@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chuck Haynes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #002855;   /* WVU Blue */
+    --gold: #EAAA00;   /* WVU Old Gold */
+    --deep: #001a38;
+    --text: #f4f1e8;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: radial-gradient(ellipse at top, var(--navy) 0%, var(--deep) 70%);
+    color: var(--text);
+    font-family: "Inter", system-ui, sans-serif;
+    overflow: hidden;
+  }
+  #stars { position: fixed; inset: 0; z-index: 0; }
+  .mountains { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 38vh; z-index: 1; }
+  main {
+    position: relative; z-index: 2;
+    min-height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center;
+    padding: 2rem 1rem 30vh;
+  }
+  .logo-wrap { width: min(220px, 50vw); margin-bottom: 1.5rem; animation: rise 1.2s ease-out both; }
+  .logo-wrap img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
+  .logo-fallback {
+    font-family: "Oswald", Impact, sans-serif; font-weight: 700;
+    font-size: clamp(4rem, 18vw, 8rem); line-height: 1; color: var(--gold);
+    letter-spacing: -.04em; text-shadow: 0 6px 18px rgba(0,0,0,.5);
+  }
+  h1 {
+    font-family: "Oswald", Impact, sans-serif; font-weight: 700;
+    font-size: clamp(2.6rem, 9vw, 5.5rem);
+    letter-spacing: .06em; text-transform: uppercase;
+    margin: 0; animation: rise 1.2s .2s ease-out both;
+  }
+  .rule { width: 120px; height: 4px; background: var(--gold); border-radius: 2px; margin: 1.1rem auto; animation: grow 1s .6s ease-out both; }
+  .tag {
+    font-family: "Oswald", Impact, sans-serif; font-weight: 500;
+    font-size: clamp(1.1rem, 3.5vw, 1.6rem);
+    color: var(--gold); letter-spacing: .12em; text-transform: uppercase;
+    margin: 0; animation: rise 1.2s .8s ease-out both;
+  }
+  .sub { margin-top: .75rem; opacity: .8; animation: rise 1.2s 1s ease-out both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<svg class="mountains" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true">
+  <path fill="#00213f" d="M0 260 L120 170 L230 230 L380 120 L520 220 L640 150 L780 240 L920 110 L1060 210 L1200 140 L1340 220 L1440 170 L1440 400 L0 400 Z"/>
+  <path fill="#001630" d="M0 320 L160 240 L300 300 L450 210 L600 290 L760 220 L900 300 L1060 230 L1220 300 L1440 240 L1440 400 L0 400 Z"/>
+  <path fill="#000e22" d="M0 370 L200 320 L420 360 L640 310 L860 365 L1080 320 L1300 360 L1440 330 L1440 400 L0 400 Z"/>
+</svg>
+
+<main>
+  <div class="logo-wrap">
+    <img src="wvu-logo.png" alt="WVU logo" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:'WV'}))">
+  </div>
+  <h1>Chuck Haynes</h1>
+  <div class="rule"></div>
+  <p class="tag">Let's Go Mountaineers!</p>
+  <p class="sub">Proud WVU family</p>
+</main>
+
+<script>
+  // Twinkling starfield behind the mountains
+  const c = document.getElementById('stars'), x = c.getContext('2d');
+  let stars = [];
+  function size() {
+    c.width = innerWidth * devicePixelRatio; c.height = innerHeight * devicePixelRatio;
+    stars = Array.from({ length: Math.round(innerWidth * innerHeight / 3500) }, () => ({
+      x: Math.random() * c.width, y: Math.random() * c.height * 0.75,
+      r: (Math.random() * 1.2 + 0.3) * devicePixelRatio, p: Math.random() * Math.PI * 2,
+      gold: Math.random() < 0.15
+    }));
+  }
+  function draw(t) {
+    x.clearRect(0, 0, c.width, c.height);
+    for (const s of stars) {
+      x.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(t / 1400 + s.p));
+      x.fillStyle = s.gold ? '#EAAA00' : '#ffffff';
+      x.beginPath(); x.arc(s.x, s.y, s.r, 0, Math.PI * 2); x.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  addEventListener('resize', size); size(); requestAnimationFrame(draw);
+</script>
+</body>
+</html>
