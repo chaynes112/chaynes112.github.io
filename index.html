@@ -54,6 +54,18 @@
   .sub { margin-top: .75rem; opacity: .8; animation: rise 1.2s 1s ease-out both; }
   @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
   @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  .music {
+    position: fixed; z-index: 3; right: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    display: flex; align-items: center; gap: .6rem;
+    padding: .7rem 1.1rem; border: 2px solid var(--gold); border-radius: 999px;
+    background: rgba(0, 26, 56, .85); color: var(--gold);
+    font: 500 1rem "Oswald", Impact, sans-serif; letter-spacing: .08em; text-transform: uppercase;
+    cursor: pointer; transition: background .2s, color .2s;
+  }
+  .music:hover, .music:focus-visible { background: var(--gold); color: var(--deep); outline: none; }
+  .music:disabled { opacity: .6; cursor: wait; }
+  .music .icon { font-size: 1.2rem; line-height: 1; }
+  midi-player { display: none; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
@@ -75,6 +87,24 @@
   <p class="tag">Let's Go Mountaineers!</p>
   <p class="sub">Proud WVU family</p>
 </main>
+
+<button class="music" id="music" type="button" disabled aria-label="Play Take Me Home, Country Roads">
+  <span class="icon" id="music-icon">&#9654;</span><span id="music-label">Loading&hellip;</span>
+</button>
+<midi-player id="player" src="country-roads.mid" sound-font loop></midi-player>
+<script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.5.0"></script>
+<script>
+  // Country Roads MIDI -- browsers block audio until a click, so it starts from the button
+  const player = document.getElementById('player');
+  const btn = document.getElementById('music');
+  const icon = document.getElementById('music-icon');
+  const label = document.getElementById('music-label');
+  function idle() { icon.innerHTML = '&#9654;'; label.textContent = 'Country Roads'; btn.setAttribute('aria-label', 'Play Take Me Home, Country Roads'); }
+  player.addEventListener('load', () => { btn.disabled = false; idle(); });
+  player.addEventListener('start', () => { icon.innerHTML = '&#10074;&#10074;'; label.textContent = 'Pause'; btn.setAttribute('aria-label', 'Pause music'); });
+  player.addEventListener('stop', idle);
+  btn.addEventListener('click', () => player.playing ? player.stop() : player.start());
+</script>
 
 <script>
   // Twinkling starfield behind the mountains
