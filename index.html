@@ -194,6 +194,7 @@
       card.replaceChildren(el('div', 'sport', label));
       if (!ev) { card.append(el('p', 'note', 'No upcoming game scheduled')); return; }
 
+      card.dataset.when = new Date(ev.date).getTime();
       const comp = ev.competitions[0];
       const wv = comp.competitors.find(isWVU) || comp.competitors[0];
       const opp = comp.competitors.find(c => c !== wv);
@@ -202,7 +203,7 @@
       const matchup = el('div', 'matchup');
       const logo = opp.team.logo || (opp.team.logos && opp.team.logos[0] && opp.team.logos[0].href);
       if (logo) { const img = el('img'); img.src = logo; img.alt = ''; matchup.append(img); }
-      matchup.append(el('span', null, prefix + ' ' + (opp.team.displayName || opp.team.location)));
+      matchup.append(el('span', null, prefix + ' ' + (opp.team.location || opp.team.shortDisplayName || opp.team.displayName)));
 
       const d = new Date(ev.date);
       const state = comp.status && comp.status.type && comp.status.type.state;
@@ -222,7 +223,12 @@
       card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
     }
   }
-  document.querySelectorAll('#game-grid .game').forEach(loadGame);
+  // Soonest game first; cards with no game go last
+  const grid = document.getElementById('game-grid');
+  Promise.all([...grid.children].map(loadGame)).then(() => {
+    const at = c => Number(c.dataset.when) || Infinity;
+    [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c));
+  });
 </script>
 </body>
 </html>
