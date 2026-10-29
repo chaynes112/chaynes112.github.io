@@ -17,10 +17,10 @@
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    background: radial-gradient(ellipse at top, var(--navy) 0%, var(--deep) 70%);
+    background: var(--deep) radial-gradient(ellipse at top, var(--navy) 0%, var(--deep) 70%) fixed;
     color: var(--text);
     font-family: "Inter", system-ui, sans-serif;
-    overflow: hidden;
+    overflow-x: hidden;
   }
   #stars { position: fixed; inset: 0; z-index: 0; }
   .mountains { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 38vh; z-index: 1; }
@@ -29,7 +29,7 @@
     min-height: 100%;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     text-align: center;
-    padding: 2rem 1rem 30vh;
+    padding: 2rem 1rem 6.5rem;
   }
   .logo-wrap { width: min(220px, 50vw); margin-bottom: 1.5rem; animation: rise 1.2s ease-out both; }
   .logo-wrap img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
@@ -66,6 +66,25 @@
   .music:disabled { opacity: .6; cursor: wait; }
   .music .icon { font-size: 1.2rem; line-height: 1; }
   midi-player { display: none; }
+  .games { width: min(960px, 100%); margin-top: 2.25rem; animation: rise 1.2s 1.2s ease-out both; }
+  .games h2 {
+    font: 500 1rem "Oswald", Impact, sans-serif; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--gold); margin: 0 0 .9rem;
+  }
+  .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .game {
+    background: rgba(0, 26, 56, .78); border: 1px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
+    border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
+  }
+  .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+  .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
+  .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
+  .game .when { opacity: .85; font-size: .92rem; }
+  .game .live { color: #ff6b5b; font-weight: 600; }
+  .game dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; margin: .75rem 0 0; font-size: .88rem; }
+  .game dt { opacity: .65; }
+  .game dd { margin: 0; font-weight: 600; }
+  .game .note { opacity: .7; font-size: .92rem; margin-top: .5rem; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
@@ -86,6 +105,15 @@
   <div class="rule"></div>
   <p class="tag">Let's Go Mountaineers!</p>
   <p class="sub">Proud WVU family</p>
+
+  <section class="games" aria-labelledby="games-title">
+    <h2 id="games-title">Next Mountaineer Games</h2>
+    <div class="game-grid" id="game-grid">
+      <article class="game" data-sport="football" data-league="college-football" data-team="277" data-groups="80"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="soccer" data-league="usa.ncaa.m.1" data-team="5658"><div class="sport">Men's Soccer</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
+    </div>
+  </section>
 </main>
 
 <button class="music" id="music" type="button" disabled aria-label="Play Take Me Home, Country Roads">
@@ -128,6 +156,73 @@
     requestAnimationFrame(draw);
   }
   addEventListener('resize', size); size(); requestAnimationFrame(draw);
+</script>
+
+<script>
+  // Next games -- pulled live from ESPN's public APIs on every page load.
+  // The core API lists every game on a team's season; the site scoreboard adds poll ranks, status and logos.
+  const CORE = 'https://sports.core.api.espn.com/v2/sports/';
+  const SITE = 'https://site.api.espn.com/apis/site/v2/sports/';
+  const ET = 'America/New_York';
+  const SEASON = new Date().getMonth() < 6 ? new Date().getFullYear() - 1 : new Date().getFullYear();
+  const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  const isWVU = c => /West Virginia/i.test(c.team.displayName || c.team.location || '');
+  const rank = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? '#' + r : 'Unranked'; };
+  const ymdET = iso => new Intl.DateTimeFormat('en-CA', { timeZone: ET, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)).replace(/-/g, '');
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  // First game that hasn't finished: walk the season list from a few hours ago forward
+  async function nextGame(card) {
+    const { sport, league, team, groups } = card.dataset;
+    const list = await getJSON(CORE + sport + '/leagues/' + league + '/seasons/' + SEASON + '/teams/' + team + '/events?limit=100');
+    const events = await Promise.all((list.items || []).map(i => getJSON(i.$ref.replace(/^http:/, 'https:')).catch(() => null)));
+    const cutoff = Date.now() - 4 * 3600e3;
+    const upcoming = events.filter(e => e && new Date(e.date) >= cutoff).sort((a, b) => new Date(a.date) - new Date(b.date));
+    for (const ev of upcoming) {
+      const sb = await getJSON(SITE + sport + '/' + league + '/scoreboard?limit=500&dates=' + ymdET(ev.date) + (groups ? '&groups=' + groups : ''));
+      const match = (sb.events || []).find(e => e.id === ev.id);
+      if (!match) continue;
+      if (match.competitions[0].status.type.state !== 'post') return match;
+    }
+    return null;
+  }
+
+  async function loadGame(card) {
+    const label = card.querySelector('.sport').textContent;
+    try {
+      const ev = await nextGame(card);
+      card.replaceChildren(el('div', 'sport', label));
+      if (!ev) { card.append(el('p', 'note', 'No upcoming game scheduled')); return; }
+
+      const comp = ev.competitions[0];
+      const wv = comp.competitors.find(isWVU) || comp.competitors[0];
+      const opp = comp.competitors.find(c => c !== wv);
+      const prefix = comp.neutralSite || wv.homeAway === 'home' ? 'vs' : 'at';
+
+      const matchup = el('div', 'matchup');
+      const logo = opp.team.logo || (opp.team.logos && opp.team.logos[0] && opp.team.logos[0].href);
+      if (logo) { const img = el('img'); img.src = logo; img.alt = ''; matchup.append(img); }
+      matchup.append(el('span', null, prefix + ' ' + (opp.team.displayName || opp.team.location)));
+
+      const d = new Date(ev.date);
+      const state = comp.status && comp.status.type && comp.status.type.state;
+      let when;
+      if (state === 'in') {
+        when = el('div', 'when'); when.append(el('span', 'live', 'LIVE NOW'), ' · ' + comp.status.type.shortDetail);
+      } else {
+        const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
+        const time = comp.timeValid === false ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
+        when = el('div', 'when', day + ' · ' + time);
+      }
+
+      const dl = el('dl');
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'WVU rank'), el('dd', null, rank(wv)));
+      card.append(matchup, when, dl);
+    } catch (e) {
+      card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
+    }
+  }
+  document.querySelectorAll('#game-grid .game').forEach(loadGame);
 </script>
 </body>
 </html>
