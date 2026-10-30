@@ -267,19 +267,20 @@
     [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c));
   });
 
-  // Sissonville High School -- no public live feed, so the schedule is entered by hand from MaxPreps.
-  // Times are UTC (7:30 PM EDT = 23:30Z; after Nov 1, 7:00 PM EST = 00:00Z next day). Add playoff games here.
-  const SVILLE_RANKS_AS_OF = 'Oct 29, 2026';
-  const SVILLE_RANK = 35;
+  // Sissonville High School -- no public live feed, so the schedule (MaxPreps) and ranks are entered by hand.
+  // Ranks are the WVSSAC playoff ratings, published each Tuesday. Times are UTC
+  // (7:30 PM EDT = 23:30Z; after Nov 1, 7:00 PM EST = 00:00Z next day). Add playoff games here.
+  const SVILLE_RANKS_AS_OF = 'WVSSAC playoff ratings, Week 9 (Oct 27, 2026)';
+  const SVILLE_RANK = { rank: 3, cls: 'AA' };
   const SVILLE_GAMES = [
-    { date: '2026-10-30T23:30:00Z', home: false, opponent: 'Lincoln County', oppRank: 77 },
-    { date: '2026-11-07T00:00:00Z', home: false, opponent: 'Wayne', oppRank: 105 },
+    { date: '2026-10-30T23:30:00Z', home: false, opponent: 'Lincoln County', oppRank: { rank: 22, cls: 'AAA' } },
+    { date: '2026-11-07T00:00:00Z', home: false, opponent: 'Wayne', oppRank: { rank: 31, cls: 'AA' } },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
     const cutoff = Date.now() - 4 * 3600e3;
     const upcoming = SVILLE_GAMES.filter(g => new Date(g.date) >= cutoff);
-    const stateRank = r => r ? '#' + r + ' in WV' : 'Unranked';
+    const stateRank = r => r ? '#' + r.rank + ' in Class ' + r.cls : 'Unranked';
     if (!upcoming.length) {
       const card = el('article', 'game'); card.append(el('div', 'sport', 'Football'), el('p', 'note', 'No upcoming games scheduled'));
       grid.append(card);
@@ -296,7 +297,7 @@
       card.append(el('div', 'sport', i === 0 ? 'Next game' : 'Upcoming'), el('div', 'matchup', (g.home ? 'vs ' : 'at ') + g.opponent), el('div', 'when', day + ' · ' + time), dl);
       grid.append(card);
     });
-    document.getElementById('sville-source').textContent = 'Schedule and MaxPreps state rankings as of ' + SVILLE_RANKS_AS_OF + '.';
+    document.getElementById('sville-source').textContent = 'Ranks: ' + SVILLE_RANKS_AS_OF + '.';
   })();
 </script>
 </body>
