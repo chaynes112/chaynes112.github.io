@@ -291,9 +291,7 @@
       const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       const time = d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
       const dl = el('dl');
-      // All three schools play without a conference (MaxPreps "Freelance"), so there is no conference record
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Opponent conf.'), el('dd', null, 'Independent'),
-                el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)), el('dt', null, 'Sissonville conf.'), el('dd', null, 'Independent'));
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)));
       card.append(el('div', 'sport', i === 0 ? 'Next game' : 'Upcoming'), el('div', 'matchup', (g.home ? 'vs ' : 'at ') + g.opponent), el('div', 'when', day + ' · ' + time), dl);
       grid.append(card);
     });
