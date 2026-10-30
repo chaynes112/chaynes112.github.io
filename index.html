@@ -220,6 +220,29 @@
       gold: Math.random() < 0.15
     }));
   }
+  // Shooting star: every 5-10 seconds one streaks down and to the left across the upper sky
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let meteor = null, nextMeteor = 2500;
+  function drawMeteor(t) {
+    if (!meteor && t >= nextMeteor && !calm) {
+      meteor = { x0: c.width * (0.35 + Math.random() * 0.6), y0: c.height * Math.random() * 0.3, start: t, life: 1100 };
+    }
+    if (!meteor) return;
+    const k = (t - meteor.start) / meteor.life;
+    if (k >= 1) { meteor = null; nextMeteor = t + 5000 + Math.random() * 5000; return; }
+    const dist = k * c.width * 0.35, len = 240 * devicePixelRatio * Math.min(1, k * 4);
+    const hx = meteor.x0 - dist * 0.87, hy = meteor.y0 + dist * 0.5;
+    const tx = hx + len * 0.87, ty = hy - len * 0.5;
+    const g = x.createLinearGradient(hx, hy, tx, ty);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.25, 'rgba(255,255,255,.75)');
+    g.addColorStop(0.55, 'rgba(234,170,0,.45)'); g.addColorStop(1, 'rgba(234,170,0,0)');
+    x.globalAlpha = k < 0.8 ? 1 : (1 - k) / 0.2;
+    x.strokeStyle = g; x.lineWidth = 3 * devicePixelRatio; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(hx, hy); x.lineTo(tx, ty); x.stroke();
+    x.shadowColor = '#fff'; x.shadowBlur = 12 * devicePixelRatio;
+    x.fillStyle = '#fff'; x.beginPath(); x.arc(hx, hy, 2.6 * devicePixelRatio, 0, Math.PI * 2); x.fill();
+    x.shadowBlur = 0;
+  }
   function draw(t) {
     x.clearRect(0, 0, c.width, c.height);
     for (const s of stars) {
@@ -227,6 +250,7 @@
       x.fillStyle = s.gold ? '#EAAA00' : '#ffffff';
       x.beginPath(); x.arc(s.x, s.y, s.r, 0, Math.PI * 2); x.fill();
     }
+    drawMeteor(t);
     requestAnimationFrame(draw);
   }
   addEventListener('resize', size); size(); requestAnimationFrame(draw);
