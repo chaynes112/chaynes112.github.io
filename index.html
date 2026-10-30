@@ -178,11 +178,39 @@
   const ymdET = iso => new Intl.DateTimeFormat('en-CA', { timeZone: ET, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)).replace(/-/g, '');
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
+  // Every game on a team's season, from the core API
+  async function seasonEvents(sport, league, team) {
+    const list = await getJSON(CORE + sport + '/leagues/' + league + '/seasons/' + SEASON + '/teams/' + team + '/events?limit=100');
+    return Promise.all((list.items || []).map(i => getJSON(i.$ref.replace(/^http:/, 'https:')).catch(() => null)));
+  }
+
+  // Conference record counted from finished conference games; soccer adds ties (W-L-T)
+  function confRecord(events, team, sport) {
+    let w = 0, l = 0, t = 0;
+    const done = Date.now() - 3 * 3600e3;
+    for (const e of events) {
+      const c = e && e.competitions && e.competitions[0];
+      if (!c || !c.conferenceCompetition || new Date(e.date) > done) continue;
+      const me = c.competitors.find(x => x.id === String(team)), them = c.competitors.find(x => x.id !== String(team));
+      if (!me || !them) continue;
+      if (me.winner) w++; else if (them.winner) l++; else t++;
+    }
+    return sport === 'soccer' ? w + '-' + l + '-' + t : w + '-' + l;
+  }
+
+  // ESPN's football feed carries conference records; soccer has to be counted from the schedule
+  async function confFor(card, competitor, events) {
+    const conf = (competitor.records || []).find(r => r.type === 'vsconf');
+    if (conf) return conf.summary;
+    const { sport, league } = card.dataset;
+    return confRecord(events || await seasonEvents(sport, league, competitor.id), competitor.id, sport);
+  }
+
   // First game that hasn't finished: walk the season list from a few hours ago forward
   async function nextGame(card) {
     const { sport, league, team, groups } = card.dataset;
-    const list = await getJSON(CORE + sport + '/leagues/' + league + '/seasons/' + SEASON + '/teams/' + team + '/events?limit=100');
-    const events = await Promise.all((list.items || []).map(i => getJSON(i.$ref.replace(/^http:/, 'https:')).catch(() => null)));
+    const events = await seasonEvents(sport, league, team);
+    card._events = events;
     const cutoff = Date.now() - 4 * 3600e3;
     const upcoming = events.filter(e => e && new Date(e.date) >= cutoff).sort((a, b) => new Date(a.date) - new Date(b.date));
     for (const ev of upcoming) {
@@ -223,8 +251,10 @@
         when = el('div', 'when', day + ' · ' + time);
       }
 
+      const [oppConf, wvConf] = await Promise.all([confFor(card, opp).catch(() => '—'), confFor(card, wv, card._events).catch(() => '—')]);
       const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'WVU rank'), el('dd', null, rank(wv)));
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent conf.'), el('dd', null, oppConf),
+                el('dt', null, 'WVU rank'), el('dd', null, rank(wv)), el('dt', null, 'WVU conf.'), el('dd', null, wvConf));
       card.append(matchup, when, dl);
     } catch (e) {
       card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
@@ -260,7 +290,9 @@
       const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       const time = d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
       const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)));
+      // All three schools play without a conference (MaxPreps "Freelance"), so there is no conference record
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Opponent conf.'), el('dd', null, 'Independent'),
+                el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)), el('dt', null, 'Sissonville conf.'), el('dd', null, 'Independent'));
       card.append(el('div', 'sport', i === 0 ? 'Next game' : 'Upcoming'), el('div', 'matchup', (g.home ? 'vs ' : 'at ') + g.opponent), el('div', 'when', day + ' · ' + time), dl);
       grid.append(card);
     });
