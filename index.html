@@ -85,8 +85,7 @@
   .game dt { opacity: .65; }
   .game dd { margin: 0; font-weight: 600; }
   .game .note { opacity: .7; font-size: .92rem; margin-top: .5rem; }
-  .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
 <body>
@@ -251,10 +250,19 @@
         when = el('div', 'when', day + ' · ' + time);
       }
 
-      const [oppConf, wvConf] = await Promise.all([confFor(card, opp).catch(() => '—'), confFor(card, wv, card._events).catch(() => '—')]);
+      // Record shown as overall (conference), e.g. 9-4-2 (5-1-2)
+      // ESPN writes soccer records as W-T-L; flip to W-L-T to match the conference counts
+      const overall = c => {
+        const r = (c.records || []).find(x => x.type === 'total');
+        if (!r) return '—';
+        const p = r.summary.split('-');
+        return card.dataset.sport === 'soccer' && p.length === 3 ? [p[0], p[2], p[1]].join('-') : r.summary;
+      };
+      const [oppConf, wvConf] = await Promise.all([confFor(card, opp).catch(() => null), confFor(card, wv, card._events).catch(() => null)]);
+      const record = (c, conf) => overall(c) + (conf ? ' (' + conf + ')' : '');
       const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent conf.'), el('dd', null, oppConf),
-                el('dt', null, 'WVU rank'), el('dd', null, rank(wv)), el('dt', null, 'WVU conf.'), el('dd', null, wvConf));
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent record'), el('dd', null, record(opp, oppConf)),
+                el('dt', null, 'WVU rank'), el('dd', null, rank(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
       card.append(matchup, when, dl);
     } catch (e) {
       card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
@@ -272,9 +280,10 @@
   // (7:30 PM EDT = 23:30Z; after Nov 1, 7:00 PM EST = 00:00Z next day). Add playoff games here.
   const SVILLE_RANKS_AS_OF = 'WVSSAC playoff ratings, Week 9 (Oct 27, 2026)';
   const SVILLE_RANK = { rank: 3, cls: 'AA' };
+  const SVILLE_RECORD = '8-0';
   const SVILLE_GAMES = [
-    { date: '2026-10-30T23:30:00Z', home: false, opponent: 'Lincoln County', oppRank: { rank: 22, cls: 'AAA' } },
-    { date: '2026-11-07T00:00:00Z', home: false, opponent: 'Wayne', oppRank: { rank: 31, cls: 'AA' } },
+    { date: '2026-10-30T23:30:00Z', home: false, opponent: 'Lincoln County', oppRank: { rank: 22, cls: 'AAA' }, oppRecord: '4-4' },
+    { date: '2026-11-07T00:00:00Z', home: false, opponent: 'Wayne', oppRank: { rank: 31, cls: 'AA' }, oppRecord: '0-8' },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
@@ -291,11 +300,12 @@
       const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       const time = d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
       const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)));
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Opponent record'), el('dd', null, g.oppRecord),
+                el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)), el('dt', null, 'Sissonville record'), el('dd', null, SVILLE_RECORD));
       card.append(el('div', 'sport', i === 0 ? 'Next game' : 'Upcoming'), el('div', 'matchup', (g.home ? 'vs ' : 'at ') + g.opponent), el('div', 'when', day + ' · ' + time), dl);
       grid.append(card);
     });
-    document.getElementById('sville-source').textContent = 'Ranks: ' + SVILLE_RANKS_AS_OF + '.';
+    document.getElementById('sville-source').textContent = 'Ranks and records: ' + SVILLE_RANKS_AS_OF + '.';
   })();
 </script>
 </body>
