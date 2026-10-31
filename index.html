@@ -38,22 +38,13 @@
     font-size: clamp(4rem, 18vw, 8rem); line-height: 1; color: var(--gold);
     letter-spacing: -.04em; text-shadow: 0 6px 18px rgba(0,0,0,.5);
   }
-  h1 {
-    font-family: "Oswald", Impact, sans-serif; font-weight: 700;
-    font-size: clamp(2.6rem, 9vw, 5.5rem);
-    letter-spacing: .06em; word-spacing: .3em; text-transform: uppercase;
-    margin: 0; animation: rise 1.2s .2s ease-out both;
-  }
-  .rule { width: 120px; height: 4px; background: var(--gold); border-radius: 2px; margin: 1.1rem auto; animation: grow 1s .6s ease-out both; }
   .tag {
     font-family: "Oswald", Impact, sans-serif; font-weight: 500;
     font-size: clamp(1.1rem, 3.5vw, 1.6rem);
     color: var(--gold); letter-spacing: .12em; text-transform: uppercase;
-    margin: 0; animation: rise 1.2s .8s ease-out both;
+    margin: 0; animation: rise 1.2s .3s ease-out both;
   }
-  .sub { margin-top: .75rem; opacity: .8; animation: rise 1.2s 1s ease-out both; }
   @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-  @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   .music {
     position: fixed; z-index: 3; right: 1.25rem; bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
     display: flex; align-items: center; gap: .6rem;
@@ -94,11 +85,11 @@
     .mascot { position: fixed; z-index: 2; left: 2rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 140px; margin: 0; }
   }
   .mascot .bob { animation: bob 1.6s ease-in-out infinite; }
-  .mascot .wave { transform-box: view-box; transform-origin: 104px 112px; animation: wave 1.2s ease-in-out infinite; }
+  .mascot .ready { transform-box: view-box; transform-origin: 77px 150px; animation: ready 2.4s ease-in-out infinite; }
   .mascot .tail { transform-box: view-box; transform-origin: 54px 60px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-  @keyframes wave { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(22deg); } }
+  @keyframes ready { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
   @keyframes tail { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
   @keyframes blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(.1); } }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
@@ -117,10 +108,7 @@
   <div class="logo-wrap">
     <img src="wvu-logo.png" alt="WVU logo" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:'WV'}))">
   </div>
-  <h1>Chuck Haynes</h1>
-  <div class="rule"></div>
   <p class="tag">Let's Go Mountaineers!</p>
-  <p class="sub">Proud WVU family</p>
 
   <section class="games" aria-labelledby="games-title">
     <h2 id="games-title">Next Mountaineer Games</h2>
@@ -143,53 +131,74 @@
 
   <div class="mascot" aria-hidden="true">
     <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="80" cy="212" rx="44" ry="6" fill="#000" opacity=".35"/>
+      <ellipse cx="80" cy="212" rx="52" ry="6" fill="#000" opacity=".35"/>
       <g class="bob">
-        <!-- musket, held in the left hand -->
-        <rect x="40" y="58" width="5" height="96" rx="2" fill="#3b3f46"/>
-        <path d="M38 150 L47 150 L50 206 Q43 210 36 206 Z" fill="#6b4423"/>
-        <!-- legs and boots -->
-        <rect x="61" y="156" width="16" height="42" rx="6" fill="#8a5a2e"/>
-        <rect x="83" y="156" width="16" height="42" rx="6" fill="#8a5a2e"/>
-        <ellipse cx="68" cy="202" rx="12" ry="7" fill="#3a2414"/>
-        <ellipse cx="92" cy="202" rx="12" ry="7" fill="#3a2414"/>
-        <!-- buckskin jacket with fringe -->
-        <path d="M56 104 Q80 97 104 104 L112 160 Q80 167 48 160 Z" fill="#b07a45"/>
-        <path d="M52 158 l-2 9 M58 160 l-1 9 M64 161 l-1 9 M70 162 l0 9 M76 162 l0 9 M82 162 l0 9 M88 162 l0 9 M94 161 l1 9 M100 161 l1 9 M106 160 l1 9" stroke="#8a5a2e" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M80 102 L80 160" stroke="#8a5a2e" stroke-width="2"/>
-        <rect x="50" y="138" width="60" height="7" fill="#3a2414"/>
-        <rect x="75" y="136" width="10" height="11" rx="2" fill="#EAAA00"/>
-        <!-- left arm, gripping the musket -->
-        <path d="M60 108 Q46 126 45 148" stroke="#b07a45" stroke-width="13" stroke-linecap="round" fill="none"/>
-        <circle cx="44" cy="148" r="7" fill="#f2c79b"/>
-        <!-- right arm, waving -->
-        <g class="wave">
-          <path d="M100 110 Q118 96 126 74" stroke="#b07a45" stroke-width="13" stroke-linecap="round" fill="none"/>
-          <path d="M108 104 l5 6 M114 97 l6 4 M119 89 l6 3" stroke="#8a5a2e" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="127" cy="70" r="8" fill="#f2c79b"/>
+        <!-- legs and boots, wide stance -->
+        <path d="M60 156 L74 156 L72 198 L56 198 Z" fill="#7d5028"/>
+        <path d="M86 156 L100 156 L104 198 L88 198 Z" fill="#7d5028"/>
+        <ellipse cx="62" cy="202" rx="13" ry="7" fill="#2a1a0e"/>
+        <ellipse cx="98" cy="202" rx="13" ry="7" fill="#2a1a0e"/>
+        <!-- buckskin hunting shirt, broad shoulders, fringe -->
+        <path d="M48 104 Q80 94 112 104 L117 160 Q80 168 43 160 Z" fill="#a06b3a"/>
+        <path d="M47 158 l-2 9 M53 160 l-1 9 M59 161 l-1 9 M65 162 l0 9 M71 162 l0 9 M77 162 l0 9 M83 162 l0 9 M89 162 l0 9 M95 161 l1 9 M101 161 l1 9 M107 160 l1 9 M113 159 l2 9" stroke="#7d5028" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M80 100 L80 160" stroke="#7d5028" stroke-width="2"/>
+        <!-- powder horn on a shoulder strap -->
+        <path d="M54 104 L106 150" stroke="#2a1a0e" stroke-width="3"/>
+        <path d="M96 146 Q110 146 116 156 Q108 154 100 156 Z" fill="#e6d7b5" stroke="#8c7a55" stroke-width="1"/>
+        <rect x="45" y="138" width="70" height="7" fill="#2a1a0e"/>
+        <rect x="74" y="136" width="12" height="11" rx="2" fill="#EAAA00"/>
+        <!-- flintlock long rifle held across the body, both hands on it -->
+        <g class="ready">
+          <g transform="translate(50 182) rotate(-50)">
+            <path d="M0 -7 L10 -9 L44 -4 L58 -3 L58 4 L44 4 Q28 6 10 10 L0 9 Z" fill="#6b3f1f" stroke="#3f230d" stroke-width="1"/>
+            <rect x="-2" y="-9" width="3" height="19" rx="1" fill="#b08d57"/>
+            <rect x="56" y="-3" width="72" height="6" rx="2" fill="#7a4a24" stroke="#3f230d" stroke-width=".8"/>
+            <rect x="56" y="-5.5" width="124" height="3.6" rx="1" fill="#4b5058"/>
+            <line x1="58" y1="-5" x2="178" y2="-5" stroke="#9aa1aa" stroke-width=".8"/>
+            <line x1="62" y1="4.2" x2="126" y2="4.2" stroke="#2b1d10" stroke-width="1.2"/>
+            <rect x="82" y="-6" width="2.5" height="10" fill="#b08d57"/>
+            <rect x="106" y="-6" width="2.5" height="10" fill="#b08d57"/>
+            <rect x="125" y="-6" width="2.5" height="10" fill="#b08d57"/>
+            <rect x="44" y="-6.5" width="15" height="6" rx="1" fill="#5d636b"/>
+            <path d="M47 -6 Q44 -12 49 -14 L51 -12 Q48 -11 50 -6 Z" fill="#3a3f46"/>
+            <rect x="55" y="-10" width="3" height="4.5" fill="#5d636b"/>
+            <path d="M38 4 Q43 12 52 4" stroke="#b08d57" stroke-width="1.6" fill="none"/>
+            <line x1="45" y1="4" x2="46" y2="8.5" stroke="#3a3f46" stroke-width="1.4"/>
+            <rect x="176" y="-8" width="2" height="2.6" fill="#b08d57"/>
+          </g>
+          <!-- arms gripping the rifle -->
+          <path d="M57 110 Q55 138 77 150" stroke="#a06b3a" stroke-width="14" stroke-linecap="round" fill="none"/>
+          <path d="M104 111 Q119 112 121 98" stroke="#a06b3a" stroke-width="14" stroke-linecap="round" fill="none"/>
+          <path d="M60 130 l-6 3 M64 140 l-5 5 M112 109 l3 6 M117 103 l6 3" stroke="#7d5028" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="77" cy="150" r="7.5" fill="#e8b88f"/>
+          <circle cx="121" cy="98" r="7.5" fill="#e8b88f"/>
         </g>
         <!-- coonskin cap tail -->
         <g class="tail">
-          <ellipse cx="48" cy="70" rx="7" ry="9" fill="#7a5230"/>
-          <ellipse cx="43" cy="82" rx="6.5" ry="8" fill="#4a3018"/>
-          <ellipse cx="39" cy="94" rx="6" ry="7.5" fill="#7a5230"/>
-          <ellipse cx="36" cy="105" rx="5" ry="6.5" fill="#e8d8b8"/>
+          <ellipse cx="48" cy="70" rx="7" ry="9" fill="#6b4626"/>
+          <ellipse cx="43" cy="82" rx="6.5" ry="8" fill="#2f1d0e"/>
+          <ellipse cx="39" cy="94" rx="6" ry="7.5" fill="#6b4626"/>
+          <ellipse cx="36" cy="105" rx="5" ry="6.5" fill="#2f1d0e"/>
         </g>
-        <!-- head -->
-        <circle cx="80" cy="72" r="28" fill="#f2c79b"/>
-        <path d="M53 76 Q55 104 80 108 Q105 104 107 76 Q100 93 80 93 Q60 93 53 76 Z" fill="#5a3a1e"/>
-        <path d="M68 86 Q80 80 92 86 Q86 90 80 87 Q74 90 68 86 Z" fill="#5a3a1e"/>
-        <path d="M73 92 Q80 98 87 92" stroke="#7a1f1f" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <ellipse cx="80" cy="78" rx="4.5" ry="3.5" fill="#e0a57a"/>
+        <!-- head: hard stare, heavy brows, full beard, scar -->
+        <circle cx="80" cy="72" r="28" fill="#e8b88f"/>
+        <path d="M51 72 Q52 100 68 108 Q80 116 92 108 Q108 100 109 72 Q101 92 80 92 Q59 92 51 72 Z" fill="#3d2614"/>
+        <path d="M66 87 Q80 79 94 87 Q87 91 80 88 Q73 91 66 87 Z" fill="#3d2614"/>
+        <path d="M71 99 Q80 92 89 99" stroke="#140a04" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+        <ellipse cx="80" cy="79" rx="5" ry="4" fill="#d29870"/>
+        <path d="M60 71 l5 7" stroke="#b9765a" stroke-width="1.6" stroke-linecap="round"/>
         <g class="eyes">
-          <ellipse cx="70" cy="68" rx="3" ry="4" fill="#1d1d1d"/>
-          <ellipse cx="90" cy="68" rx="3" ry="4" fill="#1d1d1d"/>
+          <ellipse cx="70" cy="69" rx="4.2" ry="2.5" fill="#f3ead6"/>
+          <ellipse cx="90" cy="69" rx="4.2" ry="2.5" fill="#f3ead6"/>
+          <circle cx="71" cy="69.3" r="1.9" fill="#111"/>
+          <circle cx="89" cy="69.3" r="1.9" fill="#111"/>
         </g>
-        <path d="M64 61 Q70 58 75 61 M85 61 Q90 58 96 61" stroke="#5a3a1e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
         <!-- coonskin cap -->
-        <path d="M50 64 Q51 34 80 33 Q109 34 110 64 Z" fill="#7a5230"/>
-        <path d="M56 50 Q80 44 104 50" stroke="#5c3b20" stroke-width="2.5" fill="none"/>
-        <ellipse cx="80" cy="63" rx="32" ry="6" fill="#5c3b20"/>
+        <path d="M50 57 Q51 28 80 27 Q109 28 110 57 Z" fill="#6b4626"/>
+        <path d="M56 44 Q80 38 104 44" stroke="#4a2f17" stroke-width="2.5" fill="none"/>
+        <ellipse cx="80" cy="56" rx="33" ry="5" fill="#4a2f17"/>
+        <!-- angry brows, drawn last so the brim never hides them -->
+        <path d="M60 61 L76 67 M100 61 L84 67" stroke="#1f1208" stroke-width="4.5" stroke-linecap="round"/>
       </g>
     </svg>
   </div>
