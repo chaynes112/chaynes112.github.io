@@ -79,7 +79,7 @@
   .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
   .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
-  .game .when { opacity: .85; font-size: .92rem; }
+  .game .when { opacity: .85; font-size: .88rem; }
   .game .live { color: #ff6b5b; font-weight: 600; }
   .game dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; margin: .75rem 0 0; font-size: .88rem; }
   .game dt { opacity: .65; }
@@ -411,7 +411,9 @@
     const time = g.timeTBA ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
     const dl = el('dl');
     g.rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v)));
-    card.append(matchup, el('div', 'when', day + ' · ' + time + (g.where ? ' · ' + g.where : '')), dl);
+    // Non-breaking spaces inside each piece, so a narrow card only wraps at the dots
+    const keep = s => s.replace(/ /g, '\u00a0');
+    card.append(matchup, el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')), dl);
     return card;
   }
   const byDate = grid => { const at = c => Number(c.dataset.when) || Infinity; [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c)); };
@@ -421,10 +423,10 @@
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', title: 'WVU Fall Classic', where: 'Morgantown', rows: [
-        ['Opponents', '#4 TCU, #5 Nebraska, #6 Ole Miss, #7 Kentucky'], ['WVU rank', '#1'], ['WVU record', '7-1 (2-1)']] },
+        ['Opponents', ['#4 TCU', '#5 Nebraska', '#6 Ole Miss', '#7 Kentucky'].map(t => t.replace(/ /g, '\u00a0')).join(', ')], ['WVU rank', '#1'], ['WVU record', '7-1 (2-1)']] },
     ] },
     { label: 'Baseball', games: [
-      { date: '2027-02-19T17:00:00Z', timeTBA: true, title: 'at College of Charleston', rows: [
+      { date: '2027-02-19T17:00:00Z', timeTBA: true, title: 'at College of Charleston', logo: 'charleston-logo.png', rows: [
         ['Opponent rank', 'No poll yet'], ['Opponent record', '0-0'], ['WVU rank', 'No poll yet'], ['WVU record', '0-0 (0-0)']] },
     ] },
   ];
