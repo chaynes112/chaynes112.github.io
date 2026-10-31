@@ -82,6 +82,9 @@
   .game dt { opacity: .65; }
   .game dd { margin: 0; font-weight: 600; }
   .game .note { opacity: .7; font-size: .92rem; margin-top: .5rem; }
+  .game .footnote { margin: .6rem 0 0; font-size: .78rem; opacity: .7; }
+  .game .note.with-logo { display: flex; align-items: center; gap: .55rem; opacity: 1; color: rgba(244, 241, 232, .7); }
+  .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none; }
   .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
   .games.sville { margin-top: 4rem; }
   .games .team-logo { display: block; width: 96px; height: auto; margin: 0 auto .6rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
@@ -155,8 +158,8 @@
     <div class="game-grid" id="game-grid">
       <article class="game" data-sport="football" data-league="college-football" data-team="277" data-groups="80"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="soccer" data-league="usa.ncaa.m.1" data-team="5658"><div class="sport">Men's Soccer</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-groups="50" data-season-end="1"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382" data-votes="1"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-groups="50" data-season-end="1" data-votes="Coaches Poll"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="womens-college-basketball" data-team="277" data-groups="50" data-season-end="1"><div class="sport">Women's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="volleyball" data-league="womens-college-volleyball" data-team="277"><div class="sport">Volleyball</div><p class="note">Loading&hellip;</p></article>
     </div>
@@ -495,27 +498,30 @@
     return null;
   }
 
-  // Soccer teams just outside the United Soccer Coaches top 25. ESPN's copy of the poll says who is receiving
-  // votes but not how many; the counts below are copied from unitedsoccercoaches.org and only show while
-  // ESPN's latest poll is the one they came from. Update these when a new poll comes out (Tuesdays).
+  // Votes for an unranked WVU team (cards marked data-votes), shown as "*Unranked" plus a footnote.
+  // Soccer: ESPN's copy of the United Soccer Coaches poll says who is receiving votes but not how many, so the
+  // count is copied from unitedsoccercoaches.org and only shows while ESPN's latest poll is the one it came from
+  // (update on Tuesdays). Basketball: ESPN carries the point totals, so these stay current on their own.
   const SOCCER_VOTES = {
     'usa.ncaa.w.1': { poll: '2026-10-27', teams: { '20382': 3 } },
   };
-  async function soccerVotes(card) {
-    const { sport, league } = card.dataset;
-    if (sport !== 'soccer') return {};
-    const list = await getJSON(CORE + sport + '/leagues/' + league + '/rankings');
-    const poll = await getJSON(list.items[0].$ref.replace(/^http:/, 'https:'));
-    const known = SOCCER_VOTES[league];
-    const current = known && (poll.date || '').startsWith(known.poll);
-    const out = {};
-    for (const o of poll.others || []) {
-      const id = ((o.team && o.team.$ref) || '').match(/\/teams\/(\d+)/);
-      if (!id) continue;
-      const n = current && known.teams[id[1]];
-      out[id[1]] = n ? 'received ' + n + ' vote' + (n === 1 ? '' : 's') : 'receiving votes';
+  const votesText = n => 'Received ' + n + ' Vote' + (n === 1 ? '' : 's');
+  async function wvuVotes(card) {
+    const { sport, league, team, votes } = card.dataset;
+    if (!votes) return null;
+    if (sport === 'soccer') {
+      const list = await getJSON(CORE + sport + '/leagues/' + league + '/rankings');
+      const poll = await getJSON(list.items[0].$ref.replace(/^http:/, 'https:'));
+      if (!(poll.others || []).some(o => ((o.team && o.team.$ref) || '').includes('/teams/' + team + '?'))) return null;
+      const known = SOCCER_VOTES[league];
+      const n = known && (poll.date || '').startsWith(known.poll) && known.teams[team];
+      return n ? votesText(n) : 'Receiving Votes';
     }
-    return out;
+    // votes="Coaches Poll" (or "AP Top 25") picks which ESPN poll to read
+    const { rankings = [] } = await getJSON(SITE + sport + '/' + league + '/rankings');
+    const poll = rankings.find(r => r.name === votes || r.shortName === votes);
+    const o = poll && (poll.others || []).find(x => x.team && String(x.team.id) === team);
+    return o && o.points ? votesText(o.points) + ' In ' + votes : null;
   }
 
   async function loadGame(card) {
@@ -555,25 +561,29 @@
         const p = r.summary.split('-');
         return card.dataset.sport === 'soccer' && p.length === 3 ? [p[0], p[2], p[1]].join('-') : r.summary;
       };
-      const [oppConf, wvConf, votes] = await Promise.all([confFor(card, opp).catch(() => null), confFor(card, wv, card._events).catch(() => null), soccerVotes(card).catch(() => ({}))]);
+      const [oppConf, wvConf, votes] = await Promise.all([confFor(card, opp).catch(() => null), confFor(card, wv, card._events).catch(() => null), wvuVotes(card).catch(() => null)]);
       const record = (c, conf) => overall(c) + (conf ? ' (' + conf + ')' : '');
-      const rankText = c => rank(c) + (rank(c) === 'Unranked' && votes[c.id] ? ' (' + votes[c.id] + ')' : '');
+      const starred = votes && rank(wv) === 'Unranked';
       const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rankText(opp)), el('dt', null, 'Opponent record'), el('dd', null, record(opp, oppConf)),
-                el('dt', null, 'WVU rank'), el('dd', null, rankText(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
+      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent record'), el('dd', null, record(opp, oppConf)),
+                el('dt', null, 'WVU rank'), el('dd', null, (starred ? '*' : '') + rank(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
       card.append(matchup, when, dl);
+      if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
       card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
     }
   }
   // Hand-entered cards, for teams with no live feed. Each sport shows its first game that hasn't
   // finished yet. Times are UTC: EDT = ET+4 until Nov 1, EST = ET+5 after (7:00 PM EST = 00:00Z next day).
-  function manualCard({ label, games = [], done, rows }) {
+  function manualCard({ label, games = [], done, doneLogo, rows }) {
     const card = el('article', 'game');
     card.append(el('div', 'sport', label));
     const g = games.find(x => new Date(x.date) >= Date.now() - 4 * 3600e3);
     if (!g) {
-      card.append(el('p', 'note', done || 'No upcoming game scheduled'));
+      const note = el('p', 'note' + (doneLogo ? ' with-logo' : ''));
+      if (doneLogo) { const img = el('img'); img.src = doneLogo; img.alt = ''; note.append(img); }
+      note.append(done || 'No upcoming game scheduled');
+      card.append(note);
       if (rows) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v))); card.append(dl); }
       return card;
     }
@@ -626,7 +636,7 @@
       { date: '2026-11-05T17:00:00Z', title: 'vs Lincoln', logo: 'lincoln-logo.png', subtitle: 'State Semifinal', where: 'Beckley', rows: [
         ['Opponent seed', 'No. 2 in Class AA/A'], ['Opponent record', '17-3'], ['Sissonville seed', 'No. 3 in Class AA/A'], ['Sissonville record', '16-4']] },
     ] },
-    { label: 'Boys Soccer', done: 'Season Ended', rows: [
+    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
       ['Last game', 'Regional Semifinal'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
   ];
   (function () {
