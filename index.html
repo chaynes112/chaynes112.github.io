@@ -130,12 +130,13 @@
       <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-groups="50" data-season-end="1"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="womens-college-basketball" data-team="277" data-groups="50" data-season-end="1"><div class="sport">Women's Basketball</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="volleyball" data-league="womens-college-volleyball" data-team="277"><div class="sport">Volleyball</div><p class="note">Loading&hellip;</p></article>
     </div>
   </section>
 
   <section class="games" aria-labelledby="sville-title">
     <img class="team-logo" src="sissonville-logo.png" alt="Sissonville High School logo">
-    <h2 id="sville-title">Sissonville Indians Football</h2>
+    <h2 id="sville-title">Sissonville Indians</h2>
     <div class="game-grid" id="sville-grid"></div>
     <p class="source" id="sville-source"></p>
   </section>
@@ -390,44 +391,68 @@
       card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
     }
   }
+  // Hand-entered cards, for teams with no live feed. Each sport shows its first game that hasn't
+  // finished yet. Times are UTC: EDT = ET+4 until Nov 1, EST = ET+5 after (7:00 PM EST = 00:00Z next day).
+  function manualCard({ label, games = [], done, rows }) {
+    const card = el('article', 'game');
+    card.append(el('div', 'sport', label));
+    const g = games.find(x => new Date(x.date) >= Date.now() - 4 * 3600e3);
+    if (!g) {
+      card.append(el('p', 'note', done || 'No upcoming game scheduled'));
+      if (rows) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v))); card.append(dl); }
+      return card;
+    }
+    const d = new Date(g.date);
+    card.dataset.when = d.getTime();
+    const matchup = el('div', 'matchup');
+    if (g.logo) { const img = el('img'); img.src = g.logo; img.alt = ''; matchup.append(img); }
+    matchup.append(el('span', null, g.title));
+    const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
+    const time = g.timeTBA ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
+    const dl = el('dl');
+    g.rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v)));
+    card.append(matchup, el('div', 'when', day + ' · ' + time + (g.where ? ' · ' + g.where : '')), dl);
+    return card;
+  }
+  const byDate = grid => { const at = c => Number(c.dataset.when) || Infinity; [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c)); };
+
+  // WVU sports ESPN doesn't carry (rifle) or hasn't loaded yet (baseball 2027) -- from wvusports.com.
+  // Rifle rank: CRCA Top 20 through Oct 25, 2026 (ssusa.org). Update after each new poll.
+  const WVU_MANUAL = [
+    { label: 'Rifle', games: [
+      { date: '2026-11-14T16:00:00Z', title: 'WVU Fall Classic', where: 'Morgantown', rows: [
+        ['Opponents', '#4 TCU, #5 Nebraska, #6 Ole Miss, #7 Kentucky'], ['WVU rank', '#1'], ['WVU record', '7-1 (2-1)']] },
+    ] },
+    { label: 'Baseball', games: [
+      { date: '2027-02-19T17:00:00Z', timeTBA: true, title: 'at College of Charleston', rows: [
+        ['Opponent rank', 'No poll yet'], ['Opponent record', '0-0'], ['WVU rank', 'No poll yet'], ['WVU record', '0-0 (0-0)']] },
+    ] },
+  ];
   // Soonest game first; cards with no game go last
   const grid = document.getElementById('game-grid');
-  Promise.all([...grid.children].map(loadGame)).then(() => {
-    const at = c => Number(c.dataset.when) || Infinity;
-    [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c));
-  });
+  const espnCards = [...grid.children];
+  WVU_MANUAL.forEach(s => grid.append(manualCard(s)));
+  Promise.all(espnCards.map(loadGame)).then(() => byDate(grid));
 
-  // Sissonville High School -- no public live feed, so the schedule (MaxPreps) and ranks are entered by hand.
-  // Ranks are the WVSSAC playoff ratings, published each Tuesday. Times are UTC
-  // (7:30 PM EDT = 23:30Z; after Nov 1, 7:00 PM EST = 00:00Z next day). Add playoff games here.
-  const SVILLE_RANKS_AS_OF = 'Ranks: WVSSAC playoff ratings, Week 9 (Oct 27, 2026). Records as of Oct 31, 2026.';
-  const SVILLE_RANK = { rank: 3, cls: 'AA' };
-  const SVILLE_RECORD = '9-0';
-  const SVILLE_GAMES = [
-    { date: '2026-10-30T23:30:00Z', home: false, opponent: 'Lincoln County', oppRank: { rank: 22, cls: 'AAA' }, oppRecord: '4-5' },
-    { date: '2026-11-07T00:00:00Z', home: false, opponent: 'Wayne', oppRank: { rank: 31, cls: 'AA' }, oppRecord: '0-9' },
+  // Sissonville High School -- no public live feed, so schedules (MaxPreps) and ranks are entered by hand.
+  // Football ranks are the WVSSAC playoff ratings (Tuesdays); soccer shows WVSSAC state-tournament seeds.
+  const SVILLE_SOURCE = 'Football ranks: WVSSAC playoff ratings, Week 9 (Oct 27, 2026). Soccer: WVSSAC state tournament seeds. Records as of Oct 31, 2026.';
+  const SVILLE = [
+    { label: 'Football', games: [
+      { date: '2026-11-07T00:00:00Z', title: 'at Wayne', logo: 'wayne-logo.png', rows: [
+        ['Opponent rank', '#31 in Class AA'], ['Opponent record', '0-9'], ['Sissonville rank', '#3 in Class AA'], ['Sissonville record', '9-0']] },
+    ] },
+    { label: 'Girls Soccer', games: [
+      { date: '2026-11-05T17:00:00Z', title: 'vs Lincoln', where: 'State semifinal, Beckley', rows: [
+        ['Opponent seed', 'No. 2 in Class AA/A'], ['Opponent record', '17-3'], ['Sissonville seed', 'No. 3 in Class AA/A'], ['Sissonville record', '16-4']] },
+    ] },
+    { label: 'Boys Soccer', done: 'Season complete', rows: [['Sissonville record', '13-8']] },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
-    const cutoff = Date.now() - 4 * 3600e3;
-    const upcoming = SVILLE_GAMES.filter(g => new Date(g.date) >= cutoff);
-    const stateRank = r => r ? '#' + r.rank + ' in Class ' + r.cls : 'Unranked';
-    if (!upcoming.length) {
-      const card = el('article', 'game'); card.append(el('div', 'sport', 'Football'), el('p', 'note', 'No upcoming games scheduled'));
-      grid.append(card);
-    }
-    upcoming.forEach((g, i) => {
-      const d = new Date(g.date);
-      const card = el('article', 'game');
-      const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
-      const time = d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
-      const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, stateRank(g.oppRank)), el('dt', null, 'Opponent record'), el('dd', null, g.oppRecord),
-                el('dt', null, 'Sissonville rank'), el('dd', null, stateRank(SVILLE_RANK)), el('dt', null, 'Sissonville record'), el('dd', null, SVILLE_RECORD));
-      card.append(el('div', 'sport', i === 0 ? 'Next game' : 'Upcoming'), el('div', 'matchup', (g.home ? 'vs ' : 'at ') + g.opponent), el('div', 'when', day + ' · ' + time), dl);
-      grid.append(card);
-    });
-    document.getElementById('sville-source').textContent = SVILLE_RANKS_AS_OF;
+    SVILLE.forEach(s => grid.append(manualCard(s)));
+    byDate(grid);
+    document.getElementById('sville-source').textContent = SVILLE_SOURCE;
   })();
 </script>
 </body>
