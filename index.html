@@ -127,7 +127,6 @@
     <img class="team-logo" src="sissonville-logo.png" alt="Sissonville High School logo">
     <h2 id="sville-title">Sissonville Indians</h2>
     <div class="game-grid" id="sville-grid"></div>
-    <p class="source" id="sville-source"></p>
   </section>
 
   <div class="mascot" aria-hidden="true">
@@ -450,7 +449,8 @@
 
   // Sissonville High School -- no public live feed, so schedules (MaxPreps) and ranks are entered by hand.
   // Football ranks are the WVSSAC playoff ratings (Tuesdays); soccer shows WVSSAC state-tournament seeds.
-  const SVILLE_SOURCE = 'Football ranks: WVSSAC playoff ratings, Week 9 (Oct 27, 2026). Girls soccer: WVSSAC state tournament seeds. Boys soccer rank: MaxPreps (Oct 29, 2026). Records as of Oct 31, 2026.';
+  // As of: football ranks WVSSAC Week 9 (Oct 27, 2026); girls soccer WVSSAC state seeds;
+  // boys soccer rank MaxPreps (Oct 29, 2026); records Oct 31, 2026.
   const SVILLE = [
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', title: 'at Wayne', logo: 'wayne-logo.png', rows: [
@@ -466,9 +466,7 @@
   (function () {
     const grid = document.getElementById('sville-grid');
     SVILLE.forEach(s => grid.append(manualCard(s)));
-    byDate(grid);
-    document.getElementById('sville-source').textContent = SVILLE_SOURCE;
-  })();
+    byDate(grid);  })();
 </script>
 </body>
 </html>
