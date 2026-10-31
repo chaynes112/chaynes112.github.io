@@ -88,6 +88,10 @@
   }
   .mascot .bob { animation: bob 1.6s ease-in-out infinite; }
   .mascot .ready { transform-box: view-box; transform-origin: 77px 150px; animation: ready 2.4s ease-in-out infinite; }
+  /* Click the Mountaineer to fire the rifle */
+  .mascot svg .bob { pointer-events: visiblePainted; cursor: pointer; }
+  .mascot .recoil { transform-box: view-box; transform-origin: 77px 150px; }
+  .mascot .smoke circle { transform-box: fill-box; transform-origin: center; }
   .mascot .tail { transform-box: view-box; transform-origin: 54px 60px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
@@ -177,7 +181,7 @@
         <rect x="45" y="138" width="70" height="7" fill="#2a1a0e"/>
         <rect x="74" y="136" width="12" height="11" rx="2" fill="#EAAA00"/>
         <!-- flintlock long rifle held across the body, both hands on it -->
-        <g class="ready">
+        <g class="ready"><g class="recoil">
           <g transform="translate(50 182) rotate(-50)">
             <path d="M0 -7 L10 -9 L44 -4 L58 -3 L58 4 L44 4 Q28 6 10 10 L0 9 Z" fill="#6b3f1f" stroke="#3f230d" stroke-width="1"/>
             <rect x="-2" y="-9" width="3" height="19" rx="1" fill="#b08d57"/>
@@ -194,6 +198,11 @@
             <path d="M38 4 Q43 12 52 4" stroke="#b08d57" stroke-width="1.6" fill="none"/>
             <line x1="45" y1="4" x2="46" y2="8.5" stroke="#3a3f46" stroke-width="1.4"/>
             <rect x="176" y="-8" width="2" height="2.6" fill="#b08d57"/>
+            <!-- muzzle flash, shown for a moment when he fires -->
+            <g class="flash" opacity="0">
+              <path d="M180 -3.7 L194 -14 L192 -6 L210 -3.7 L192 -1 L196 8 Z" fill="#ffb22e"/>
+              <path d="M180 -3.7 L190 -9 L189 -5 L200 -3.7 L189 -2 L191 3 Z" fill="#fff4c2"/>
+            </g>
           </g>
           <!-- arms gripping the rifle -->
           <path d="M57 110 Q55 138 77 150" stroke="#a06b3a" stroke-width="14" stroke-linecap="round" fill="none"/>
@@ -201,7 +210,9 @@
           <path d="M60 130 l-6 3 M64 140 l-5 5 M112 109 l3 6 M117 103 l6 3" stroke="#7d5028" stroke-width="2.5" stroke-linecap="round"/>
           <circle cx="77" cy="150" r="7.5" fill="#e8b88f"/>
           <circle cx="121" cy="98" r="7.5" fill="#e8b88f"/>
-        </g>
+        </g></g>
+        <!-- gun smoke puffs are added here when he fires -->
+        <g class="smoke"></g>
         <!-- coonskin cap tail -->
         <g class="tail">
           <ellipse cx="48" cy="70" rx="7" ry="9" fill="#6b4626"/>
@@ -304,11 +315,47 @@
 
   // Easter egg: the UFO pops out of the star, swoops left across the sky and leaves the screen
   const ufo = document.getElementById('ufo');
-  let flying = false;
+  const UFO_MS = 5200;
+  let flying = false, audio = null;
+
+  // Classic sci-fi warble, synthesized (no sound file): a rising then falling tone with fast vibrato,
+  // panned right to left so it follows the saucer across the screen
+  function ufoSound() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audio = audio || new AC();
+    if (audio.state === 'suspended') audio.resume();
+    const t = audio.currentTime, dur = UFO_MS / 1000;
+    const out = audio.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.16, t + 0.5);
+    out.gain.setValueAtTime(0.16, t + dur - 1.2);
+    out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    const pan = audio.createStereoPanner ? audio.createStereoPanner() : null;
+    if (pan) { pan.pan.setValueAtTime(0.8, t); pan.pan.linearRampToValueAtTime(-0.9, t + dur); out.connect(pan).connect(audio.destination); }
+    else out.connect(audio.destination);
+    const lfo = audio.createOscillator(), depth = audio.createGain();
+    lfo.frequency.value = 7; depth.gain.value = 55;
+    lfo.connect(depth);
+    const tones = [['sine', 1], ['triangle', 1.5]].map(([type, mult]) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(260 * mult, t);
+      o.frequency.exponentialRampToValueAtTime(880 * mult, t + 0.7);
+      o.frequency.exponentialRampToValueAtTime(480 * mult, t + dur);
+      depth.connect(o.frequency);
+      g.gain.value = mult === 1 ? 1 : 0.35;
+      o.connect(g).connect(out);
+      return o;
+    });
+    [lfo, ...tones].forEach(o => { o.start(t); o.stop(t + dur + 0.05); });
+  }
+
   document.getElementById('egg').addEventListener('click', () => {
     if (flying) return;
     flying = true;
     ufo.hidden = false;
+    ufoSound();
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32, y = innerHeight * 0.2;
     const at = (px, py, s, r) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)` });
     ufo.animate([
@@ -318,7 +365,67 @@
       at(w * 0.4, y + 25, 1, -6),
       at(w * 0.18, y - 20, 1, 8),
       at(-220, y - 70, 1, -14),
-    ], { duration: 5200, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
+    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
+  });
+
+  // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
+  const mascot = document.querySelector('.mascot svg');
+  let reloading = false;
+
+  function gunshotSound() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audio = audio || new AC();
+    if (audio.state === 'suspended') audio.resume();
+    const t = audio.currentTime;
+    // the crack: a short burst of noise, darkening as it fades
+    const len = Math.floor(audio.sampleRate * 0.9), buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const noise = audio.createBufferSource(); noise.buffer = buf;
+    const tone = audio.createBiquadFilter(); tone.type = 'lowpass';
+    tone.frequency.setValueAtTime(6000, t); tone.frequency.exponentialRampToValueAtTime(400, t + 0.6);
+    const crack = audio.createGain();
+    crack.gain.setValueAtTime(0.0001, t); crack.gain.exponentialRampToValueAtTime(0.5, t + 0.005);
+    crack.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+    noise.connect(tone).connect(crack).connect(audio.destination);
+    // the boom: a low thump underneath
+    const thump = audio.createOscillator(), tg = audio.createGain();
+    thump.type = 'sine';
+    thump.frequency.setValueAtTime(130, t); thump.frequency.exponentialRampToValueAtTime(38, t + 0.3);
+    tg.gain.setValueAtTime(0.0001, t); tg.gain.exponentialRampToValueAtTime(0.6, t + 0.01); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    thump.connect(tg).connect(audio.destination);
+    noise.start(t); noise.stop(t + 0.9); thump.start(t); thump.stop(t + 0.4);
+  }
+
+  function puff(cx, cy, r, dx, dy, grow, ms, delay) {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+    c.setAttribute('fill', '#dcdcdc'); c.setAttribute('opacity', '0');
+    mascot.querySelector('.smoke').append(c);
+    c.animate([
+      { transform: 'translate(0, 0) scale(.4)', opacity: 0.9 },
+      { transform: `translate(${dx * 0.5}px, ${dy * 0.5}px) scale(${grow * 0.7})`, opacity: 0.7, offset: 0.3 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${grow})`, opacity: 0 },
+    ], { duration: ms, delay, easing: 'ease-out', fill: 'backwards' }).onfinish = () => c.remove();
+  }
+
+  mascot.addEventListener('click', () => {
+    if (reloading) return;
+    reloading = true;
+    gunshotSound();
+    const flash = mascot.querySelector('.flash');
+    flash.animate([{ opacity: 1 }, { opacity: 1, offset: 0.4 }, { opacity: 0 }], { duration: 120 });
+    mascot.querySelector('.recoil').animate([
+      { transform: 'none' },
+      { transform: 'translate(-5px, 5px) rotate(-5deg)', offset: 0.12 },
+      { transform: 'none' },
+    ], { duration: 450, easing: 'ease-out' });
+    // small puff at the flintlock pan, then a big cloud out of the muzzle drifting up and away
+    puff(77, 137, 3, -6, -14, 3, 900, 0);
+    for (let i = 0; i < 9; i++) {
+      puff(163 + i * 2.5, 41 - i * 3, 4 + Math.random() * 3, 18 + Math.random() * 26, -22 - Math.random() * 30, 2.4 + Math.random() * 1.6, 1600 + Math.random() * 900, i * 25);
+    }
+    setTimeout(() => { reloading = false; }, 1200);
   });
 </script>
 
