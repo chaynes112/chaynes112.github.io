@@ -77,6 +77,8 @@
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
   .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
   .game .when { opacity: .85; font-size: .88rem; }
+  .game .when.with-spread { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+  .game .when .spread { font-weight: 600; white-space: nowrap; }
   .game .live { color: #ff6b5b; font-weight: 600; }
   .game dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; margin: .75rem 0 0; font-size: .88rem; }
   .game dt { opacity: .65; }
@@ -571,7 +573,11 @@
                 el('dt', null, 'WVU rank'), el('dd', null, (starred ? '*' : '') + rank(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
       // Point spread (DraftKings, via ESPN) when a sportsbook has posted one; cards without odds skip the row
       const o = (comp.odds || []).find(Boolean);
-      if (o && o.details) dl.append(el('dt', null, 'Spread'), el('dd', null, o.details));
+      // shown at the right end of the date/time line
+      if (o && o.details) {
+        const left = el('span'); left.append(...when.childNodes);
+        when.classList.add('with-spread'); when.append(left, el('span', 'spread', o.details));
+      }
       card.append(matchup, when, dl);
       if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
