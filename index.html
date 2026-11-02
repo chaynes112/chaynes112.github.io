@@ -604,6 +604,25 @@
     return names.length ? names.join(', ') : null;
   };
 
+  // Soccer conference standings, copied from sunbeltsports.org and big12sports.com (Nov 2, 2026), in order,
+  // with each team's conference record. A rank only shows while ESPN's count of that team's conference
+  // record still matches, so it drops off by itself after the team's next game. Update after games.
+  const SOCCER_STANDINGS = {
+    'usa.ncaa.m.1': [['Marshall', '5-1-2'], ['West Virginia', '5-1-2'], ['James Madison', '4-1-3'], ['UCF', '4-3-1'],
+      ['South Carolina', '3-3-2'], ['Coastal Carolina', '3-3-2'], ['Georgia Southern', '2-4-2'], ['Kentucky', '2-4-2'],
+      ['Old Dominion', '2-5-1'], ['Georgia State', '1-6-1']],
+    'usa.ncaa.w.1': [['Texas Tech', '8-1-1'], ['BYU', '7-1-2'], ['Baylor', '7-2-1'], ['Houston', '7-2-1'], ['Colorado', '7-3-0'],
+      ['Kansas', '6-2-2'], ['UCF', '5-3-2'], ['West Virginia', '4-4-2'], ['Arizona State', '4-5-1'], ['Oklahoma State', '3-5-2'],
+      ['Arizona', '2-4-4'], ['Cincinnati', '2-6-2'], ['TCU', '2-7-1'], ['Utah', '1-6-3'], ['Kansas State', '1-7-2'], ['Iowa State', '0-8-2']],
+  };
+  const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th');
+  function soccerConfRank(card, c, confRec) {
+    const table = SOCCER_STANDINGS[card.dataset.league];
+    if (!table || !confRec) return null;
+    const i = table.findIndex(([name]) => name === c.team.location || name === c.team.shortDisplayName);
+    return i >= 0 && table[i][1] === confRec ? ordinal(i + 1) + ' of ' + table.length : null;
+  }
+
   async function loadGame(card) {
     const label = card.querySelector('.sport').textContent;
     try {
@@ -644,24 +663,58 @@
       const [oppConf, wvConf, votes] = await Promise.all([confFor(card, opp).catch(() => null), confFor(card, wv, card._events).catch(() => null), wvuVotes(card).catch(() => null)]);
       const record = (c, conf) => overall(c) + (conf ? ' (' + conf + ')' : '');
       const starred = votes && rank(wv) === 'Unranked';
-      const dl = el('dl');
-      dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent record'), el('dd', null, record(opp, oppConf)),
-                el('dt', null, 'WVU rank'), el('dd', null, (starred ? '*' : '') + rank(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
-      // Conferences, TV and city (rows are skipped when ESPN has nothing)
+
+      // ESPN's game summary: matchup predictor (football and basketball) and both conferences' standings
+      const summary = await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/summary?event=' + ev.id).catch(() => ({}));
+      const projection = c => {
+        const p = summary.predictor;
+        const side = p && [p.homeTeam, p.awayTeam].find(s => s && String(s.id) === String(c.id));
+        return side && side.gameProjection ? Number(side.gameProjection).toFixed(1) + '%' : null;
+      };
+      // Conference rank = position in ESPN's conference standings, once the team has played a conference game
+      const confRank = c => {
+        for (const g of (summary.standings && summary.standings.groups) || []) {
+          const entries = (g.standings && g.standings.entries) || [];
+          const i = entries.findIndex(e => String(e.id) === String(c.id) || e.team === c.team.displayName || e.team === c.team.location);
+          if (i < 0) continue;
+          const vc = (entries[i].stats || []).find(s => s.name === 'vs. Conf.' || s.type === 'vsconf');
+          if (!vc || !vc.summary || /^0-0(-0)?$/.test(vc.summary)) return null;
+          const n = i + 1, suf = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+          return n + suf + ' of ' + entries.length;
+        }
+        return null;
+      };
       const oppConfName = await oppConference(card, opp, ev).catch(() => null);
-      const recDd = dl.querySelectorAll('dd');
-      if (oppConfName) recDd[1].after(el('dt', null, 'Opponent conf.'), el('dd', null, oppConfName));
-      recDd[3].after(el('dt', null, 'WVU conf.'), el('dd', null, card.dataset.conf));
-      const tv = gameTV(comp), city = gameCity(comp);
-      if (tv) dl.append(el('dt', null, 'TV'), el('dd', null, tv));
-      if (city) dl.append(el('dt', null, 'Location'), el('dd', null, city));
-      // Point spread (DraftKings, via ESPN) when a sportsbook has posted one; cards without odds skip the row
+
+      const abbr = c => c.team.abbreviation || c.team.location;
+      const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
+      const dl = el('dl');
+      row(dl, 'Opponent rank', rank(opp));
+      row(dl, 'Opponent record', record(opp, oppConf));
+      row(dl, 'Opponent conf. record', oppConf);
+      row(dl, 'Opponent conf.', oppConfName);
+      row(dl, 'Opponent conf. rank', confRank(opp) || soccerConfRank(card, opp, oppConf));
+      row(dl, 'WVU rank', (starred ? '*' : '') + rank(wv));
+      row(dl, 'WVU record', record(wv, wvConf));
+      row(dl, 'WVU conf. record', wvConf);
+      row(dl, 'WVU conf.', card.dataset.conf);
+      row(dl, 'WVU conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf));
+      row(dl, 'Stadium', comp.venue && comp.venue.fullName);
+      row(dl, 'Location', gameCity(comp));
+      row(dl, 'TV', gameTV(comp));
+
+      // Betting lines (DraftKings, via ESPN); the spread sits at the right end of the date/time line
       const o = (comp.odds || []).find(Boolean);
-      // shown at the right end of the date/time line
       if (o && o.details) {
         const left = el('span'); left.append(...when.childNodes);
         when.classList.add('with-spread'); when.append(left, el('span', 'spread', o.details));
+        row(dl, 'Over/under', o.overUnder != null ? String(o.overUnder) : null);
+        const ml = o.moneyline || {}, line = side => { const m = ml[side] && (ml[side].close || ml[side].open); return m && m.odds; };
+        const wvSide = wv.homeAway === 'home' ? 'home' : 'away', oppSide = wvSide === 'home' ? 'away' : 'home';
+        if (line(wvSide) && line(oppSide)) row(dl, 'Moneyline', 'WVU ' + line(wvSide) + ' · ' + abbr(opp) + ' ' + line(oppSide));
       }
+      if (projection(wv) && projection(opp)) row(dl, 'Matchup predictor', 'WVU ' + projection(wv) + ' · ' + abbr(opp) + ' ' + projection(opp));
+
       card.append(matchup, when, dl);
       if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
