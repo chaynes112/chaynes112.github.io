@@ -110,6 +110,8 @@
   #egg { position: fixed; z-index: 3; left: calc(90vw - 16px); top: calc(12vh - 16px); width: 32px; height: 32px;
          padding: 0; border: 0; background: transparent; cursor: default; -webkit-tap-highlight-color: transparent; }
   #egg:focus { outline: none; }
+  /* Bigger hidden target for fingers on touch screens (still centered on the star) */
+  @media (pointer: coarse) { #egg { left: calc(90vw - 26px); top: calc(12vh - 26px); width: 52px; height: 52px; } }
   #ufo { position: fixed; z-index: 1; left: 0; top: 0; width: 130px; pointer-events: none; will-change: transform;
          filter: drop-shadow(0 0 12px rgba(120, 255, 200, .55)); }
   #ufo svg { display: block; width: 100%; height: auto; }
