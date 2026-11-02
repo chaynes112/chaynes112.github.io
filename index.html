@@ -32,7 +32,19 @@
     text-align: center;
     padding: 2rem 1rem 6.5rem;
   }
-  .logo-wrap { width: min(220px, 50vw); margin-bottom: 1.5rem; animation: rise 1.2s ease-out both; }
+  .logo-wrap { position: relative; width: min(220px, 50vw); margin-bottom: 1.5rem; animation: rise 1.2s ease-out both; }
+  /* Easter egg: the (R) on the Flying WV -- invisible button centered on it (73.3% across, 95.8% down) */
+  #toasty-spot { position: absolute; left: 73.3%; top: 95.8%; width: 22px; height: 22px; transform: translate(-50%, -50%);
+                 padding: 0; border: 0; background: transparent; cursor: default; -webkit-tap-highlight-color: transparent; }
+  #toasty-spot:focus { outline: none; }
+  @media (pointer: coarse) { #toasty-spot { width: 44px; height: 44px; } }
+  /* The pop-up guy peeks in from the bottom-right corner, like the old arcade gag */
+  #toasty { position: fixed; z-index: 5; right: 0; bottom: 0; width: 150px; pointer-events: none; transform-origin: 100% 100%; }
+  #toasty svg { display: block; width: 100%; height: auto; }
+  #toasty .bubble { position: absolute; right: 118px; top: -6px; padding: .35rem .7rem; border: 3px solid #111; border-radius: 14px;
+                    background: #fff6c2; color: #b3261e; font: 700 1.5rem Impact, "Oswald", sans-serif; letter-spacing: .04em; white-space: nowrap;
+                    transform: rotate(-8deg); }
+  #toasty .bubble::after { content: ""; position: absolute; right: -14px; bottom: 6px; border: 8px solid transparent; border-left: 12px solid #111; }
   .logo-wrap img { width: 100%; height: auto; display: block; filter: drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
   .logo-fallback {
     font-family: "Oswald", Impact, sans-serif; font-weight: 700;
@@ -126,6 +138,25 @@
 <body>
 <canvas id="stars"></canvas>
 <button id="egg" type="button" tabindex="-1" aria-hidden="true"></button>
+<div id="toasty" hidden aria-hidden="true">
+  <div class="bubble">TOASTY!</div>
+  <svg viewBox="0 0 150 160" xmlns="http://www.w3.org/2000/svg">
+    <!-- original cartoon pop-up guy (a nod to the Mortal Kombat gag, not anyone's likeness) -->
+    <path d="M20 160 Q24 122 75 118 Q126 122 130 160 Z" fill="#002855"/>
+    <path d="M58 120 L75 138 L92 120" fill="#EAAA00"/>
+    <ellipse cx="30" cy="74" rx="9" ry="13" fill="#f0c19a"/>
+    <ellipse cx="120" cy="74" rx="9" ry="13" fill="#f0c19a"/>
+    <ellipse cx="75" cy="72" rx="44" ry="52" fill="#f6cfa8"/>
+    <path d="M31 58 Q30 18 75 16 Q120 18 119 58 Q112 40 102 44 Q96 30 84 38 Q76 26 66 37 Q56 28 50 42 Q40 38 31 58 Z" fill="#5b3a1f"/>
+    <path d="M50 52 Q58 45 66 51 M84 51 Q92 45 100 52" stroke="#3b2413" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="58" cy="63" rx="7" ry="8" fill="#fff"/><circle cx="59" cy="64" r="3.6" fill="#1a1a1a"/>
+    <ellipse cx="92" cy="63" rx="7" ry="8" fill="#fff"/><circle cx="91" cy="64" r="3.6" fill="#1a1a1a"/>
+    <path d="M75 66 Q70 80 76 82" stroke="#d99a6c" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <circle cx="47" cy="84" r="7" fill="#f2a08a" opacity=".6"/><circle cx="103" cy="84" r="7" fill="#f2a08a" opacity=".6"/>
+    <path d="M48 92 Q75 120 102 92 Q75 100 48 92 Z" fill="#7a1f1f"/>
+    <path d="M52 93 Q75 101 98 93 L96 98 Q75 104 54 98 Z" fill="#fff"/>
+  </svg>
+</div>
 <div id="ufo" hidden aria-hidden="true">
   <svg viewBox="0 0 130 64" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="65" cy="58" rx="30" ry="4" fill="#7dffc8" opacity=".35"/>
@@ -154,6 +185,7 @@
 <main>
   <div class="logo-wrap">
     <img src="wvu-logo.png" alt="WVU logo" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:'WV'}))">
+    <button id="toasty-spot" type="button" tabindex="-1" aria-hidden="true"></button>
   </div>
   <p class="tag">West Virginia Mountaineers</p>
   <p class="subhead">Upcoming Games</p>
@@ -380,6 +412,27 @@
       at(w * 0.18, y - 20, 1, 8),
       at(-220, y - 70, 1, -14),
     ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
+  });
+
+  // Easter egg: click the (R) on the Flying WV and a cartoon guy pops in from the corner shouting "Toasty!"
+  // The voice is the browser's built-in text-to-speech, so it sounds a little different on each device.
+  const toasty = document.getElementById('toasty');
+  let toasting = false;
+  document.getElementById('toasty-spot').addEventListener('click', () => {
+    if (toasting) return;
+    toasting = true;
+    toasty.hidden = false;
+    if ('speechSynthesis' in window) {
+      const say = new SpeechSynthesisUtterance('Toasty!');
+      say.pitch = 1.7; say.rate = 1.15; say.volume = 1;
+      speechSynthesis.cancel(); speechSynthesis.speak(say);
+    }
+    toasty.animate([
+      { transform: 'translate(70%, 75%) rotate(-28deg)' },
+      { transform: 'translate(0, 0) rotate(-12deg)', offset: 0.12 },
+      { transform: 'translate(0, 0) rotate(-12deg)', offset: 0.82 },
+      { transform: 'translate(70%, 75%) rotate(-28deg)' },
+    ], { duration: 1500, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   });
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
