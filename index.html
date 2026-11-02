@@ -170,12 +170,12 @@
 
   <section class="games" aria-label="Next Mountaineer games">
     <div class="game-grid" id="game-grid">
-      <article class="game" data-sport="football" data-league="college-football" data-team="277" data-groups="80"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="soccer" data-league="usa.ncaa.m.1" data-team="5658"><div class="sport">Men's Soccer</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382" data-votes="1"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-groups="50" data-season-end="1" data-votes="Coaches Poll"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="basketball" data-league="womens-college-basketball" data-team="277" data-groups="50" data-season-end="1"><div class="sport">Women's Basketball</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="volleyball" data-league="womens-college-volleyball" data-team="277"><div class="sport">Volleyball</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="football" data-league="college-football" data-team="277" data-conf="Big 12" data-groups="80"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="soccer" data-league="usa.ncaa.m.1" data-team="5658" data-conf="Sun Belt"><div class="sport">Men's Soccer</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382" data-conf="Big 12" data-votes="1"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1" data-votes="Coaches Poll"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="basketball" data-league="womens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1"><div class="sport">Women's Basketball</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="volleyball" data-league="womens-college-volleyball" data-team="277" data-conf="Big 12"><div class="sport">Volleyball</div><p class="note">Loading&hellip;</p></article>
     </div>
   </section>
 
@@ -562,6 +562,48 @@
     return o && o.points ? votesText(o.points) + ' In ' + votes : null;
   }
 
+  // Conference names: ESPN's core API has them for football, basketball and volleyball teams. Soccer teams
+  // have none there, so a soccer conference game means the opponent is in WVU's conference.
+  // ESPN labels the MAAC (Metro Atlantic) as just "Metro", so that one is renamed.
+  const CONF_FIX = { 'Metro': 'MAAC' };
+  async function oppConference(card, opp, ev) {
+    const { sport, league, conf } = card.dataset;
+    try {
+      const team = await getJSON(CORE + sport + '/leagues/' + league + '/seasons/' + seasonFor(card) + '/teams/' + opp.id);
+      if (team.groups && team.groups.$ref) {
+        const g = await getJSON(team.groups.$ref.replace(/^http:/, 'https:'));
+        const name = g.shortName || g.name;
+        if (name) return CONF_FIX[name] || name;
+      }
+    } catch (e) { /* fall through */ }
+    const core = (card._events || []).find(e => e && e.id === ev.id);
+    return core && core.competitions[0].conferenceCompetition ? conf : null;
+  }
+
+  // "Lubbock, TX" from ESPN's venue address, which sometimes spells out the state or leaves it off
+  const STATES = { Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA', Colorado: 'CO', Connecticut: 'CT',
+    Delaware: 'DE', Florida: 'FL', Georgia: 'GA', Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA', Kansas: 'KS',
+    Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD', Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS',
+    Missouri: 'MO', Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM',
+    'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA',
+    'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT',
+    Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY', 'District of Columbia': 'DC' };
+  // venues where ESPN leaves the state off -- add to this as they come up
+  const CITY_STATE = { Harrisonburg: 'VA' };
+  function gameCity(comp) {
+    const a = (comp.venue && comp.venue.address) || {};
+    let city = (a.city || '').trim(), state = (a.state || '').trim();
+    if (!state && city.includes(',')) [city, state] = city.split(',').map(s => s.trim());
+    if (!state) state = CITY_STATE[city] || '';
+    if (!city) return null;
+    state = STATES[state] || state;
+    return state ? city + ', ' + state : city;
+  }
+  const gameTV = comp => {
+    const names = [...new Set((comp.broadcasts || []).flatMap(b => b.names || []))];
+    return names.length ? names.join(', ') : null;
+  };
+
   async function loadGame(card) {
     const label = card.querySelector('.sport').textContent;
     try {
@@ -605,6 +647,14 @@
       const dl = el('dl');
       dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent record'), el('dd', null, record(opp, oppConf)),
                 el('dt', null, 'WVU rank'), el('dd', null, (starred ? '*' : '') + rank(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
+      // Conferences, TV and city (rows are skipped when ESPN has nothing)
+      const oppConfName = await oppConference(card, opp, ev).catch(() => null);
+      const recDd = dl.querySelectorAll('dd');
+      if (oppConfName) recDd[1].after(el('dt', null, 'Opponent conf.'), el('dd', null, oppConfName));
+      recDd[3].after(el('dt', null, 'WVU conf.'), el('dd', null, card.dataset.conf));
+      const tv = gameTV(comp), city = gameCity(comp);
+      if (tv) dl.append(el('dt', null, 'TV'), el('dd', null, tv));
+      if (city) dl.append(el('dt', null, 'Location'), el('dd', null, city));
       // Point spread (DraftKings, via ESPN) when a sportsbook has posted one; cards without odds skip the row
       const o = (comp.odds || []).find(Boolean);
       // shown at the right end of the date/time line
