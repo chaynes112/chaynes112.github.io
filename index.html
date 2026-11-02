@@ -569,19 +569,9 @@
       const dl = el('dl');
       dl.append(el('dt', null, 'Opponent rank'), el('dd', null, rank(opp)), el('dt', null, 'Opponent record'), el('dd', null, record(opp, oppConf)),
                 el('dt', null, 'WVU rank'), el('dd', null, (starred ? '*' : '') + rank(wv)), el('dt', null, 'WVU record'), el('dd', null, record(wv, wvConf)));
-      // Betting lines (DraftKings, via ESPN) when a sportsbook has posted them; cards without odds skip these rows
+      // Point spread (DraftKings, via ESPN) when a sportsbook has posted one; cards without odds skip the row
       const o = (comp.odds || []).find(Boolean);
-      if (o && o.details) {
-        const nb = s => String(s).replace(/ /g, ' ');
-        dl.append(el('dt', null, 'Spread'), el('dd', null, o.details));
-        if (o.overUnder != null) dl.append(el('dt', null, 'Over/under'), el('dd', null, String(o.overUnder)));
-        const ml = o.moneyline || {}, line = side => { const m = ml[side] && (ml[side].close || ml[side].open); return m && m.odds; };
-        const abbr = side => { const t = o[side + 'TeamOdds'] && o[side + 'TeamOdds'].team; return t && t.abbreviation; };
-        const wvSide = wv.homeAway === 'home' ? 'home' : 'away', oppSide = wvSide === 'home' ? 'away' : 'home';
-        if (line(wvSide) && line(oppSide)) {
-          dl.append(el('dt', null, 'Moneyline'), el('dd', null, nb('WVU ' + line(wvSide)) + ' · ' + nb((abbr(oppSide) || 'Opp') + ' ' + line(oppSide))));
-        }
-      }
+      if (o && o.details) dl.append(el('dt', null, 'Spread'), el('dd', null, o.details));
       card.append(matchup, when, dl);
       if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
