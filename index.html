@@ -394,7 +394,9 @@
 
   // Easter egg: click the (R) on the Flying WV and the Toasty guy pops in from the corner, like Mortal Kombat.
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
-  // toasty.mp3 clip (about 1.2 s; the voice runs 0.28-0.87 s).
+  // sound. toasty.mp3 has 0.28 s of silence before the voice, so playback skips most of it and
+  // "Toasty!" lands as he slides in.
+  const TOASTY_SKIP = 0.24;
   const toasty = document.getElementById('toasty');
   const toastySound = new Audio('toasty.mp3');
   toastySound.preload = 'auto';
@@ -403,14 +405,15 @@
     if (toasting) return;
     toasting = true;
     toasty.hidden = false;
-    toastySound.currentTime = 0;
+    toastySound.currentTime = TOASTY_SKIP;
     toastySound.play().catch(() => {});
+    // in by 0.1 s, up until the clip ends (~0.95 s after the skip), out by 1.2 s
     toasty.animate([
       { transform: 'translate(105%, 40%)' },
-      { transform: 'translate(0, 0)', offset: 0.1 },
-      { transform: 'translate(0, 0)', offset: 0.83 },
+      { transform: 'translate(0, 0)', offset: 0.08 },
+      { transform: 'translate(0, 0)', offset: 0.79 },
       { transform: 'translate(105%, 40%)' },
-    ], { duration: 1450, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
+    ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   });
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
