@@ -176,6 +176,7 @@
       <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1" data-votes="Coaches Poll"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="womens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1"><div class="sport">Women's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="volleyball" data-league="womens-college-volleyball" data-team="277" data-conf="Big 12"><div class="sport">Volleyball</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="baseball" data-league="college-baseball" data-team="136" data-season-end="1" data-conf="Big 12" data-scan="7" data-fallback="Baseball"><div class="sport">Baseball</div><p class="note">Loading&hellip;</p></article>
     </div>
   </section>
 
@@ -523,6 +524,18 @@
   // First game that hasn't finished: walk the season list from a few hours ago forward
   async function nextGame(card) {
     const { sport, league, team, groups } = card.dataset;
+    // ESPN's season game list is empty for college baseball, so cards marked data-scan="N" look at the
+    // scoreboard one day at a time for the next N days and stop at the first game that isn't over
+    if (card.dataset.scan) {
+      card._events = [];
+      for (let day = 0; day < Number(card.dataset.scan); day++) {
+        const date = new Date(Date.now() + day * 86400e3).toISOString();
+        const sb = await getJSON(SITE + sport + '/' + league + '/scoreboard?limit=500&dates=' + ymdET(date) + (groups ? '&groups=' + groups : ''));
+        const match = (sb.events || []).find(e => e.competitions[0].competitors.some(c => String(c.id) === team) && e.competitions[0].status.type.state !== 'post');
+        if (match) return match;
+      }
+      return null;
+    }
     const events = await seasonEvents(sport, league, team, seasonFor(card));
     card._events = events;
     const cutoff = Date.now() - 4 * 3600e3;
@@ -588,6 +601,8 @@
     'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA',
     'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT',
     Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY', 'District of Columbia': 'DC' };
+  // venue names ESPN has out of date (WVU volleyball plays in Hope Coliseum)
+  const VENUE_FIX = { 'WVU Coliseum': 'Hope Coliseum' };
   // venues where ESPN leaves the state off -- add to this as they come up
   const CITY_STATE = { Harrisonburg: 'VA' };
   function gameCity(comp) {
@@ -628,7 +643,7 @@
     try {
       const ev = await nextGame(card);
       card.replaceChildren(el('div', 'sport', label));
-      if (!ev) { card.append(el('p', 'note', 'No upcoming game scheduled')); return; }
+      if (!ev) { if (!useFallback(card)) card.append(el('p', 'note', 'No upcoming game scheduled')); return; }
 
       card.dataset.when = new Date(ev.date).getTime();
       const comp = ev.competitions[0];
@@ -699,7 +714,7 @@
       row(dl, 'WVU conf. record', wvConf);
       row(dl, 'WVU conf.', card.dataset.conf);
       row(dl, 'WVU conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf));
-      row(dl, 'Stadium', comp.venue && comp.venue.fullName);
+      row(dl, 'Stadium', comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName));
       row(dl, 'Location', gameCity(comp));
       row(dl, 'TV', gameTV(comp));
 
@@ -718,7 +733,7 @@
       card.append(matchup, when, dl);
       if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
-      card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
+      if (!useFallback(card)) card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
     }
   }
   // Hand-entered cards, for teams with no live feed. Each sport shows its first game that hasn't
@@ -770,7 +785,15 @@
   // Soonest game first; cards with no game go last
   const grid = document.getElementById('game-grid');
   const espnCards = [...grid.children];
-  WVU_MANUAL.forEach(s => grid.append(manualCard(s)));
+  // Cards marked data-fallback="<label>" use ESPN when it has the schedule, and the hand-entered
+  // card with that label until then (baseball: ESPN posts the spring schedule closer to the season)
+  function useFallback(card) {
+    const s = WVU_MANUAL.find(m => m.label === card.dataset.fallback);
+    if (!s) return false;
+    card.replaceWith(manualCard(s));
+    return true;
+  }
+  WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard(s)));
   Promise.all(espnCards.map(loadGame)).then(() => byDate(grid));
 
   // Sissonville High School -- no public live feed, so schedules (MaxPreps) and ranks are entered by hand.
