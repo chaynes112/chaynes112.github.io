@@ -720,7 +720,7 @@
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
       const rankNum = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
       const matchup = teamsLine(
-        { rank: rankNum(wv), name: 'WVU', star: starred, record: record(wv, wvConf) }, prefix,
+        { rank: rankNum(wv), name: 'WVU', logo: 'wvu-logo.png', star: starred, record: record(wv, wvConf) }, prefix,
         { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf) });
 
       // Side-by-side rows (WVU | opponent), then single rows for the game itself
@@ -757,9 +757,9 @@
   function teamsLine(us, prefix, them) {
     const block = t => {
       const b = el('div', 'team'), top = el('div', 'team-name');
-      if (t.logo) { const img = el('img'); img.src = t.logo; img.alt = ''; top.append(img); }
       if (t.rank) top.append(el('span', 'team-rank', String(t.rank)));
       top.append(el('span', null, t.name + (t.star ? '*' : '')));
+      if (t.logo) { const img = el('img'); img.src = t.logo; img.alt = ''; top.append(img); }
       b.append(top);
       if (t.record) b.append(el('div', 'team-rec', t.record));
       return b;
@@ -816,13 +816,13 @@
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'WVU', record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: 'wvu-logo.png' }, rows: [
+        us: { rank: 1, name: 'WVU', logo: 'wvu-logo.png', record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: 'wvu-logo.png' }, rows: [
         ['Opponents', ['#4 TCU', '#5 NEB', '#6 MISS', '#7 UK'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
         ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
-        us: { name: 'WVU', record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', logo: 'charleston-logo.png', record: '0-0' },
+        us: { name: 'WVU', logo: 'wvu-logo.png', record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', logo: 'charleston-logo.png', record: '0-0' },
         pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
     ] },
   ];
@@ -847,12 +847,12 @@
   const SVILLE = [
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
-        us: { rank: 3, name: 'Sissonville', record: '9-0' }, them: { rank: 31, name: 'Wayne', logo: 'wayne-logo.png', record: '0-9' }, rows: [
+        us: { rank: 3, name: 'Sissonville', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 31, name: 'Wayne', logo: 'wayne-logo.png', record: '0-9' }, rows: [
         ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl (livestream)']] },
     ] },
     { label: 'Girls Soccer', games: [
       { date: '2026-11-05T17:00:00Z', where: 'Beckley, WV', prefix: 'vs', subtitle: 'State Semifinal',
-        us: { rank: 3, name: 'Sissonville', record: '16-4' }, them: { rank: 2, name: 'Lincoln', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
+        us: { rank: 3, name: 'Sissonville', logo: 'sissonville-logo.png', record: '16-4' }, them: { rank: 2, name: 'Lincoln', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
         ['Venue', 'YMCA Paul Cline Memorial Sports Complex'], ['Broadcast', 'NFHS Network (livestream)']] },
     ] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
