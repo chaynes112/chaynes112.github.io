@@ -83,6 +83,13 @@
   }
   .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
+  /* Matchup: [rank] WVU / record  vs  [logo][rank] Opponent / record */
+  .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .55rem 0 .4rem; }
+  .game .team-name { display: flex; align-items: center; gap: .35rem; font-weight: 600; font-size: 1.05rem; line-height: 1.25; }
+  .game .team-name img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+  .game .team-rank { color: var(--gold); font-size: .85rem; font-weight: 700; }
+  .game .team-rec { font-size: .8rem; opacity: .75; margin-top: .1rem; }
+  .game .team-vs { opacity: .7; font-size: .9rem; padding-top: .15rem; }
   .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
   .game .when { opacity: .85; font-size: .88rem; }
   .game .when.with-spread { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
@@ -604,7 +611,7 @@
   // venue names ESPN has out of date (WVU volleyball plays in Hope Coliseum)
   const VENUE_FIX = { 'WVU Coliseum': 'Hope Coliseum' };
   // venues where ESPN leaves the state off -- add to this as they come up
-  const CITY_STATE = { Harrisonburg: 'VA' };
+  const CITY_STATE = { Harrisonburg: 'VA', Morgantown: 'WV' };
   function gameCity(comp) {
     const a = (comp.venue && comp.venue.address) || {};
     let city = (a.city || '').trim(), state = (a.state || '').trim();
@@ -651,11 +658,7 @@
       const opp = comp.competitors.find(c => c !== wv);
       const prefix = comp.neutralSite || wv.homeAway === 'home' ? 'vs' : 'at';
 
-      const matchup = el('div', 'matchup');
       const logo = opp.team.logo || (opp.team.logos && opp.team.logos[0] && opp.team.logos[0].href);
-      if (logo) { const img = el('img'); img.src = logo; img.alt = ''; matchup.append(img); }
-      matchup.append(el('span', null, prefix + ' ' + (opp.team.location || opp.team.shortDisplayName || opp.team.displayName)));
-
       const d = new Date(ev.date);
       const state = comp.status && comp.status.type && comp.status.type.state;
       let when;
@@ -666,6 +669,8 @@
         const time = comp.timeValid === false ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
         when = el('div', 'when', day + ' · ' + time);
       }
+      const city = gameCity(comp);
+      if (city) when.append(' · ' + city);
 
       // Record shown as overall (conference), e.g. 9-4-2 (5-1-2)
       // ESPN writes soccer records as W-T-L; flip to W-L-T to match the conference counts
@@ -703,19 +708,20 @@
 
       const abbr = c => c.team.abbreviation || c.team.location;
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
+      // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
+      const rankNum = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
+      const matchup = teamsLine(
+        { rank: rankNum(wv), name: 'WVU', star: starred, record: record(wv, wvConf) }, prefix,
+        { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf) });
+
       const dl = el('dl');
-      row(dl, 'Opponent rank', rank(opp));
-      row(dl, 'Opponent record', record(opp, oppConf));
       row(dl, 'Opponent conf. record', oppConf);
       row(dl, 'Opponent conf.', oppConfName);
       row(dl, 'Opponent conf. rank', confRank(opp) || soccerConfRank(card, opp, oppConf));
-      row(dl, 'WVU rank', (starred ? '*' : '') + rank(wv));
-      row(dl, 'WVU record', record(wv, wvConf));
       row(dl, 'WVU conf. record', wvConf);
       row(dl, 'WVU conf.', card.dataset.conf);
       row(dl, 'WVU conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf));
       row(dl, 'Stadium', comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName));
-      row(dl, 'Location', gameCity(comp));
       row(dl, 'TV', gameTV(comp));
 
       // Betting lines (DraftKings, via ESPN); the spread sits at the right end of the date/time line
@@ -738,6 +744,22 @@
   }
   // Hand-entered cards, for teams with no live feed. Each sport shows its first game that hasn't
   // finished yet. Times are UTC: EDT = ET+4 until Nov 1, EST = ET+5 after (7:00 PM EST = 00:00Z next day).
+  // Two team blocks: [rank] name (record underneath), then "vs"/"at", then the opponent the same way
+  function teamsLine(us, prefix, them) {
+    const block = t => {
+      const b = el('div', 'team'), top = el('div', 'team-name');
+      if (t.logo) { const img = el('img'); img.src = t.logo; img.alt = ''; top.append(img); }
+      if (t.rank) top.append(el('span', 'team-rank', String(t.rank)));
+      top.append(el('span', null, t.name + (t.star ? '*' : '')));
+      b.append(top);
+      if (t.record) b.append(el('div', 'team-rec', t.record));
+      return b;
+    };
+    const line = el('div', 'teams');
+    line.append(block(us), el('span', 'team-vs', prefix), block(them));
+    return line;
+  }
+
   function manualCard({ label, games = [], done, doneLogo, rows }) {
     const card = el('article', 'game');
     card.append(el('div', 'sport', label));
@@ -752,9 +774,7 @@
     }
     const d = new Date(g.date);
     card.dataset.when = d.getTime();
-    const matchup = el('div', 'matchup');
-    if (g.logo) { const img = el('img'); img.src = g.logo; img.alt = ''; matchup.append(img); }
-    matchup.append(el('span', null, g.title));
+    const matchup = teamsLine(g.us, g.prefix, g.them);
     const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
     const time = g.timeTBA ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
     const dl = el('dl');
@@ -772,14 +792,15 @@
   // Rifle rank: CRCA Top 20 through Oct 25, 2026 (ssusa.org). Update after each new poll.
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
-      { date: '2026-11-14T16:00:00Z', title: 'WVU Fall Classic', logo: 'wvu-logo.png', where: 'Morgantown', rows: [
-        ['Opponents', ['#4 TCU', '#5 Nebraska', '#6 Ole Miss', '#7 Kentucky'].map(t => t.replace(/ /g, '\u00a0')).join(', ')], ['WVU rank', '#1'], ['WVU record', '7-1 (2-1)'],
-        ['WVU conf. record', '2-1'], ['WVU conf.', 'GARC'], ['Stadium', 'WVU Rifle Range'], ['Location', 'Morgantown, WV']] },
+      { date: '2026-11-14T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
+        us: { rank: 1, name: 'WVU', record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png' }, rows: [
+        ['Opponents', ['#4 TCU', '#5 Nebraska', '#6 Ole Miss', '#7 Kentucky'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
+        ['WVU conf. record', '2-1'], ['WVU conf.', 'GARC'], ['Stadium', 'WVU Rifle Range']] },
     ] },
     { label: 'Baseball', games: [
-      { date: '2027-02-19T17:00:00Z', timeTBA: true, title: 'at College of Charleston', logo: 'charleston-logo.png', rows: [
-        ['Opponent rank', 'No poll yet'], ['Opponent record', '0-0'], ['Opponent conf.', 'CAA'], ['WVU rank', 'No poll yet'], ['WVU record', '0-0 (0-0)'],
-        ['WVU conf.', 'Big 12'], ['Stadium', 'The Ballpark at Patriots Point'], ['Location', 'Charleston, SC']] },
+      { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
+        us: { name: 'WVU', record: '0-0 (0-0)' }, them: { name: 'College of Charleston', logo: 'charleston-logo.png', record: '0-0' }, rows: [
+        ['Opponent conf.', 'CAA'], ['WVU conf.', 'Big 12'], ['Stadium', 'The Ballpark at Patriots Point']] },
     ] },
   ];
   // Soonest game first; cards with no game go last
@@ -802,14 +823,14 @@
   // boys soccer rank MaxPreps (Oct 29, 2026); records Oct 31, 2026.
   const SVILLE = [
     { label: 'Football', games: [
-      { date: '2026-11-07T00:00:00Z', title: 'at Wayne', logo: 'wayne-logo.png', rows: [
-        ['Opponent rank', '#31 in Class AA'], ['Opponent record', '0-9'], ['Sissonville rank', '#3 in Class AA'], ['Sissonville record', '9-0'],
-        ['Stadium', 'Wayne High School'], ['Location', 'Wayne, WV'], ['TV', 'Hudl (livestream)']] },
+      { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
+        us: { rank: 3, name: 'Sissonville', record: '9-0' }, them: { rank: 31, name: 'Wayne', logo: 'wayne-logo.png', record: '0-9' }, rows: [
+        ['Stadium', 'Wayne High School'], ['TV', 'Hudl (livestream)']] },
     ] },
     { label: 'Girls Soccer', games: [
-      { date: '2026-11-05T17:00:00Z', title: 'vs Lincoln · State Semifinal', logo: 'lincoln-logo.png', where: 'Beckley', rows: [
-        ['Opponent seed', 'No. 2 in Class AA/A'], ['Opponent record', '17-3'], ['Sissonville seed', 'No. 3 in Class AA/A'], ['Sissonville record', '16-4'],
-        ['Stadium', 'YMCA Paul Cline Memorial Sports Complex'], ['Location', 'Beckley, WV'], ['TV', 'NFHS Network (livestream)']] },
+      { date: '2026-11-05T17:00:00Z', where: 'Beckley, WV', prefix: 'vs', subtitle: 'State Semifinal',
+        us: { rank: 3, name: 'Sissonville', record: '16-4' }, them: { rank: 2, name: 'Lincoln', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
+        ['Stadium', 'YMCA Paul Cline Memorial Sports Complex'], ['TV', 'NFHS Network (livestream)']] },
     ] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
       ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
