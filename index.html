@@ -71,12 +71,21 @@
   .music:disabled { opacity: .6; cursor: wait; }
   .music .icon { font-size: 1.2rem; line-height: 1; }
   midi-player { display: none; }
-  .games { width: min(960px, 100%); margin-top: 2.25rem; animation: rise 1.2s 1.2s ease-out both; }
+  .games { width: min(1280px, 100%); margin-top: 2.25rem; animation: rise 1.2s 1.2s ease-out both; }
   .games h2 {
     font: 500 1rem "Oswald", Impact, sans-serif; letter-spacing: .2em; text-transform: uppercase;
     color: var(--gold); margin: 0 0 .9rem;
   }
-  .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+  .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(370px, 100%), 1fr)); gap: 1rem; }
+  /* WVU | opponent comparison table under each matchup */
+  .game .cmp { display: grid; grid-template-columns: auto 1fr 1fr; gap: .2rem .8rem; margin: .75rem 0 0; font-size: .88rem; white-space: nowrap; }
+  .game .cmp-head { font: 500 .78rem "Oswald", Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+  .game .cmp-label { opacity: .65; }
+  .game .cmp-val { font-weight: 600; }
+  .game .details dl { margin-top: .5rem; }
+  .game dd { white-space: nowrap; }
+  /* phones are too narrow for one-line values; let long ones wrap rather than run off the card */
+  @media (max-width: 480px) { .game dd, .game .cmp { white-space: normal; } }
   .game {
     background: rgba(0, 26, 56, .78); border: 1px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
@@ -108,7 +117,7 @@
   /* Cartoon Mountaineer -- in the page flow on narrow screens, standing on the mountains on wide ones */
   .mascot { width: 120px; margin: 2rem auto 0; pointer-events: none; }
   .mascot svg { display: block; width: 100%; height: auto; overflow: visible; }
-  @media (min-width: 1200px) {
+  @media (min-width: 1640px) {
     .mascot { position: fixed; z-index: 2; left: 2rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 140px; margin: 0; }
   }
   .mascot .bob { animation: bob 1.6s ease-in-out infinite; }
@@ -714,29 +723,29 @@
         { rank: rankNum(wv), name: 'WVU', star: starred, record: record(wv, wvConf) }, prefix,
         { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf) });
 
-      const dl = el('dl');
-      row(dl, 'Opponent conf. record', oppConf);
-      row(dl, 'Opponent conf.', oppConfName);
-      row(dl, 'Opponent conf. rank', confRank(opp) || soccerConfRank(card, opp, oppConf));
-      row(dl, 'WVU conf. record', wvConf);
-      row(dl, 'WVU conf.', card.dataset.conf);
-      row(dl, 'WVU conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf));
-      row(dl, 'Stadium', comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName));
-      row(dl, 'TV', gameTV(comp));
+      // Side-by-side rows (WVU | opponent), then single rows for the game itself
+      const pairs = [
+        ['Conference', card.dataset.conf, oppConfName],
+        ['Conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf), confRank(opp) || soccerConfRank(card, opp, oppConf)],
+      ];
+      const singles = [
+        ['Venue', comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName)],
+        ['Broadcast', gameTV(comp)],
+      ];
 
       // Betting lines (DraftKings, via ESPN); the spread sits at the right end of the date/time line
       const o = (comp.odds || []).find(Boolean);
       if (o && o.details) {
         const left = el('span'); left.append(...when.childNodes);
         when.classList.add('with-spread'); when.append(left, el('span', 'spread', o.details));
-        row(dl, 'Over/under', o.overUnder != null ? String(o.overUnder) : null);
         const ml = o.moneyline || {}, line = side => { const m = ml[side] && (ml[side].close || ml[side].open); return m && m.odds; };
         const wvSide = wv.homeAway === 'home' ? 'home' : 'away', oppSide = wvSide === 'home' ? 'away' : 'home';
-        if (line(wvSide) && line(oppSide)) row(dl, 'Moneyline', 'WVU ' + line(wvSide) + ' · ' + abbr(opp) + ' ' + line(oppSide));
+        pairs.push(['Moneyline', line(wvSide), line(oppSide)]);
+        singles.push(['Over/under', o.overUnder != null ? String(o.overUnder) : null]);
       }
-      if (projection(wv) && projection(opp)) row(dl, 'Matchup predictor', 'WVU ' + projection(wv) + ' · ' + abbr(opp) + ' ' + projection(opp));
+      pairs.push(['Win chance', projection(wv), projection(opp)]);
 
-      card.append(matchup, when, dl);
+      card.append(matchup, when, details('WVU', abbr(opp), pairs, singles));
       if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
       if (!useFallback(card)) card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
@@ -760,6 +769,21 @@
     return line;
   }
 
+  // Card details: a WVU | opponent table for paired stats, then label/value rows. Empty rows are skipped.
+  function details(usName, themName, pairs = [], singles = []) {
+    const wrap = el('div', 'details');
+    const live = pairs.filter(([, a, b]) => a || b);
+    if (live.length) {
+      const t = el('div', 'cmp');
+      t.append(el('span'), el('span', 'cmp-head', usName), el('span', 'cmp-head', themName));
+      live.forEach(([k, a, b]) => t.append(el('span', 'cmp-label', k), el('span', 'cmp-val', a || '—'), el('span', 'cmp-val', b || '—')));
+      wrap.append(t);
+    }
+    const rows = singles.filter(([, v]) => v);
+    if (rows.length) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v))); wrap.append(dl); }
+    return wrap;
+  }
+
   function manualCard({ label, games = [], done, doneLogo, rows }) {
     const card = el('article', 'game');
     card.append(el('div', 'sport', label));
@@ -777,13 +801,12 @@
     const matchup = teamsLine(g.us, g.prefix, g.them);
     const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
     const time = g.timeTBA ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
-    const dl = el('dl');
-    g.rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v)));
     // Non-breaking spaces inside each piece, so a narrow card only wraps at the dots
     const keep = s => s.replace(/ /g, '\u00a0');
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
-    card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')), dl);
+    card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')),
+                details(g.us.short || g.us.name, g.them.short || g.them.name, g.pairs, g.rows));
     return card;
   }
   const byDate = grid => { const at = c => Number(c.dataset.when) || Infinity; [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c)); };
@@ -793,14 +816,14 @@
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'WVU', record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png' }, rows: [
-        ['Opponents', ['#4 TCU', '#5 Nebraska', '#6 Ole Miss', '#7 Kentucky'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
-        ['WVU conf. record', '2-1'], ['WVU conf.', 'GARC'], ['Stadium', 'WVU Rifle Range']] },
+        us: { rank: 1, name: 'WVU', record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: 'wvu-logo.png' }, rows: [
+        ['Opponents', ['#4 TCU', '#5 NEB', '#6 MISS', '#7 UK'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
+        ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
-        us: { name: 'WVU', record: '0-0 (0-0)' }, them: { name: 'College of Charleston', logo: 'charleston-logo.png', record: '0-0' }, rows: [
-        ['Opponent conf.', 'CAA'], ['WVU conf.', 'Big 12'], ['Stadium', 'The Ballpark at Patriots Point']] },
+        us: { name: 'WVU', record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', logo: 'charleston-logo.png', record: '0-0' },
+        pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
     ] },
   ];
   // Soonest game first; cards with no game go last
@@ -825,12 +848,12 @@
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
         us: { rank: 3, name: 'Sissonville', record: '9-0' }, them: { rank: 31, name: 'Wayne', logo: 'wayne-logo.png', record: '0-9' }, rows: [
-        ['Stadium', 'Wayne High School'], ['TV', 'Hudl (livestream)']] },
+        ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl (livestream)']] },
     ] },
     { label: 'Girls Soccer', games: [
       { date: '2026-11-05T17:00:00Z', where: 'Beckley, WV', prefix: 'vs', subtitle: 'State Semifinal',
         us: { rank: 3, name: 'Sissonville', record: '16-4' }, them: { rank: 2, name: 'Lincoln', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
-        ['Stadium', 'YMCA Paul Cline Memorial Sports Complex'], ['TV', 'NFHS Network (livestream)']] },
+        ['Venue', 'YMCA Paul Cline Memorial Sports Complex'], ['Broadcast', 'NFHS Network (livestream)']] },
     ] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
       ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
