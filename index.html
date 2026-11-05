@@ -336,11 +336,15 @@
   player.addEventListener('load', () => { btn.disabled = false; idle(); });
   player.addEventListener('start', () => { icon.innerHTML = '&#10074;&#10074;'; label.textContent = 'Pause'; btn.setAttribute('aria-label', 'Pause music'); });
   player.addEventListener('stop', idle);
-  btn.addEventListener('click', () => player.playing ? player.stop() : player.start());
+  btn.addEventListener('click', () => {
+    if (player.playing) { player.stop(); return; }
+    if (!chop.paused) chop.pause();
+    player.start();
+  });
 
   // Click the Sissonville logo: the Tomahawk Chop MP3. Click again to pause, again to resume.
   // Loaded with the page so it starts right away; skips the recording's 1.65 s of near-silence at the top.
-  // Country Roads stops so the two don't clash.
+  // Country Roads stops so the two don't clash, and the Country Roads button pauses this one.
   const CHOP_START = 1.65;
   const chop = new Audio('tomahawk-chop.mp3');
   chop.preload = 'auto';
