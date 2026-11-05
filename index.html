@@ -512,23 +512,23 @@
     audio = audio || new AC();
     if (audio.state === 'suspended') audio.resume();
     const t = audio.currentTime;
-    // the crack: a short burst of noise, darkening as it fades
-    const len = Math.floor(audio.sampleRate * 0.9), buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
+    // heavy black powder: a darker crack with a long rolling tail
+    const len = Math.floor(audio.sampleRate * 1.7), buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     const noise = audio.createBufferSource(); noise.buffer = buf;
     const tone = audio.createBiquadFilter(); tone.type = 'lowpass';
-    tone.frequency.setValueAtTime(6000, t); tone.frequency.exponentialRampToValueAtTime(400, t + 0.6);
+    tone.frequency.setValueAtTime(3500, t); tone.frequency.exponentialRampToValueAtTime(150, t + 1.12);
     const crack = audio.createGain();
-    crack.gain.setValueAtTime(0.0001, t); crack.gain.exponentialRampToValueAtTime(0.5, t + 0.005);
-    crack.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+    crack.gain.setValueAtTime(0.0001, t); crack.gain.exponentialRampToValueAtTime(0.55, t + 0.004);
+    crack.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
     noise.connect(tone).connect(crack).connect(audio.destination);
-    // the boom: a low thump underneath
+    // the boom: a big low thump underneath
     const thump = audio.createOscillator(), tg = audio.createGain();
     thump.type = 'sine';
-    thump.frequency.setValueAtTime(130, t); thump.frequency.exponentialRampToValueAtTime(38, t + 0.3);
-    tg.gain.setValueAtTime(0.0001, t); tg.gain.exponentialRampToValueAtTime(0.6, t + 0.01); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+    thump.frequency.setValueAtTime(90, t); thump.frequency.exponentialRampToValueAtTime(28, t + 0.6);
+    tg.gain.setValueAtTime(0.0001, t); tg.gain.exponentialRampToValueAtTime(0.9, t + 0.01); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
     thump.connect(tg).connect(audio.destination);
-    noise.start(t); noise.stop(t + 0.9); thump.start(t); thump.stop(t + 0.4);
+    noise.start(t); noise.stop(t + 1.7); thump.start(t); thump.stop(t + 0.75);
   }
 
   function puff(cx, cy, r, dx, dy, grow, ms, delay) {
