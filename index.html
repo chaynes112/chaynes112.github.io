@@ -117,6 +117,10 @@
   .game .when.with-spread { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
   .game .when .spread { font-weight: 600; white-space: nowrap; }
   .game .live { color: #ff6b5b; font-weight: 600; }
+  .game .final { color: var(--gold); font-weight: 700; }
+  /* live / final score, right after each team's name */
+  .game .team-score { font: 700 1.6rem/32px "Oswald", Impact, sans-serif; margin-left: .35rem; flex: none; }
+  .game .team-score.lost { opacity: .55; }
   .game dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; margin: .75rem 0 0; font-size: .88rem; }
   .game dt { opacity: .65; }
   .game dd { margin: 0; font-weight: 600; }
@@ -568,7 +572,8 @@
   const SEASON = new Date().getMonth() < 6 ? new Date().getFullYear() - 1 : new Date().getFullYear();
   // ESPN names basketball seasons by the year they end (2026-27 = 2027)
   const seasonFor = card => SEASON + (card.dataset.seasonEnd ? 1 : 0);
-  const getJSON = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  // no-cache: always check with ESPN (cheap if unchanged), so refreshes never show a stale score
+  const getJSON = url => fetch(url, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
   const isWVU = c => /West Virginia/i.test(c.team.displayName || c.team.location || '');
   const rank = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? '#' + r : 'Unranked'; };
   const ymdET = iso => new Intl.DateTimeFormat('en-CA', { timeZone: ET, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)).replace(/-/g, '');
@@ -602,32 +607,42 @@
     return confRecord(events || await seasonEvents(sport, league, competitor.id, seasonFor(card)), competitor.id, sport);
   }
 
-  // First game that hasn't finished: walk the season list from a few hours ago forward
+  // The game to show: one in progress first; otherwise a game that finished recently (FINAL, kept up until
+  // FINAL_HOURS after its start); otherwise the next game. Walks the season list from FINAL_HOURS ago forward.
+  const FINAL_HOURS = 15;
   async function nextGame(card) {
     const { sport, league, team, groups } = card.dataset;
+    const cutoff = Date.now() - FINAL_HOURS * 3600e3;
+    let final = null;
+    // returns the game to show, or undefined to keep looking
+    const consider = match => {
+      const st = match.competitions[0].status.type.state;
+      if (st === 'post') { if (new Date(match.date) >= cutoff) final = match; return; }
+      return st === 'in' || !final ? match : final;
+    };
     // ESPN's season game list is empty for college baseball, so cards marked data-scan="N" look at the
-    // scoreboard one day at a time for the next N days and stop at the first game that isn't over
+    // scoreboard one day at a time for the next N days
     if (card.dataset.scan) {
       card._events = [];
       for (let day = 0; day < Number(card.dataset.scan); day++) {
         const date = new Date(Date.now() + day * 86400e3).toISOString();
         const sb = await getJSON(SITE + sport + '/' + league + '/scoreboard?limit=500&dates=' + ymdET(date) + (groups ? '&groups=' + groups : ''));
-        const match = (sb.events || []).find(e => e.competitions[0].competitors.some(c => String(c.id) === team) && e.competitions[0].status.type.state !== 'post');
-        if (match) return match;
+        const mine = (sb.events || []).filter(e => e.competitions[0].competitors.some(c => String(c.id) === team)).sort((a, b) => new Date(a.date) - new Date(b.date));
+        for (const m of mine) { const pick = consider(m); if (pick) return pick; }
       }
-      return null;
+      return final;
     }
     const events = await seasonEvents(sport, league, team, seasonFor(card));
     card._events = events;
-    const cutoff = Date.now() - 4 * 3600e3;
     const upcoming = events.filter(e => e && new Date(e.date) >= cutoff).sort((a, b) => new Date(a.date) - new Date(b.date));
     for (const ev of upcoming) {
       const sb = await getJSON(SITE + sport + '/' + league + '/scoreboard?limit=500&dates=' + ymdET(ev.date) + (groups ? '&groups=' + groups : ''));
       const match = (sb.events || []).find(e => e.id === ev.id);
       if (!match) continue;
-      if (match.competitions[0].status.type.state !== 'post') return match;
+      const pick = consider(match);
+      if (pick) return pick;
     }
-    return null;
+    return final;
   }
 
   // Votes for an unranked WVU team (cards marked data-votes), shown as "*Unranked" plus a footnote.
@@ -740,9 +755,10 @@
     try {
       const ev = await nextGame(card);
       card.replaceChildren(el('div', 'sport', label));
-      if (!ev) { if (!useFallback(card)) card.append(el('p', 'note', 'No upcoming game scheduled')); return; }
+      if (!ev) { if (!useFallback(card)) { card.append(el('p', 'note', 'No upcoming game scheduled')); card._ok = true; } return; }
 
       card.dataset.when = new Date(ev.date).getTime();
+      card._ev = { id: ev.id, date: ev.date };
       const comp = ev.competitions[0];
       const wv = comp.competitors.find(isWVU) || comp.competitors[0];
       const opp = comp.competitors.find(c => c !== wv);
@@ -751,11 +767,16 @@
       const logo = opp.team.logo || (opp.team.logos && opp.team.logos[0] && opp.team.logos[0].href);
       const d = new Date(ev.date);
       const state = comp.status && comp.status.type && comp.status.type.state;
+      card.dataset.state = state;
+      const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       let when;
       if (state === 'in') {
-        when = el('div', 'when'); when.append(el('span', 'live', 'LIVE NOW'), ' · ' + comp.status.type.shortDetail);
+        // the clock text is kept so the live refresh can update it in place
+        card._clock = document.createTextNode(' · ' + comp.status.type.shortDetail);
+        when = el('div', 'when'); when.append(el('span', 'live', 'LIVE NOW'), card._clock);
+      } else if (state === 'post') {
+        when = el('div', 'when'); when.append(el('span', 'final', (comp.status.type.shortDetail || 'Final').toUpperCase()), ' · ' + day);
       } else {
-        const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
         const time = comp.timeValid === false ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
         when = el('div', 'when', day + ' · ' + time);
       }
@@ -828,9 +849,13 @@
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
       const rankNum = c => { const r = pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
+      // score next to each name once the game starts; at the final the loser's score is dimmed
+      const score = c => state === 'pre' || c.score == null ? null : (typeof c.score === 'object' ? c.score.displayValue : c.score);
+      const lost = c => state === 'post' && comp.competitors.some(x => x !== c && x.winner);
       const matchup = teamsLine(
-        { rank: rankNum(wv), name: 'West Virginia', logo: WVU_CARD_LOGO, star: starred, record: record(wv, wvConf) }, prefix,
-        { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf) });
+        { rank: rankNum(wv), name: 'West Virginia', logo: WVU_CARD_LOGO, star: starred, record: record(wv, wvConf), score: score(wv), lost: lost(wv) }, prefix,
+        { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf), score: score(opp), lost: lost(opp) });
+      card._scores = [...matchup.querySelectorAll('.team-score')];
 
       // Detail rows, in order: ones every game has first, then betting/predictor rows that only some have.
       // [label, value] spans both columns; [label, WVU, opponent] fills the two columns.
@@ -859,6 +884,7 @@
       if (GAME_NOTE[ev.id]) card.append(el('div', 'matchup', GAME_NOTE[ev.id]));
       card.append(when, details('WVU', abbr(opp), rows));
       if (starred) card.append(el('p', 'footnote', '*' + votes));
+      card._ok = true;
     } catch (e) {
       if (!useFallback(card)) card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
     }
@@ -915,6 +941,7 @@
       if (t.record) main.append(el('div', 'team-rec', t.record));
       if (lead.childNodes.length) b.append(lead);
       b.append(main);
+      if (t.score != null) b.append(el('span', 'team-score' + (t.lost ? ' lost' : ''), String(t.score)));
       return b;
     };
     const line = el('div', 'teams');
@@ -1027,7 +1054,54 @@
     return true;
   }
   WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
-  Promise.all(espnCards.map(loadGame)).then(() => byDate(grid));
+  Promise.all(espnCards.map(loadGame)).then(() => { byDate(grid); setTimeout(tick, nextTick()); });
+
+  // Auto-refresh, cards only (the music and animations keep going):
+  //  - a live game: score and clock every 30 seconds; when it ends the card rebuilds as FINAL
+  //  - a game starting within 15 minutes: the card rebuilds every minute, so it flips to LIVE on its own
+  //  - every card: rebuilt every 10 minutes, and right away when you come back to the tab
+  // Nothing refreshes while the tab is in the background. A refresh that fails keeps the card as it was.
+  const REFRESH_ALL = 10 * 60e3, REFRESH_LIVE = 30e3, REFRESH_IDLE = 60e3, SOON = 15 * 60e3;
+  let lastAll = Date.now(), busy = false;
+  const shown = () => espnCards.filter(c => c.isConnected);
+  const nextTick = () => shown().some(c => c.dataset.state === 'in') ? REFRESH_LIVE : REFRESH_IDLE;
+  async function reloadCard(card) {
+    const fresh = card.cloneNode(false);
+    delete fresh.dataset.when; delete fresh.dataset.state;
+    fresh.append(card.querySelector('.sport').cloneNode(true));
+    await loadGame(fresh);
+    if (!fresh._ok || !card.isConnected) return;
+    card.replaceWith(fresh);
+    espnCards[espnCards.indexOf(card)] = fresh;
+  }
+  async function liveScore(card) {
+    const { sport, league, groups } = card.dataset;
+    const sb = await getJSON(SITE + sport + '/' + league + '/scoreboard?limit=500&dates=' + ymdET(card._ev.date) + (groups ? '&groups=' + groups : ''));
+    const m = (sb.events || []).find(e => e.id === card._ev.id);
+    if (!m) return;
+    const comp = m.competitions[0];
+    if (comp.status.type.state !== 'in') return reloadCard(card);   // just ended: rebuild as FINAL
+    const wv = comp.competitors.find(isWVU) || comp.competitors[0], opp = comp.competitors.find(c => c !== wv);
+    const val = c => typeof c.score === 'object' ? c.score.displayValue : c.score;
+    if (card._scores && card._scores.length === 2) { card._scores[0].textContent = val(wv); card._scores[1].textContent = val(opp); }
+    if (card._clock) card._clock.textContent = ' · ' + comp.status.type.shortDetail;
+  }
+  async function refresh(all) {
+    if (busy || document.hidden) return;
+    busy = true;
+    try {
+      if (all) { lastAll = Date.now(); await Promise.all(shown().map(c => reloadCard(c).catch(() => {}))); }
+      else await Promise.all(shown().filter(c => c._ev).map(c =>
+        c.dataset.state === 'in' ? liveScore(c).catch(() => {})
+        : c.dataset.state === 'pre' && new Date(c._ev.date) - Date.now() < SOON ? reloadCard(c).catch(() => {}) : null));
+      byDate(grid);
+    } finally { busy = false; }
+  }
+  async function tick() {
+    await refresh(Date.now() - lastAll >= REFRESH_ALL);
+    setTimeout(tick, nextTick());
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - lastAll > REFRESH_IDLE) refresh(true); });
 
   // Sissonville High School -- no public live feed, so schedules (MaxPreps) and ranks are entered by hand.
   // Football ranks are the WVSSAC playoff ratings (Tuesdays); soccer shows WVSSAC state-tournament seeds.
