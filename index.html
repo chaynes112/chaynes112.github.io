@@ -87,7 +87,7 @@
   .game dd { white-space: nowrap; }
   /* phones are too narrow for one-line values; let long ones wrap rather than run off the card */
   @media (max-width: 480px) { .game dd, .game .cmp, .game .team-name { white-space: normal; }
-    .game .team-name { height: auto; min-height: 32px; } .game .team, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
+    .game .team-name { height: auto; min-height: 32px; } .game .team, .game .team-main, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
   .game {
     background: rgba(0, 26, 56, .78); border: 1px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
@@ -96,8 +96,10 @@
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
   /* Matchup: [logo][rank] West Virginia / record  vs  [logo][rank] Opponent / record -- the biggest text on the card */
   .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .55rem 0 .4rem; }
-  .game .team-name { display: flex; align-items: center; gap: .4rem; height: 32px; font-weight: 600; font-size: 1.2rem; line-height: 1.25; white-space: nowrap; }
-  .game .team-name img { width: 30px; height: 30px; object-fit: contain; flex: none;
+  .game .team { display: flex; align-items: flex-start; gap: .4rem; }
+  .game .team-lead { display: flex; align-items: center; gap: .4rem; height: 32px; flex: none; }
+  .game .team-name { display: flex; align-items: center; height: 32px; font-weight: 600; font-size: 1.2rem; line-height: 1.25; white-space: nowrap; }
+  .game .team-lead img { width: 30px; height: 30px; object-fit: contain; flex: none;
                          /* thin light outline so dark logos (Cincinnati, Texas Tech, Colorado) show on navy */
                          filter: drop-shadow(0 0 .6px rgba(255,255,255,.95)) drop-shadow(0 0 .6px rgba(255,255,255,.95)); }
   .game .team-rank { color: var(--gold); font-size: 1.05rem; font-weight: 700; }
@@ -852,13 +854,16 @@
   // Two team blocks: [rank] name (record underneath), then "vs"/"at", then the opponent the same way
   function teamsLine(us, prefix, them) {
     const block = t => {
-      const b = el('div', 'team'), top = el('div', 'team-name');
-      // logo, rank, name -- the same order ESPN's schedule uses; * (receiving votes) goes in front of the name
-      if (t.logo) top.append(teamLogo(t.logo));
-      if (t.rank) top.append(el('span', 'team-rank', String(t.rank)));
+      // logo, rank, name -- the same order ESPN's schedule uses; * (receiving votes) goes in front of the name.
+      // Logo and rank sit in their own column so the record lines up under the start of the name.
+      const b = el('div', 'team'), lead = el('div', 'team-lead'), main = el('div', 'team-main'), top = el('div', 'team-name');
+      if (t.logo) lead.append(teamLogo(t.logo));
+      if (t.rank) lead.append(el('span', 'team-rank', String(t.rank)));
       top.append(el('span', null, (t.star ? '*' : '') + t.name));
-      b.append(top);
-      if (t.record) b.append(el('div', 'team-rec', t.record));
+      main.append(top);
+      if (t.record) main.append(el('div', 'team-rec', t.record));
+      if (lead.childNodes.length) b.append(lead);
+      b.append(main);
       return b;
     };
     const line = el('div', 'teams');
@@ -960,22 +965,22 @@
     // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
     { label: 'Boys Basketball', games: [
       { date: '2026-12-04T23:00:00Z', where: 'Ravenswood, WV', prefix: 'at',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Ravenswood', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Ravenswood', logo: 'ravenswood-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Ravenswood High School']] },
     ] },
     { label: 'Girls Basketball', games: [
       { date: '2026-12-10T00:00:00Z', where: 'Charleston, WV', prefix: 'vs',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Logan', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Logan', logo: 'logan-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Sissonville High School']] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-04-26T21:00:00Z', where: 'Williamstown, WV', prefix: 'at',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Williamstown', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Williamstown', logo: 'williamstown-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Williamstown High School']] },
     ] },
     { label: 'Softball', games: [
       { date: '2027-03-16T22:00:00Z', where: 'Charleston, WV', prefix: 'vs',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Herbert Hoover', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Herbert Hoover', logo: 'herbert-hoover-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Sissonville High School']] },
     ] },
     { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
