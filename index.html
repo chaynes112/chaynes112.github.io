@@ -120,7 +120,9 @@
   .game dt { opacity: .65; }
   .game dd { margin: 0; font-weight: 600; }
   .game .note { opacity: .7; font-size: .92rem; margin-top: .5rem; }
-  .game .footnote { margin: .6rem 0 0; font-size: .78rem; opacity: .7; }
+  /* the *received-votes note sits at the very bottom of its card */
+  .game { display: flex; flex-direction: column; }
+  .game .footnote { margin: auto 0 0; padding-top: .6rem; font-size: .78rem; opacity: .7; }
   .game .note.with-logo { display: flex; align-items: center; gap: .55rem; opacity: 1; color: rgba(244, 241, 232, .7); }
   .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none; }
   .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
@@ -701,9 +703,9 @@
   // with each team's conference record. A rank only shows while ESPN's count of that team's conference
   // record still matches, so it drops off by itself after the team's next game. Update after games.
   const SOCCER_STANDINGS = {
-    'usa.ncaa.m.1': [['Marshall', '5-1-2'], ['West Virginia', '5-1-2'], ['James Madison', '4-1-3'], ['UCF', '4-3-1'],
-      ['South Carolina', '3-3-2'], ['Coastal Carolina', '3-3-2'], ['Georgia Southern', '2-4-2'], ['Kentucky', '2-4-2'],
-      ['Old Dominion', '2-5-1'], ['Georgia State', '1-6-1']],
+    'usa.ncaa.m.1': [['West Virginia', '6-1-2'], ['Marshall', '6-1-2'], ['UCF', '5-3-1'], ['James Madison', '4-2-3'],
+      ['Coastal Carolina', '4-3-2'], ['South Carolina', '3-4-2'], ['Kentucky', '3-4-2'], ['Georgia Southern', '2-5-2'],
+      ['Old Dominion', '2-6-1'], ['Georgia State', '1-7-1']],   // sunbeltsports.org, final regular season (Nov 5, 2026)
     'usa.ncaa.w.1': [['Texas Tech', '8-1-1'], ['BYU', '7-1-2'], ['Baylor', '7-2-1'], ['Houston', '7-2-1'], ['Colorado', '7-3-0'],
       ['Kansas', '6-2-2'], ['UCF', '5-3-2'], ['West Virginia', '4-4-2'], ['Arizona State', '4-5-1'], ['Oklahoma State', '3-5-2'],
       ['Arizona', '2-4-4'], ['Cincinnati', '2-6-2'], ['TCU', '2-7-1'], ['Utah', '1-6-3'], ['Kansas State', '1-7-2'], ['Iowa State', '0-8-2']],
@@ -776,20 +778,41 @@
         return side && side.gameProjection ? Number(side.gameProjection).toFixed(1) + '%' : null;
       };
       // Conference rank = position in ESPN's conference standings, once the team has played a conference game
-      const confRank = c => {
+      // Conference rank, tie-aware like ESPN's "1st in Big 12": 1 + the number of conference teams with a better
+      // conference record. Before conference play (0-0) it goes by overall record instead, as ESPN does.
+      // Volleyball's standings come without records (and out of order), so those come from each team's ESPN record.
+      const pct = s => { const [w = 0, l = 0, tie = 0] = String(s || '').split('-').map(Number); const n = w + l + tie; return n ? (w + tie / 2) / n : null; };
+      const groupRecs = new Map();
+      const recordsFor = g => {
+        if (!groupRecs.has(g)) groupRecs.set(g, Promise.all(((g.standings && g.standings.entries) || []).map(async e => {
+          const st = name => ((e.stats || []).find(s => s.name === name || s.type === name) || {}).summary;
+          let conf = st('vs. Conf.') || st('vsconf'), ovr = st('overall') || st('total');
+          if (!conf && e.id) {
+            const r = await getJSON(CORE + card.dataset.sport + '/leagues/' + card.dataset.league + '/seasons/' + seasonFor(card) + '/types/2/teams/' + e.id + '/record').catch(() => ({}));
+            const item = n => ((r.items || []).find(i => i.name === n) || {}).summary;
+            conf = item('vs. Conf.') || item('Conference'); ovr = ovr || item('overall');
+          }
+          return { e, conf, ovr };
+        })));
+        return groupRecs.get(g);
+      };
+      const confRank = async c => {
         for (const g of (summary.standings && summary.standings.groups) || []) {
           const entries = (g.standings && g.standings.entries) || [];
-          const i = entries.findIndex(e => String(e.id) === String(c.id) || e.team === c.team.displayName || e.team === c.team.location);
-          if (i < 0) continue;
-          const vc = (entries[i].stats || []).find(s => s.name === 'vs. Conf.' || s.type === 'vsconf');
-          if (!vc || !vc.summary || /^0-0(-0)?$/.test(vc.summary)) return null;
-          const n = i + 1, suf = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
-          return n + suf + ' of ' + entries.length;
+          if (!entries.some(e => String(e.id) === String(c.id) || e.team === c.team.displayName || e.team === c.team.location)) continue;
+          const recs = await recordsFor(g);
+          const me = recs.find(r => String(r.e.id) === String(c.id) || r.e.team === c.team.displayName || r.e.team === c.team.location);
+          const by = pct(me.conf) !== null ? 'conf' : 'ovr';
+          const mine = pct(me[by]);
+          if (mine === null) return null;
+          const n = 1 + recs.filter(r => (pct(r[by]) ?? -1) > mine).length;
+          return ordinal(n) + ' of ' + entries.length;
         }
         return null;
       };
       const oppConfName = await oppConference(card, opp, ev).catch(() => null);
       const [wvNick, oppNick] = await Promise.all([teamNickname(card, wv), teamNickname(card, opp)]);
+      const [wvRank, oppRank] = await Promise.all([confRank(wv).catch(() => null), confRank(opp).catch(() => null)]);
 
       const abbr = c => c.team.abbreviation || c.team.location;
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
@@ -807,16 +830,15 @@
         ['Broadcast', gameTV(comp) || 'TBA'],
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
-        ['Conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf) || DASH, confRank(opp) || soccerConfRank(card, opp, oppConf) || DASH],
+        ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
         // only when there's data
         ['Win chance', projection(wv), projection(opp)],
       ];
 
-      // Betting lines (DraftKings, via ESPN); the spread sits at the right end of the date/time line
+      // Betting lines (DraftKings, via ESPN), only when there are some: Spread, Over/under, Moneyline under Win chance
       const o = (comp.odds || []).find(Boolean);
       if (o && o.details) {
-        const left = el('span'); left.append(...when.childNodes);
-        when.classList.add('with-spread'); when.append(left, el('span', 'spread', o.details));
+        rows.push(['Spread', o.details]);
         const ml = o.moneyline || {}, line = side => { const m = ml[side] && (ml[side].close || ml[side].open); return m && m.odds; };
         const wvSide = wv.homeAway === 'home' ? 'home' : 'away', oppSide = wvSide === 'home' ? 'away' : 'home';
         rows.push(['Over/under', o.overUnder != null ? String(o.overUnder) : null]);
@@ -1012,7 +1034,7 @@
         ['Venue', 'Sissonville High School']] },
     ] },
     { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
-      ['Last game', 'Lost 3 sets to 1 (Oct 27)'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
+      ['Last game', 'Oct 27'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
