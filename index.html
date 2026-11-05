@@ -83,6 +83,7 @@
   .game .cmp-label { opacity: .65; }
   .game .cmp-val { font-weight: 600; }
   .game .cmp-wide { grid-column: span 2; }
+  .game .cmp-lines { white-space: pre; }   /* one entry per line (rifle opponents) */
   .game .details dl { margin-top: .5rem; }
   .game dd { white-space: nowrap; }
   /* phones are too narrow for one-line values; let long ones wrap rather than run off the card */
@@ -933,7 +934,8 @@
         headed = true;
       }
       t.append(el('span', 'cmp-label', r[0]));
-      if (r.length === 3) t.append(el('span', 'cmp-val', r[1] || '—'), el('span', 'cmp-val', r[2] || '—'));
+      const val = v => el('span', 'cmp-val' + (String(v).includes('\n') ? ' cmp-lines' : ''), v == null ? '—' : v);
+      if (r.length === 3) t.append(val(r[1]), val(r[2]));
       else t.append(el('span', 'cmp-val cmp-wide', r[1]));
     });
     return t;
@@ -945,12 +947,13 @@
   function standardRows(g, college) {
     const row = k => (g.rows || []).find(r => r[0] === k), pair = k => (g.pairs || []).find(r => r[0] === k);
     const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'],
-                 ['Nickname', g.us.nick || DASH, g.them.nick || DASH]];
-    if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, r[2] || DASH]; }));
+                 ['Nickname', g.us.nick || DASH, g.noOpp ? '' : g.them.nick || DASH]];
+    // a field event (noOpp: rifle meets) has no single opponent, so its column stays empty instead of dashes
+    if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, g.noOpp ? '' : r[2] || DASH]; }));
     const taken = new Set(std.map(r => r[0]));
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
-  function manualCard({ label, games = [], done, doneLogo, rows, college }) {
+  function manualCard({ label, games = [], done, doneLogo, rows, college, last }) {
     const card = el('article', 'game');
     card.append(el('div', 'sport', label));
     // a multi-day event (through: last day) stays up until its last day is over
@@ -960,7 +963,10 @@
       if (doneLogo) note.append(teamLogo(doneLogo));   // same sizing as the logos on the other cards
       note.append(done || 'No upcoming game scheduled');
       card.append(note);
-      if (rows) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v))); card.append(dl); }
+      // last: when the final game was played -- shown on the Last game line, and used to list ended seasons newest first
+      const lastDay = last && new Date(last).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
+      if (last) card.dataset.ended = new Date(last).getTime();
+      if (rows) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, k === 'Last game' && lastDay ? v + ' (' + lastDay + ')' : v))); card.append(dl); }
       return card;
     }
     const d = new Date(g.date);
@@ -974,23 +980,29 @@
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
     card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')),
-                details(g.us.short || g.us.name, g.them.short || g.them.name, standardRows(g, college)));
+                details(g.us.short || g.us.name, g.noOpp ? '' : g.them.short || g.them.name, standardRows(g, college)));
     return card;
   }
-  const byDate = grid => { const at = c => Number(c.dataset.when) || Infinity; [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c)); };
+  // upcoming games soonest first, then ended seasons with the most recent last game first
+  const byDate = grid => {
+    const key = c => c.dataset.when ? [0, Number(c.dataset.when)] : c.dataset.ended ? [1, -Number(c.dataset.ended)] : [2, 0];
+    [...grid.children].sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1]; }).forEach(c => grid.append(c));
+  };
 
   // WVU sports ESPN doesn't carry (rifle) or hasn't loaded yet (baseball 2027) -- from wvusports.com.
   // Rifle rank: CRCA Top 20 through Oct 25, 2026 (ssusa.org). Update after each new poll.
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: WVU_CARD_LOGO }, rows: [
-        ['Opponents', ['#4 UK', '#5 NEB', '#6 TCU', '#7 MISS'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
+        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png' }, noOpp: true, rows: [
+        // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
+        // (TCU publishes none: counted from match results, 3-2 per Navy's Oct 4 recap + 3 wins since)
+        ["Opponent's record", '', ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'].join('\n')],
         ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
-        us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', nick: 'Cougars', logo: 'charleston-logo.png', record: '0-0' },
+        us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', nick: 'Cougars', logo: 'charleston-logo.png', record: '0-0 (0-0)' },
         pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
     ] },
   ];
@@ -1018,9 +1030,12 @@
         us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 29, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
         ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
     ] },
-    { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
+    { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
-    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
+    { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
+      // Last game: Class AA Region IV first round, 9 seed Sissonville at 8 seed Buffalo, Oct 27 (WVSSAC bracket)
+      ['Last game', 'Regional First Round'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
+    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
       ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
     // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
     { label: 'Boys Basketball', games: [
@@ -1043,9 +1058,6 @@
         us: { name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Herbert Hoover', nick: 'Huskies', logo: 'herbert-hoover-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Sissonville High School']] },
     ] },
-    { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
-      // Last game: Class AA Region IV first round, 9 seed Sissonville at 8 seed Buffalo, Oct 27 (WVSSAC bracket)
-      ['Last game', 'Regional First Round'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
