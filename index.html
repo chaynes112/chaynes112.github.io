@@ -716,6 +716,19 @@
     return i >= 0 && table[i][1] === confRec ? ordinal(i + 1) + ' of ' + table.length : null;
   }
 
+  // Team nickname (Mountaineers, Bearcats). ESPN's soccer feed puts the school in 'name', so fall back to
+  // 'nickname', then to the display name minus the school ('Cincinnati Bearcats' -> 'Bearcats').
+  const nickname = c => {
+    const tm = c.team, loc = tm.location || '';
+    if (tm.nickname) return tm.nickname;
+    if (tm.name && tm.name !== loc) return tm.name;
+    const rest = (tm.displayName || '').startsWith(loc) ? tm.displayName.slice(loc.length).trim() : '';
+    return rest || null;
+  };
+  // Soccer's scoreboard has no nickname at all; ESPN's season team record does.
+  const teamNickname = async (card, c) => nickname(c) || await getJSON(CORE + card.dataset.sport + '/leagues/' + card.dataset.league
+    + '/seasons/' + seasonFor(card) + '/teams/' + c.id).then(tm => tm.nickname || null).catch(() => null);
+
   async function loadGame(card) {
     const label = card.querySelector('.sport').textContent;
     try {
@@ -776,6 +789,7 @@
         return null;
       };
       const oppConfName = await oppConference(card, opp, ev).catch(() => null);
+      const [wvNick, oppNick] = await Promise.all([teamNickname(card, wv), teamNickname(card, opp)]);
 
       const abbr = c => c.team.abbreviation || c.team.location;
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
@@ -790,6 +804,7 @@
       const rows = [
         ['Venue', comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName)],
         ['Broadcast', gameTV(comp)],
+        ['Nickname', wvNick, oppNick],
         ['Conference', card.dataset.conf, oppConfName],
         ['Conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf), confRank(opp) || soccerConfRank(card, opp, oppConf)],
         ['Win chance', projection(wv), projection(opp)],
@@ -837,8 +852,8 @@
           if (a[(y * c.width + xx) * 4 + 3] > 40) { if (xx < l) l = xx; if (xx > r) r = xx; if (y < t) t = y; if (y > b) b = y; }
         }
         if (r < 0) return;
-        // same visible area as the TT, but never taller than the name row (30px) or wider than 40px
-        const w = r - l + 1, h = b - t + 1, k = Math.min(Math.sqrt(LOGO_AREA / (w * h)), 30 / h, 40 / w);
+        // same visible area as the TT, but never taller than 27px (so tall, narrow logos like Lincoln's don't tower) or wider than 40px
+        const w = r - l + 1, h = b - t + 1, k = Math.min(Math.sqrt(LOGO_AREA / (w * h)), 27 / h, 40 / w);
         const out = document.createElement('canvas');
         out.width = Math.round(img.naturalWidth * w / c.width); out.height = Math.round(img.naturalHeight * h / c.height);
         out.getContext('2d').drawImage(img, l / s, t / s, w / s, h / s, 0, 0, out.width, out.height);
@@ -895,7 +910,7 @@
     const g = games.find(x => new Date(x.date) >= Date.now() - 4 * 3600e3);
     if (!g) {
       const note = el('p', 'note' + (doneLogo ? ' with-logo' : ''));
-      if (doneLogo) { const img = el('img'); img.src = doneLogo; img.alt = ''; note.append(img); }
+      if (doneLogo) note.append(teamLogo(doneLogo));   // same sizing as the logos on the other cards
       note.append(done || 'No upcoming game scheduled');
       card.append(note);
       if (rows) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, v))); card.append(dl); }
@@ -911,7 +926,7 @@
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
     card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')),
-                details(g.us.short || g.us.name, g.them.short || g.them.name, [...(g.rows || []), ...(g.pairs || [])]));
+                details(g.us.short || g.us.name, g.them.short || g.them.name, [...(g.rows || []), ['Nickname', g.us.nick, g.them.nick], ...(g.pairs || [])]));
     return card;
   }
   const byDate = grid => { const at = c => Number(c.dataset.when) || Infinity; [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c)); };
@@ -921,13 +936,13 @@
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'West Virginia', short: 'WVU', logo: WVU_CARD_LOGO, record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: WVU_CARD_LOGO }, rows: [
+        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: WVU_CARD_LOGO }, rows: [
         ['Opponents', ['#4 TCU', '#5 NEB', '#6 MISS', '#7 UK'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
         ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
-        us: { name: 'West Virginia', short: 'WVU', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', logo: 'charleston-logo.png', record: '0-0' },
+        us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', nick: 'Cougars', logo: 'charleston-logo.png', record: '0-0' },
         pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
     ] },
   ];
@@ -952,12 +967,12 @@
   const SVILLE = [
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
-        us: { rank: 3, name: 'Sissonville', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 31, name: 'Wayne', logo: 'wayne-logo.png', record: '0-9' }, rows: [
+        us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 31, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
         ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
     ] },
     { label: 'Girls Soccer', games: [
       { date: '2026-11-05T17:00:00Z', where: 'Beckley, WV', prefix: 'vs', subtitle: 'State Semifinal',
-        us: { rank: 3, name: 'Sissonville', logo: 'sissonville-logo.png', record: '16-4' }, them: { rank: 2, name: 'Lincoln', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
+        us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '16-4' }, them: { rank: 2, name: 'Lincoln', nick: 'Cougars', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
         ['Venue', 'YMCA Paul Cline Memorial Sports Complex'], ['Broadcast', 'NFHS Network']] },
     ] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
@@ -965,22 +980,22 @@
     // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
     { label: 'Boys Basketball', games: [
       { date: '2026-12-04T23:00:00Z', where: 'Ravenswood, WV', prefix: 'at',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Ravenswood', logo: 'ravenswood-logo.png', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Ravenswood', nick: 'Red Devils', logo: 'ravenswood-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Ravenswood High School']] },
     ] },
     { label: 'Girls Basketball', games: [
       { date: '2026-12-10T00:00:00Z', where: 'Charleston, WV', prefix: 'vs',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Logan', logo: 'logan-logo.png', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Logan', nick: 'Wildcats', logo: 'logan-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Sissonville High School']] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-04-26T21:00:00Z', where: 'Williamstown, WV', prefix: 'at',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Williamstown', logo: 'williamstown-logo.png', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Williamstown', nick: 'Yellowjackets', logo: 'williamstown-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Williamstown High School']] },
     ] },
     { label: 'Softball', games: [
       { date: '2027-03-16T22:00:00Z', where: 'Charleston, WV', prefix: 'vs',
-        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Herbert Hoover', logo: 'herbert-hoover-logo.png', record: '0-0' }, rows: [
+        us: { name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Herbert Hoover', nick: 'Huskies', logo: 'herbert-hoover-logo.png', record: '0-0' }, rows: [
         ['Venue', 'Sissonville High School']] },
     ] },
     { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
