@@ -351,7 +351,7 @@
       gold: Math.random() < 0.15
     }));
   }
-  // Shooting star: every 5-10 seconds one streaks down and to the left across the upper sky
+  // Shooting star: every 30-60 seconds one streaks down and to the left across the upper sky
   const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let meteor = null, nextMeteor = 2500;
   function drawMeteor(t) {
@@ -360,7 +360,7 @@
     }
     if (!meteor) return;
     const k = (t - meteor.start) / meteor.life;
-    if (k >= 1) { meteor = null; nextMeteor = t + 5000 + Math.random() * 5000; return; }
+    if (k >= 1) { meteor = null; nextMeteor = t + 30000 + Math.random() * 30000; return; }
     const dist = k * c.width * 0.35, len = 240 * devicePixelRatio * Math.min(1, k * 4);
     const hx = meteor.x0 - dist * 0.87, hy = meteor.y0 + dist * 0.5;
     const tx = hx + len * 0.87, ty = hy - len * 0.5;
