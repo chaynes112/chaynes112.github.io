@@ -908,7 +908,7 @@
       // logo, rank, name -- the same order ESPN's schedule uses; * (receiving votes) goes in front of the name.
       // Logo and rank sit in their own column so the record lines up under the start of the name.
       const b = el('div', 'team'), lead = el('div', 'team-lead'), main = el('div', 'team-main'), top = el('div', 'team-name');
-      if (t.logo) lead.append(teamLogo(t.logo));
+      if (t.logo) { const img = teamLogo(t.logo); if (t.noOutline) img.style.filter = 'none'; lead.append(img); }
       if (t.rank) lead.append(el('span', 'team-rank', String(t.rank)));
       top.append(el('span', null, (t.star ? '*' : '') + t.name));
       main.append(top);
@@ -947,10 +947,14 @@
   function standardRows(g, college) {
     const row = k => (g.rows || []).find(r => r[0] === k), pair = k => (g.pairs || []).find(r => r[0] === k);
     const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'],
-                 ...(g.lead || []),   // rows that go right under the column header (rifle: the field's records)
                  ['Nickname', g.us.nick || DASH, g.noOpp ? '' : g.them.nick || DASH]];
     // a field event (noOpp: rifle meets) has no single opponent, so its column stays empty instead of dashes
     if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, g.noOpp ? '' : r[2] || DASH]; }));
+    // field (rifle): one opposing team per row in the second column, starting at Nickname; leftovers get rows with no label
+    if (g.field) {
+      const start = std.findIndex(r => r.length === 3);
+      g.field.forEach((team, i) => { const r = std[start + i]; if (r && r.length === 3) r[2] = team; else std.push(['', '', team]); });
+    }
     const taken = new Set(std.map(r => r[0]));
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
@@ -995,14 +999,14 @@
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png' }, noOpp: true, rows: [
+        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png', noOutline: true }, noOpp: true, rows: [
         // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
         // (TCU publishes none: counted from match results, 3-2 per Navy's Oct 4 recap + 3 wins since)
         // GARC publishes no standings; rank from each member's conference record on its own schedule page (Nov 5):
         // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
         ['Venue', 'WVU Rifle Range']],
-        // field event: the second column is headed "Opponents" and its first row lists every team in the field
-        oppHead: 'Opponents', lead: [['Record', '7-1 (2-0)', ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'].join('\n')]],
+        // field event: the second column is headed "Opponents", one team per row down that column
+        oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
     { label: 'Baseball', games: [
