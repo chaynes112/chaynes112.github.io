@@ -348,6 +348,7 @@
   const CHOP_START = 1.65;
   const chop = new Audio('tomahawk-chop.mp3');
   chop.preload = 'auto';
+  chop.volume = 0.7;   // a little under full so it sits closer to the Country Roads MIDI
   document.querySelector('.sville .team-logo').addEventListener('click', () => {
     if (!chop.paused) { chop.pause(); return; }
     if (player.playing) player.stop();
