@@ -779,7 +779,7 @@
       };
       // Conference rank = position in ESPN's conference standings, once the team has played a conference game
       // Conference rank, tie-aware like ESPN's "1st in Big 12": 1 + the number of conference teams with a better
-      // conference record. Before conference play (0-0) it goes by overall record instead, as ESPN does.
+      // conference record. ESPN goes by conference record only, so before conference play (all 0-0) every team is tied for 1st.
       // Volleyball's standings come without records (and out of order), so those come from each team's ESPN record.
       const pct = s => { const [w = 0, l = 0, tie = 0] = String(s || '').split('-').map(Number); const n = w + l + tie; return n ? (w + tie / 2) / n : null; };
       const groupRecs = new Map();
@@ -802,10 +802,8 @@
           if (!entries.some(e => String(e.id) === String(c.id) || e.team === c.team.displayName || e.team === c.team.location)) continue;
           const recs = await recordsFor(g);
           const me = recs.find(r => String(r.e.id) === String(c.id) || r.e.team === c.team.displayName || r.e.team === c.team.location);
-          const by = pct(me.conf) !== null ? 'conf' : 'ovr';
-          const mine = pct(me[by]);
-          if (mine === null) return null;
-          const n = 1 + recs.filter(r => (pct(r[by]) ?? -1) > mine).length;
+          const val = r => pct(r.conf) ?? 0.5;   // no conference games yet counts as even
+          const n = 1 + recs.filter(r => val(r) > val(me)).length;
           return ordinal(n) + ' of ' + entries.length;
         }
         return null;
