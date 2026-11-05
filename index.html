@@ -76,7 +76,7 @@
     font: 500 1rem "Oswald", Impact, sans-serif; letter-spacing: .2em; text-transform: uppercase;
     color: var(--gold); margin: 0 0 .9rem;
   }
-  .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(370px, 100%), 1fr)); gap: 1rem; }
+  .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr)); gap: 1rem; }
   /* WVU | opponent comparison table under each matchup */
   .game .cmp { display: grid; grid-template-columns: auto 1fr 1fr; gap: .2rem .8rem; margin: .75rem 0 0; font-size: .88rem; white-space: nowrap; }
   .game .cmp-head { font: 500 .78rem "Oswald", Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
@@ -87,24 +87,30 @@
   .game dd { white-space: nowrap; }
   /* phones are too narrow for one-line values; let long ones wrap rather than run off the card */
   @media (max-width: 480px) { .game dd, .game .cmp, .game .team-name { white-space: normal; }
-    .game .team-name { height: auto; min-height: 26px; } .game .team, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
+    .game .team-name { height: auto; min-height: 32px; } .game .team, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
   .game {
     background: rgba(0, 26, 56, .78); border: 1px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
   }
   .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
-  /* Matchup: [rank] WVU / record  vs  [logo][rank] Opponent / record */
+  /* Matchup: [logo][rank] West Virginia / record  vs  [logo][rank] Opponent / record -- the biggest text on the card */
   .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .55rem 0 .4rem; }
-  .game .team-name { display: flex; align-items: center; gap: .35rem; height: 26px; font-weight: 600; font-size: .97rem; line-height: 1.25; white-space: nowrap; }
-  .game .team-name img { width: 24px; height: 24px; object-fit: contain; flex: none;
+  .game .team-name { display: flex; align-items: center; gap: .4rem; height: 32px; font-weight: 600; font-size: 1.2rem; line-height: 1.25; white-space: nowrap; }
+  .game .team-name img { width: 30px; height: 30px; object-fit: contain; flex: none;
                          /* thin light outline so dark logos (Cincinnati, Texas Tech, Colorado) show on navy */
                          filter: drop-shadow(0 0 .6px rgba(255,255,255,.95)) drop-shadow(0 0 .6px rgba(255,255,255,.95)); }
-  .game .team-rank { color: var(--gold); font-size: .85rem; font-weight: 700; }
-  .game .team-rec { font-size: .8rem; opacity: .75; margin-top: .1rem; }
-  .game .team-vs { opacity: .7; font-size: .9rem; padding-top: .15rem; }
+  .game .team-rank { color: var(--gold); font-size: 1.05rem; font-weight: 700; }
+  .game .team-rec { font-size: 1rem; opacity: .75; margin-top: .1rem; }
+  .game .team-vs { opacity: .7; font-size: 1.1rem; padding-top: .25rem; }
   .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
-  .game .when { opacity: .85; font-size: .88rem; }
+  .game .when { opacity: .85; font-size: 1.05rem; }
+  /* phones: the bigger names don't fit side by side, so each team gets its own line */
+  @media (max-width: 480px) {
+    .game .teams { flex-direction: column; gap: .1rem; }
+    .game .teams .team-name { white-space: normal; height: auto; min-height: 32px; }
+    .game .team-vs { padding: 0; font-size: .95rem; }
+  }
   .game .when.with-spread { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
   .game .when .spread { font-weight: 600; white-space: nowrap; }
   .game .live { color: #ff6b5b; font-weight: 600; }
@@ -774,7 +780,7 @@
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
       const rankNum = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
       const matchup = teamsLine(
-        { rank: rankNum(wv), name: 'West Virginia', logo: 'wvu-logo.png', star: starred, record: record(wv, wvConf) }, prefix,
+        { rank: rankNum(wv), name: 'West Virginia', logo: WVU_CARD_LOGO, star: starred, record: record(wv, wvConf) }, prefix,
         { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf) });
 
       // Detail rows, in order: ones every game has first, then betting/predictor rows that only some have.
@@ -809,7 +815,9 @@
   // Logos come with different amounts of empty padding and different shapes, so each one is trimmed to
   // its drawn area and scaled to the same visible area as Texas Tech's "TT" (about 21 x 24 px).
   // ESPN's logo server allows reading the pixels; if it ever stops, the logo just shows untrimmed.
-  const LOGO_AREA = 21 * 24;
+  // ESPN's blue Flying WV for the game cards (the big logo at the top stays gold)
+  const WVU_CARD_LOGO = 'https://a.espncdn.com/i/teamlogos/ncaa/500/277.png';
+  const LOGO_AREA = 26.25 * 30;
   function teamLogo(src) {
     const img = el('img');
     img.alt = '';
@@ -827,8 +835,8 @@
           if (a[(y * c.width + xx) * 4 + 3] > 40) { if (xx < l) l = xx; if (xx > r) r = xx; if (y < t) t = y; if (y > b) b = y; }
         }
         if (r < 0) return;
-        // same visible area as the TT, but never taller than the name row (24px) or wider than 32px
-        const w = r - l + 1, h = b - t + 1, k = Math.min(Math.sqrt(LOGO_AREA / (w * h)), 24 / h, 32 / w);
+        // same visible area as the TT, but never taller than the name row (30px) or wider than 40px
+        const w = r - l + 1, h = b - t + 1, k = Math.min(Math.sqrt(LOGO_AREA / (w * h)), 30 / h, 40 / w);
         const out = document.createElement('canvas');
         out.width = Math.round(img.naturalWidth * w / c.width); out.height = Math.round(img.naturalHeight * h / c.height);
         out.getContext('2d').drawImage(img, l / s, t / s, w / s, h / s, 0, 0, out.width, out.height);
@@ -845,9 +853,10 @@
   function teamsLine(us, prefix, them) {
     const block = t => {
       const b = el('div', 'team'), top = el('div', 'team-name');
-      if (t.rank) top.append(el('span', 'team-rank', String(t.rank)));
-      top.append(el('span', null, t.name + (t.star ? '*' : '')));
+      // logo, rank, name -- the same order ESPN's schedule uses; * (receiving votes) goes in front of the name
       if (t.logo) top.append(teamLogo(t.logo));
+      if (t.rank) top.append(el('span', 'team-rank', String(t.rank)));
+      top.append(el('span', null, (t.star ? '*' : '') + t.name));
       b.append(top);
       if (t.record) b.append(el('div', 'team-rec', t.record));
       return b;
@@ -907,13 +916,13 @@
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'West Virginia', short: 'WVU', logo: 'wvu-logo.png', record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: 'wvu-logo.png' }, rows: [
+        us: { rank: 1, name: 'West Virginia', short: 'WVU', logo: WVU_CARD_LOGO, record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: WVU_CARD_LOGO }, rows: [
         ['Opponents', ['#4 TCU', '#5 NEB', '#6 MISS', '#7 UK'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
         ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
-        us: { name: 'West Virginia', short: 'WVU', logo: 'wvu-logo.png', record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', logo: 'charleston-logo.png', record: '0-0' },
+        us: { name: 'West Virginia', short: 'WVU', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'CofC', logo: 'charleston-logo.png', record: '0-0' },
         pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
     ] },
   ];
