@@ -802,11 +802,13 @@
       // Detail rows, in order: ones every game has first, then betting/predictor rows that only some have.
       // [label, value] spans both columns; [label, WVU, opponent] fills the two columns.
       const rows = [
-        ['Venue', comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName)],
-        ['Broadcast', gameTV(comp)],
-        ['Nickname', wvNick, oppNick],
-        ['Conference', card.dataset.conf, oppConfName],
-        ['Conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf), confRank(opp) || soccerConfRank(card, opp, oppConf)],
+        // always shown (TBA / dash when ESPN has nothing yet)
+        ['Venue', (comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName)) || 'TBA'],
+        ['Broadcast', gameTV(comp) || 'TBA'],
+        ['Nickname', wvNick || DASH, oppNick || DASH],
+        ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
+        ['Conf. rank', confRank(wv) || soccerConfRank(card, wv, wvConf) || DASH, confRank(opp) || soccerConfRank(card, opp, oppConf) || DASH],
+        // only when there's data
         ['Win chance', projection(wv), projection(opp)],
       ];
 
@@ -904,7 +906,18 @@
     return t;
   }
 
-  function manualCard({ label, games = [], done, doneLogo, rows }) {
+  // Rows every hand-entered card always shows, in this order: Venue, Broadcast (TBA if unknown), Nickname,
+  // and for college also Conference and Conf. rank (dash if unknown). Any other rows follow.
+  const DASH = '—';
+  function standardRows(g, college) {
+    const row = k => (g.rows || []).find(r => r[0] === k), pair = k => (g.pairs || []).find(r => r[0] === k);
+    const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'],
+                 ['Nickname', g.us.nick || DASH, g.them.nick || DASH]];
+    if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, r[2] || DASH]; }));
+    const taken = new Set(std.map(r => r[0]));
+    return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
+  }
+  function manualCard({ label, games = [], done, doneLogo, rows, college }) {
     const card = el('article', 'game');
     card.append(el('div', 'sport', label));
     const g = games.find(x => new Date(x.date) >= Date.now() - 4 * 3600e3);
@@ -926,7 +939,7 @@
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
     card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')),
-                details(g.us.short || g.us.name, g.them.short || g.them.name, [...(g.rows || []), ['Nickname', g.us.nick, g.them.nick], ...(g.pairs || [])]));
+                details(g.us.short || g.us.name, g.them.short || g.them.name, standardRows(g, college)));
     return card;
   }
   const byDate = grid => { const at = c => Number(c.dataset.when) || Infinity; [...grid.children].sort((a, b) => at(a) - at(b)).forEach(c => grid.append(c)); };
@@ -954,10 +967,10 @@
   function useFallback(card) {
     const s = WVU_MANUAL.find(m => m.label === card.dataset.fallback);
     if (!s) return false;
-    card.replaceWith(manualCard(s));
+    card.replaceWith(manualCard({ ...s, college: true }));
     return true;
   }
-  WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard(s)));
+  WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
   Promise.all(espnCards.map(loadGame)).then(() => byDate(grid));
 
   // Sissonville High School -- no public live feed, so schedules (MaxPreps) and ranks are entered by hand.
@@ -999,7 +1012,7 @@
         ['Venue', 'Sissonville High School']] },
     ] },
     { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
-      ['Last game', 'Oct 27 at Buffalo (L 3-1)'], ['Sissonville rank', '#124 in WV'], ['Sissonville record', '4-30 (0-11)']] },
+      ['Last game', 'Lost 3 sets to 1 (Oct 27)'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
