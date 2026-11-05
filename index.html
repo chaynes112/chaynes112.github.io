@@ -200,7 +200,7 @@
 
   <section class="games" aria-label="Next Mountaineer games">
     <div class="game-grid" id="game-grid">
-      <article class="game" data-sport="football" data-league="college-football" data-team="277" data-conf="Big 12" data-groups="80"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="football" data-league="college-football" data-team="277" data-conf="Big 12" data-groups="80" data-polls="Playoff Committee Rankings|AP Top 25"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="soccer" data-league="usa.ncaa.m.1" data-team="5658" data-conf="Sun Belt"><div class="sport">Men's Soccer</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382" data-conf="Big 12" data-votes="1"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1" data-votes="Coaches Poll"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
@@ -358,7 +358,7 @@
   const CHOP_START = 1.65;
   const chop = new Audio('tomahawk-chop.mp3');
   chop.preload = 'auto';
-  chop.volume = 0.7;   // a little under full so it sits closer to the Country Roads MIDI
+  chop.volume = 0.5;   // a little under full so it sits closer to the Country Roads MIDI
   document.querySelector('.sville .team-logo').addEventListener('click', () => {
     if (!chop.paused) { chop.pause(); return; }
     if (player.playing) player.stop();
@@ -731,6 +731,9 @@
   const teamNickname = async (card, c) => nickname(c) || await getJSON(CORE + card.dataset.sport + '/leagues/' + card.dataset.league
     + '/seasons/' + seasonFor(card) + '/teams/' + c.id).then(tm => tm.nickname || null).catch(() => null);
 
+  // Extra line under the matchup for specific ESPN games (by ESPN event id), like the high school 'State Semifinal' line
+  const GAME_NOTE = { '401929850': 'Sun Belt Quarterfinal' };   // men's soccer vs Georgia Southern, Nov 8, 2026
+
   async function loadGame(card) {
     const label = card.querySelector('.sport').textContent;
     try {
@@ -772,6 +775,14 @@
 
       // ESPN's game summary: matchup predictor (football and basketball) and both conferences' standings
       const summary = await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/summary?event=' + ev.id).catch(() => ({}));
+      // Cards with data-polls use the first listed poll ESPN currently has (football: the CFP rankings in the weeks they
+      // come out, otherwise the AP poll); a team not in that poll shows no rank. Other cards use ESPN's own rank.
+      let pollRanks = null;
+      if (card.dataset.polls) {
+        const all = (await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/rankings').catch(() => ({}))).rankings || [];
+        const poll = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).find(Boolean);
+        if (poll) pollRanks = new Map((poll.ranks || []).map(r => [String(r.team && r.team.id), r.current]));
+      }
       const projection = c => {
         const p = summary.predictor;
         const side = p && [p.homeTeam, p.awayTeam].find(s => s && String(s.id) === String(c.id));
@@ -815,7 +826,7 @@
       const abbr = c => c.team.abbreviation || c.team.location;
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
-      const rankNum = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
+      const rankNum = c => { const r = pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
       const matchup = teamsLine(
         { rank: rankNum(wv), name: 'West Virginia', logo: WVU_CARD_LOGO, star: starred, record: record(wv, wvConf) }, prefix,
         { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf) });
@@ -843,7 +854,9 @@
         rows.push(['Moneyline', line(wvSide), line(oppSide)]);
       }
 
-      card.append(matchup, when, details('WVU', abbr(opp), rows));
+      card.append(matchup);
+      if (GAME_NOTE[ev.id]) card.append(el('div', 'matchup', GAME_NOTE[ev.id]));
+      card.append(when, details('WVU', abbr(opp), rows));
       if (starred) card.append(el('p', 'footnote', '*' + votes));
     } catch (e) {
       if (!useFallback(card)) card.replaceChildren(el('div', 'sport', label), el('p', 'note', 'Schedule unavailable right now'));
@@ -940,7 +953,8 @@
   function manualCard({ label, games = [], done, doneLogo, rows, college }) {
     const card = el('article', 'game');
     card.append(el('div', 'sport', label));
-    const g = games.find(x => new Date(x.date) >= Date.now() - 4 * 3600e3);
+    // a multi-day event (through: last day) stays up until its last day is over
+    const g = games.find(x => new Date(x.through || x.date) >= Date.now() - 4 * 3600e3);
     if (!g) {
       const note = el('p', 'note' + (doneLogo ? ' with-logo' : ''));
       if (doneLogo) note.append(teamLogo(doneLogo));   // same sizing as the logos on the other cards
@@ -952,7 +966,8 @@
     const d = new Date(g.date);
     card.dataset.when = d.getTime();
     const matchup = teamsLine(g.us, g.prefix, g.them);
-    const day = d.toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
+    const fmtDay = x => new Date(x).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
+    const day = fmtDay(g.date) + (g.through ? ' - ' + fmtDay(g.through) : '');
     const time = g.timeTBA ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
     // Non-breaking spaces inside each piece, so a narrow card only wraps at the dots
     const keep = s => s.replace(/ /g, '\u00a0');
@@ -968,9 +983,9 @@
   // Rifle rank: CRCA Top 20 through Oct 25, 2026 (ssusa.org). Update after each new poll.
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
-      { date: '2026-11-14T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-1)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: WVU_CARD_LOGO }, rows: [
-        ['Opponents', ['#4 TCU', '#5 NEB', '#6 MISS', '#7 UK'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
+      { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
+        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', short: 'Field', logo: WVU_CARD_LOGO }, rows: [
+        ['Opponents', ['#4 UK', '#5 NEB', '#6 TCU', '#7 MISS'].map(t => t.replace(/ /g, '\u00a0')).join(', ')],
         ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
     ] },
     { label: 'Baseball', games: [
@@ -1000,14 +1015,11 @@
   const SVILLE = [
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
-        us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 31, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
+        us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 29, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
         ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
     ] },
-    { label: 'Girls Soccer', games: [
-      { date: '2026-11-05T17:00:00Z', where: 'Beckley, WV', prefix: 'vs', subtitle: 'State Semifinal',
-        us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '16-4' }, them: { rank: 2, name: 'Lincoln', nick: 'Cougars', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
-        ['Venue', 'YMCA Paul Cline Memorial Sports Complex'], ['Broadcast', 'NFHS Network']] },
-    ] },
+    { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
+      ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
       ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
     // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
