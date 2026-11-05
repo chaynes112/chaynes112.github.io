@@ -998,7 +998,9 @@
         // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
         // (TCU publishes none: counted from match results, 3-2 per Navy's Oct 4 recap + 3 wins since)
         ["Opponent's record", '', ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'].join('\n')],
-        ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null]] },
+        // GARC publishes no standings; rank from each member's conference record on its own schedule page (Nov 5):
+        // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
+        ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
@@ -1032,11 +1034,11 @@
     ] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
+    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
+      ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
     { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
       // Last game: Class AA Region IV first round, 9 seed Sissonville at 8 seed Buffalo, Oct 27 (WVSSAC bracket)
       ['Last game', 'Regional First Round'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
-    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
-      ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
     // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
     { label: 'Boys Basketball', games: [
       { date: '2026-12-04T23:00:00Z', where: 'Ravenswood, WV', prefix: 'at',
