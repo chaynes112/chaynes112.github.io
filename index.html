@@ -947,6 +947,7 @@
   function standardRows(g, college) {
     const row = k => (g.rows || []).find(r => r[0] === k), pair = k => (g.pairs || []).find(r => r[0] === k);
     const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'],
+                 ...(g.lead || []),   // rows that go right under the column header (rifle: the field's records)
                  ['Nickname', g.us.nick || DASH, g.noOpp ? '' : g.them.nick || DASH]];
     // a field event (noOpp: rifle meets) has no single opponent, so its column stays empty instead of dashes
     if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, g.noOpp ? '' : r[2] || DASH]; }));
@@ -980,7 +981,7 @@
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
     card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')),
-                details(g.us.short || g.us.name, g.noOpp ? '' : g.them.short || g.them.name, standardRows(g, college)));
+                details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), standardRows(g, college)));
     return card;
   }
   // upcoming games soonest first, then ended seasons with the most recent last game first
@@ -997,10 +998,12 @@
         us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png' }, noOpp: true, rows: [
         // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
         // (TCU publishes none: counted from match results, 3-2 per Navy's Oct 4 recap + 3 wins since)
-        ["Opponent's record", '', ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'].join('\n')],
         // GARC publishes no standings; rank from each member's conference record on its own schedule page (Nov 5):
         // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
-        ['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
+        ['Venue', 'WVU Rifle Range']],
+        // field event: the second column is headed "Opponents" and its first row lists every team in the field
+        oppHead: 'Opponents', lead: [['Record', '7-1 (2-0)', ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'].join('\n')]],
+        pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
     { label: 'Baseball', games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
