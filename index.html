@@ -338,13 +338,16 @@
   player.addEventListener('stop', idle);
   btn.addEventListener('click', () => player.playing ? player.stop() : player.start());
 
-  // Click the Sissonville logo: the Tomahawk Chop MP3 (click again to stop). Country Roads stops so the two don't clash.
+  // Click the Sissonville logo: the Tomahawk Chop MP3. Click again to pause, again to resume.
+  // Loaded with the page so it starts right away; skips the recording's 1.65 s of near-silence at the top.
+  // Country Roads stops so the two don't clash.
+  const CHOP_START = 1.65;
   const chop = new Audio('tomahawk-chop.mp3');
-  chop.preload = 'none';
+  chop.preload = 'auto';
   document.querySelector('.sville .team-logo').addEventListener('click', () => {
     if (!chop.paused) { chop.pause(); return; }
     if (player.playing) player.stop();
-    chop.currentTime = 0;
+    if (chop.ended || chop.currentTime < CHOP_START) chop.currentTime = CHOP_START;
     chop.play();
   });
 </script>
