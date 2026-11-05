@@ -948,15 +948,38 @@
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
         us: { rank: 3, name: 'Sissonville', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 31, name: 'Wayne', logo: 'wayne-logo.png', record: '0-9' }, rows: [
-        ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl (livestream)']] },
+        ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
     ] },
     { label: 'Girls Soccer', games: [
       { date: '2026-11-05T17:00:00Z', where: 'Beckley, WV', prefix: 'vs', subtitle: 'State Semifinal',
         us: { rank: 3, name: 'Sissonville', logo: 'sissonville-logo.png', record: '16-4' }, them: { rank: 2, name: 'Lincoln', logo: 'lincoln-logo.png', record: '17-3' }, rows: [
-        ['Venue', 'YMCA Paul Cline Memorial Sports Complex'], ['Broadcast', 'NFHS Network (livestream)']] },
+        ['Venue', 'YMCA Paul Cline Memorial Sports Complex'], ['Broadcast', 'NFHS Network']] },
     ] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
       ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
+    // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
+    { label: 'Boys Basketball', games: [
+      { date: '2026-12-04T23:00:00Z', where: 'Ravenswood, WV', prefix: 'at',
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Ravenswood', record: '0-0' }, rows: [
+        ['Venue', 'Ravenswood High School']] },
+    ] },
+    { label: 'Girls Basketball', games: [
+      { date: '2026-12-10T00:00:00Z', where: 'Charleston, WV', prefix: 'vs',
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Logan', record: '0-0' }, rows: [
+        ['Venue', 'Sissonville High School']] },
+    ] },
+    { label: 'Baseball', games: [
+      { date: '2027-04-26T21:00:00Z', where: 'Williamstown, WV', prefix: 'at',
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Williamstown', record: '0-0' }, rows: [
+        ['Venue', 'Williamstown High School']] },
+    ] },
+    { label: 'Softball', games: [
+      { date: '2027-03-16T22:00:00Z', where: 'Charleston, WV', prefix: 'vs',
+        us: { name: 'Sissonville', logo: 'sissonville-logo.png', record: '0-0' }, them: { name: 'Herbert Hoover', record: '0-0' }, rows: [
+        ['Venue', 'Sissonville High School']] },
+    ] },
+    { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', rows: [
+      ['Last game', 'Oct 27 at Buffalo (L 3-1)'], ['Sissonville rank', '#124 in WV'], ['Sissonville record', '4-30 (0-11)']] },
   ];
   (function () {
     const grid = document.getElementById('sville-grid');
