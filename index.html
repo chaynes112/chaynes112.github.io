@@ -86,7 +86,8 @@
   .game .details dl { margin-top: .5rem; }
   .game dd { white-space: nowrap; }
   /* phones are too narrow for one-line values; let long ones wrap rather than run off the card */
-  @media (max-width: 480px) { .game dd, .game .cmp, .game .team-name { white-space: normal; } }
+  @media (max-width: 480px) { .game dd, .game .cmp, .game .team-name { white-space: normal; }
+    .game .team-name { height: auto; min-height: 26px; } .game .team, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
   .game {
     background: rgba(0, 26, 56, .78); border: 1px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
@@ -95,8 +96,10 @@
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
   /* Matchup: [rank] WVU / record  vs  [logo][rank] Opponent / record */
   .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .55rem 0 .4rem; }
-  .game .team-name { display: flex; align-items: center; gap: .35rem; font-weight: 600; font-size: .97rem; line-height: 1.25; white-space: nowrap; }
-  .game .team-name img { width: 24px; height: 24px; object-fit: contain; flex: none; }
+  .game .team-name { display: flex; align-items: center; gap: .35rem; height: 26px; font-weight: 600; font-size: .97rem; line-height: 1.25; white-space: nowrap; }
+  .game .team-name img { width: 24px; height: 24px; object-fit: contain; flex: none;
+                         /* thin light outline so dark logos (Cincinnati, Texas Tech, Colorado) show on navy */
+                         filter: drop-shadow(0 0 .6px rgba(255,255,255,.95)) drop-shadow(0 0 .6px rgba(255,255,255,.95)); }
   .game .team-rank { color: var(--gold); font-size: .85rem; font-weight: 700; }
   .game .team-rec { font-size: .8rem; opacity: .75; margin-top: .1rem; }
   .game .team-vs { opacity: .7; font-size: .9rem; padding-top: .15rem; }
@@ -774,7 +777,8 @@
           if (a[(y * c.width + xx) * 4 + 3] > 40) { if (xx < l) l = xx; if (xx > r) r = xx; if (y < t) t = y; if (y > b) b = y; }
         }
         if (r < 0) return;
-        const w = r - l + 1, h = b - t + 1, k = Math.sqrt(LOGO_AREA / (w * h));
+        // same visible area as the TT, but never taller than the name row (24px) or wider than 32px
+        const w = r - l + 1, h = b - t + 1, k = Math.min(Math.sqrt(LOGO_AREA / (w * h)), 24 / h, 32 / w);
         const out = document.createElement('canvas');
         out.width = Math.round(img.naturalWidth * w / c.width); out.height = Math.round(img.naturalHeight * h / c.height);
         out.getContext('2d').drawImage(img, l / s, t / s, w / s, h / s, 0, 0, out.width, out.height);
