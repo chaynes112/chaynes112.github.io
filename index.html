@@ -82,6 +82,7 @@
   .game .cmp-head { font: 500 .78rem "Oswald", Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
   .game .cmp-label { opacity: .65; }
   .game .cmp-val { font-weight: 600; }
+  .game .cmp-val a { color: inherit; }
   .game .cmp-wide { grid-column: span 2; }
   .game .cmp-lines { white-space: pre; }   /* one entry per line (rifle opponents) */
   .game .details dl { margin-top: .5rem; }
@@ -966,9 +967,15 @@
         headed = true;
       }
       t.append(el('span', 'cmp-label', r[0]));
-      const val = v => el('span', 'cmp-val' + (String(v).includes('\n') ? ' cmp-lines' : ''), v == null ? '—' : v);
+      // a value can be { text, href } to show it as a link (opens in a new tab)
+      const fill = (span, v) => {
+        if (v && v.href) { const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; span.append(a); }
+        else span.textContent = v == null ? '—' : v;
+        return span;
+      };
+      const val = v => fill(el('span', 'cmp-val' + (String(v).includes('\n') ? ' cmp-lines' : '')), v);
       if (r.length === 3) t.append(val(r[1]), val(r[2]));
-      else t.append(el('span', 'cmp-val cmp-wide', r[1]));
+      else t.append(fill(el('span', 'cmp-val cmp-wide'), r[1]));
     });
     return t;
   }
@@ -1241,7 +1248,7 @@
     { label: 'Football', games: [
       { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
         us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 29, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
-        ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
+        ['Venue', 'Wayne High School'], ['Broadcast', { text: 'Hudl', href: 'https://fan.hudl.com/usa/wv/charleston/organization/15384/sissonville-high-school/team/31991/boys-varsity-football/schedule?date=2026-11-01&range=Month&s=U2NoZWR1bGVFbnRyeTMzOTg1Njc5&ss=2026' }]] },
     ] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
