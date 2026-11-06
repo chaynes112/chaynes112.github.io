@@ -116,7 +116,10 @@
   }
   .game .when.with-spread { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
   .game .when .spread { font-weight: 600; white-space: nowrap; }
-  .game .live { color: #ff6b5b; font-weight: 600; }
+  /* LIVE NOW: red, slowly fading down and back up (2.4s per pulse); steady for people who turn off animations */
+  .game .live { color: #ff3b2f; font-weight: 600; animation: live-pulse 2.4s ease-in-out infinite; }
+  @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .game .live { animation: none; } }
   .game .final { color: var(--gold); font-weight: 700; }
   /* live / final score, right after each team's name */
   .game .team-score { font: 700 1.6rem/32px "Oswald", Impact, sans-serif; margin-left: .35rem; flex: none; }
