@@ -339,7 +339,8 @@
 <button class="music" id="music" type="button" disabled aria-label="Play Take Me Home, Country Roads">
   <span class="icon" id="music-icon">&#9654;</span><span id="music-label">Loading&hellip;</span>
 </button>
-<midi-player id="player" src="country-roads.mid" sound-font loop></midi-player>
+<!-- ?v= changes whenever the .mid file is replaced, so browsers don't keep playing a cached old copy -->
+<midi-player id="player" src="country-roads.mid?v=2" sound-font loop></midi-player>
 <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.5.0"></script>
 <script>
   // Country Roads MIDI -- browsers block audio until a click, so it starts from the button
