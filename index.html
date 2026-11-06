@@ -856,6 +856,7 @@
         { rank: rankNum(wv), name: 'West Virginia', logo: WVU_CARD_LOGO, star: starred, record: record(wv, wvConf), score: score(wv), lost: lost(wv) }, prefix,
         { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf), score: score(opp), lost: lost(opp) });
       card._scores = [...matchup.querySelectorAll('.team-score')];
+      if (state === 'post' && wv.winner) card.dataset.win = ev.id;   // fireworks (see celebrate)
 
       // Detail rows, in order: ones every game has first, then betting/predictor rows that only some have.
       // [label, value] spans both columns; [label, WVU, opponent] fills the two columns.
@@ -1054,7 +1055,65 @@
     return true;
   }
   WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
-  Promise.all(espnCards.map(loadGame)).then(() => { byDate(grid); setTimeout(tick, nextTick()); });
+  // each card checks for a win as soon as it loads, so the fireworks don't wait for the slowest card
+  Promise.all(espnCards.map(c => loadGame(c).then(celebrate))).then(() => { byDate(grid); setTimeout(tick, nextTick()); });
+
+  // Fireworks when a card shows a WVU win (FINAL). Each win sets them off once per browser -- on the first visit
+  // after the game, or right when a game you're watching goes final. Skipped for people who turn off animations.
+  function celebrate() {
+    let seen = [];
+    try { seen = JSON.parse(localStorage.getItem('wvu-wins-seen') || '[]'); } catch (e) { /* storage blocked: still celebrate */ }
+    const wins = shown().map(c => c.dataset.win).filter(id => id && !seen.includes(id));
+    if (!wins.length) return;
+    try { localStorage.setItem('wvu-wins-seen', JSON.stringify([...seen, ...wins].slice(-50))); } catch (e) { /* ignore */ }
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) fireworks();
+  }
+  function fireworks(ms = 8000) {
+    const cv = document.createElement('canvas'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none';
+    const size = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0); };
+    size(); addEventListener('resize', size);
+    document.body.append(cv);
+    const COLORS = ['#EAAA00', '#FFD24D', '#ffffff', '#4F8FE6', '#EAAA00'];
+    const rockets = [], sparks = [], start = performance.now();
+    let nextLaunch = start, last = start;
+    const launch = () => {
+      const W = innerWidth, H = innerHeight;
+      rockets.push({ x: W * (0.15 + Math.random() * 0.7), y: H, vx: (Math.random() - 0.5) * 60, vy: -(H * 0.9 + Math.random() * H * 0.35),
+                     top: H * (0.12 + Math.random() * 0.33), color: COLORS[Math.floor(Math.random() * COLORS.length)] });
+    };
+    const burst = r => {
+      const n = 60 + Math.floor(Math.random() * 40), speed = 140 + Math.random() * 120;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, s = speed * (0.55 + Math.random() * 0.45);
+        sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, fade: 0.55 + Math.random() * 0.4,
+                      color: Math.random() < 0.8 ? r.color : '#ffffff' });
+      }
+    };
+    const frame = now => {
+      const dt = Math.min((now - last) / 1000, 0.05); last = now;
+      if (now - start < ms && now >= nextLaunch) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
+      // fade the previous frame instead of clearing it, which leaves short trails
+      g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(0, 0, innerWidth, innerHeight);
+      g.globalCompositeOperation = 'lighter';
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const r = rockets[i];
+        r.vy += 380 * dt; r.x += r.vx * dt; r.y += r.vy * dt;
+        g.fillStyle = '#ffe9a8'; g.fillRect(r.x - 1.5, r.y - 1.5, 3, 3);
+        if (r.y <= r.top || r.vy >= 0) { burst(r); rockets.splice(i, 1); }
+      }
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.vx *= 0.985; s.vy = s.vy * 0.985 + 90 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= s.fade * dt;
+        if (s.life <= 0) { sparks.splice(i, 1); continue; }
+        g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, 2, 0, Math.PI * 2); g.fill();
+      }
+      g.globalAlpha = 1;
+      if (now - start < ms || rockets.length || sparks.length) requestAnimationFrame(frame);
+      else { removeEventListener('resize', size); cv.remove(); }
+    };
+    requestAnimationFrame(frame);
+  }
 
   // Auto-refresh, cards only (the music and animations keep going):
   //  - a live game: score and clock every 30 seconds; when it ends the card rebuilds as FINAL
@@ -1095,6 +1154,7 @@
         c.dataset.state === 'in' ? liveScore(c).catch(() => {})
         : c.dataset.state === 'pre' && new Date(c._ev.date) - Date.now() < SOON ? reloadCard(c).catch(() => {}) : null));
       byDate(grid);
+      celebrate();
     } finally { busy = false; }
   }
   async function tick() {
