@@ -719,8 +719,8 @@
     return names.length ? names.join(', ') : null;
   };
 
-  // Soccer conference standings, copied from sunbeltsports.org and big12sports.com (Nov 2, 2026), in order,
-  // with each team's conference record. A rank only shows while ESPN's count of that team's conference
+  // Soccer conference standings from sunbeltsports.org and big12sports.com, in order, with each team's conference
+  // record. wvu-data.json (updated every 2 hours by the GitHub job) replaces these; the copy below is the fallback. A rank only shows while ESPN's count of that team's conference
   // record still matches, so it drops off by itself after the team's next game. Update after games.
   const SOCCER_STANDINGS = {
     'usa.ncaa.m.1': [['West Virginia', '6-1-2'], ['Marshall', '6-1-2'], ['UCF', '5-3-1'], ['James Madison', '4-2-3'],
@@ -1026,8 +1026,9 @@
     [...grid.children].sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1]; }).forEach(c => grid.append(c));
   };
 
-  // WVU sports ESPN doesn't carry (rifle) or hasn't loaded yet (baseball 2027) -- from wvusports.com.
-  // Rifle rank: CRCA Top 20 through Oct 25, 2026 (ssusa.org). Update after each new poll.
+  // WVU sports ESPN doesn't carry (rifle) or hasn't loaded yet (baseball 2027). The GitHub job
+  // (scripts/update_wvu_data.py, every 2 hours) pulls these into wvu-data.json from wvusports.com, ncaarifle.org
+  // and ncaa.com's CRCA poll; the games typed in below are only used if that file can't be loaded.
   const WVU_MANUAL = [
     { label: 'Rifle', games: [
       { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
@@ -1058,9 +1059,26 @@
     card.replaceWith(manualCard({ ...s, college: true }));
     return true;
   }
-  WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
-  // each card checks for a win as soon as it loads, so the fireworks don't wait for the slowest card
-  Promise.all(espnCards.map(c => loadGame(c).then(celebrate))).then(() => { byDate(grid); setTimeout(tick, nextTick()); });
+  // wvu-data.json is read straight from the repository, because the job's commits don't rebuild the site;
+  // then the site's own copy; then the values typed in above. Each try gets 4 seconds.
+  const DATA_URLS = ['https://raw.githubusercontent.com/chaynes112/chaynes112.github.io/main/wvu-data.json', 'wvu-data.json'];
+  const withTimeout = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
+  const wvuData = DATA_URLS.reduce((p, u) => p.catch(() => withTimeout(getJSON(u), 4000)), Promise.reject(new Error('start'))).catch(() => null);
+  function applyData(d) {
+    if (!d) return;
+    const logo = t => t && t.logo === 'WVU_CARD_LOGO' ? { ...t, logo: WVU_CARD_LOGO } : t;
+    WVU_MANUAL.forEach(s => {
+      const games = d.manual && d.manual[s.label];
+      if (Array.isArray(games)) s.games = games.map(g => ({ ...g, us: logo(g.us), them: logo(g.them) }));
+    });
+    Object.entries(d.soccerStandings || {}).forEach(([league, table]) => { if (Array.isArray(table) && table.length) SOCCER_STANDINGS[league] = table; });
+  }
+  wvuData.then(d => {
+    applyData(d);
+    WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
+    // each card checks for a win as soon as it loads, so the fireworks don't wait for the slowest card
+    Promise.all(espnCards.map(c => loadGame(c).then(celebrate))).then(() => { byDate(grid); setTimeout(tick, nextTick()); });
+  });
 
   // Fireworks when a card shows a WVU win (FINAL). Each win sets them off once per browser -- on the first visit
   // after the game, or right when a game you're watching goes final. Skipped for people who turn off animations.

@@ -1,0 +1,33 @@
+# Refreshes wvu-data.json (rifle, baseball until ESPN has it, soccer standings) from the official sites.
+# The page reads that file from raw.githubusercontent.com, because commits made here don't rebuild GitHub Pages.
+name: Update WVU data
+
+on:
+  schedule:
+    - cron: '23 */2 * * *'   # every 2 hours (GitHub may start scheduled runs a few minutes late)
+  workflow_dispatch:          # "Run workflow" button on the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-wvu-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pull the data
+        run: python3 scripts/update_wvu_data.py wvu-data.json
+      - name: Commit if anything changed
+        run: |
+          git add wvu-data.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update WVU data"
+          git pull --rebase
+          git push

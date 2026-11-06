@@ -1,0 +1,644 @@
+{
+ "updated": "2026-11-06T23:04:31Z",
+ "manual": {
+  "Rifle": [
+   {
+    "date": "2026-11-14T16:00:00Z",
+    "where": "Morgantown, WV",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "WVU Rifle Range"
+     ]
+    ],
+    "through": "2026-11-15T16:00:00Z",
+    "prefix": "at",
+    "them": {
+     "name": "WVU Fall Classic",
+     "logo": "wvu-logo.png",
+     "noOutline": true
+    },
+    "noOpp": true,
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      null
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      null
+     ]
+    ],
+    "oppHead": "Opponents",
+    "field": [
+     "#4 UK 4-1 (1-1)",
+     "#5 NEB 3-4",
+     "#6 TCU 6-2",
+     "#7 MISS 7-0"
+    ]
+   },
+   {
+    "date": "2027-01-15T17:00:00Z",
+    "where": "Fairbanks, AK",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "UAF Range"
+     ]
+    ],
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "rank": 8,
+     "name": "Alaska Fairbanks",
+     "short": "UAF",
+     "nick": "Nanooks",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png",
+     "record": "3-1"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      null
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      null
+     ]
+    ]
+   },
+   {
+    "date": "2027-01-16T17:00:00Z",
+    "where": "Fairbanks, AK",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "TVSA Range"
+     ]
+    ],
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "rank": 8,
+     "name": "Alaska Fairbanks",
+     "short": "UAF",
+     "nick": "Nanooks",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png",
+     "record": "3-1"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      null
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      null
+     ]
+    ]
+   },
+   {
+    "date": "2027-01-23T17:00:00Z",
+    "where": "Morgantown, WV",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "WVU Rifle Range"
+     ]
+    ],
+    "timeTBA": true,
+    "prefix": "vs",
+    "them": {
+     "rank": 2,
+     "name": "Navy",
+     "short": "NAVY",
+     "nick": "Midshipmen ",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Navy.png",
+     "record": "9-0 (3-0)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      "GARC"
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      "1st of 6"
+     ]
+    ]
+   },
+   {
+    "date": "2027-01-30T17:00:00Z",
+    "where": "Akron, OH",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "Robert A. Pinn Shooting Range"
+     ]
+    ],
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "rank": 12,
+     "name": "Akron",
+     "short": "AKR",
+     "nick": "Zips",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/android-chrome-192x192.png",
+     "record": "0-3 (0-2)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      "GARC"
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      "4th of 6"
+     ]
+    ]
+   },
+   {
+    "date": "2027-02-13T17:00:00Z",
+    "where": "Lexington, KY",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "Barker Hall Rifle Range"
+     ]
+    ],
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "rank": 4,
+     "name": "Kentucky",
+     "short": "UK",
+     "nick": "Wildcats",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Kentucky.png",
+     "record": "4-1 (1-1)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      "GARC"
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      "3rd of 6"
+     ]
+    ]
+   },
+   {
+    "date": "2027-02-20T17:00:00Z",
+    "where": "Morgantown, WV",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "WVU Shell Building"
+     ]
+    ],
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "name": "NCAA Qualifying Match (VMI)",
+     "logo": "wvu-logo.png",
+     "noOutline": true
+    },
+    "noOpp": true,
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      null
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      null
+     ]
+    ]
+   },
+   {
+    "date": "2027-02-27T17:00:00Z",
+    "where": "Morgantown, WV",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "WVU Shell Building"
+     ]
+    ],
+    "through": "2027-02-28T17:00:00Z",
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "name": "GARC Championships",
+     "logo": "wvu-logo.png",
+     "noOutline": true
+    },
+    "noOpp": true,
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      null
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      null
+     ]
+    ]
+   },
+   {
+    "date": "2027-03-12T17:00:00Z",
+    "where": "Statesboro, GA",
+    "us": {
+     "rank": 1,
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "7-1 (2-0)"
+    },
+    "rows": [
+     [
+      "Venue",
+      "Georgia Southern Shooting Sports Education Center"
+     ]
+    ],
+    "through": "2027-03-13T17:00:00Z",
+    "timeTBA": true,
+    "prefix": "at",
+    "them": {
+     "name": "NCAA Championships",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/NCAALogoUpdated.png",
+     "noOutline": false
+    },
+    "noOpp": true,
+    "pairs": [
+     [
+      "Conference",
+      "GARC",
+      null
+     ],
+     [
+      "Conf. rank",
+      "1st of 6",
+      null
+     ]
+    ]
+   }
+  ],
+  "Baseball": [
+   {
+    "date": "2027-02-19T17:00:00Z",
+    "where": "Charleston, SC",
+    "prefix": "at",
+    "us": {
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "0-0 (0-0)"
+    },
+    "them": {
+     "name": "College of Charleston",
+     "short": "COFC",
+     "nick": "Cougars",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Charleston.png",
+     "record": "0-0 (0-0)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "Big 12",
+      "CAA"
+     ]
+    ],
+    "rows": [
+     [
+      "Venue",
+      "The Ballpark at Patriots Point"
+     ]
+    ],
+    "timeTBA": true
+   },
+   {
+    "date": "2027-02-20T17:00:00Z",
+    "where": "Charleston, SC",
+    "prefix": "at",
+    "us": {
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "0-0 (0-0)"
+    },
+    "them": {
+     "name": "College of Charleston",
+     "short": "COFC",
+     "nick": "Cougars",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Charleston.png",
+     "record": "0-0 (0-0)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "Big 12",
+      "CAA"
+     ]
+    ],
+    "rows": [
+     [
+      "Venue",
+      "The Ballpark at Patriots Point"
+     ]
+    ],
+    "timeTBA": true
+   },
+   {
+    "date": "2027-02-21T17:00:00Z",
+    "where": "Charleston, SC",
+    "prefix": "at",
+    "us": {
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "0-0 (0-0)"
+    },
+    "them": {
+     "name": "College of Charleston",
+     "short": "COFC",
+     "nick": "Cougars",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Charleston.png",
+     "record": "0-0 (0-0)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "Big 12",
+      "CAA"
+     ]
+    ],
+    "rows": [
+     [
+      "Venue",
+      "The Ballpark at Patriots Point"
+     ]
+    ],
+    "timeTBA": true
+   },
+   {
+    "date": "2027-02-25T17:00:00Z",
+    "where": "DeLand, FL",
+    "prefix": "vs",
+    "us": {
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "0-0 (0-0)"
+    },
+    "them": {
+     "name": "St. John's",
+     "short": "SJU",
+     "nick": "Red Storm",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Saint_Johns.png",
+     "record": "0-0 (0-0)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "Big 12",
+      "Big East"
+     ]
+    ],
+    "rows": [
+     [
+      "Venue",
+      "Melching Field at Conrad Park"
+     ]
+    ],
+    "timeTBA": true
+   },
+   {
+    "date": "2027-02-26T20:00:00Z",
+    "where": "Orlando, FL",
+    "prefix": "vs",
+    "us": {
+     "name": "West Virginia",
+     "short": "WVU",
+     "nick": "Mountaineers",
+     "logo": "WVU_CARD_LOGO",
+     "record": "0-0 (0-0)"
+    },
+    "them": {
+     "name": "Indiana State",
+     "short": "INST",
+     "nick": "Sycamores",
+     "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Indiana_State.png",
+     "record": "0-0 (0-0)"
+    },
+    "pairs": [
+     [
+      "Conference",
+      "Big 12",
+      null
+     ]
+    ],
+    "rows": [
+     [
+      "Venue",
+      "ESPN Wide World of Sports Complex"
+     ]
+    ]
+   }
+  ]
+ },
+ "soccerStandings": {
+  "usa.ncaa.m.1": [
+   [
+    "West Virginia",
+    "6-1-2"
+   ],
+   [
+    "Marshall",
+    "6-1-2"
+   ],
+   [
+    "UCF",
+    "5-3-1"
+   ],
+   [
+    "James Madison",
+    "4-2-3"
+   ],
+   [
+    "Coastal Carolina",
+    "4-3-2"
+   ],
+   [
+    "South Carolina",
+    "3-4-2"
+   ],
+   [
+    "Kentucky",
+    "3-4-2"
+   ],
+   [
+    "Georgia Southern",
+    "2-5-2"
+   ],
+   [
+    "Old Dominion",
+    "2-6-1"
+   ],
+   [
+    "Georgia State",
+    "1-7-1"
+   ]
+  ],
+  "usa.ncaa.w.1": [
+   [
+    "BYU",
+    "8-1-2"
+   ],
+   [
+    "Texas Tech",
+    "8-2-1"
+   ],
+   [
+    "Baylor",
+    "8-2-1"
+   ],
+   [
+    "Colorado",
+    "8-3-0"
+   ],
+   [
+    "Kansas",
+    "7-2-2"
+   ],
+   [
+    "Houston",
+    "7-3-1"
+   ],
+   [
+    "UCF",
+    "6-3-2"
+   ],
+   [
+    "West Virginia",
+    "4-4-3"
+   ],
+   [
+    "Arizona State",
+    "4-6-1"
+   ],
+   [
+    "Arizona",
+    "2-4-5"
+   ],
+   [
+    "Oklahoma State",
+    "3-6-2"
+   ],
+   [
+    "Cincinnati",
+    "2-6-3"
+   ],
+   [
+    "Kansas State",
+    "2-7-2"
+   ],
+   [
+    "TCU",
+    "2-7-2"
+   ],
+   [
+    "Utah",
+    "1-7-3"
+   ],
+   [
+    "Iowa State",
+    "0-9-2"
+   ]
+  ]
+ }
+}
