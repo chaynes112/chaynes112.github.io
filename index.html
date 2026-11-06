@@ -1068,45 +1068,93 @@
     try { localStorage.setItem('wvu-wins-seen', JSON.stringify([...seen, ...wins].slice(-50))); } catch (e) { /* ignore */ }
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) fireworks();
   }
-  function fireworks(ms = 8000) {
+  // Fireworks sounds, made in the browser like the musket: a rising whistle on launch, then a boom and crackle
+  // at the burst, panned left/right to where it is on screen. Browsers only allow sound after the visitor has
+  // clicked or tapped something on the page, so on a fresh visit the fireworks may be silent.
+  function fwSound(kind, x, delay = 0) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audio = audio || new AC();
+    if (audio.state === 'suspended') audio.resume().catch(() => {});
+    const a = audio, t = a.currentTime + delay;
+    const out = a.createGain(); out.gain.value = 0.5;
+    const pan = a.createStereoPanner ? a.createStereoPanner() : null;
+    if (pan) { pan.pan.value = Math.max(-1, Math.min(1, (x / innerWidth) * 2 - 1)) * 0.8; out.connect(pan).connect(a.destination); }
+    else out.connect(a.destination);
+    const noise = secs => { const len = Math.floor(a.sampleRate * secs), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; const s = a.createBufferSource(); s.buffer = b; return s; };
+    if (kind === 'launch') {
+      const o = a.createOscillator(), g = a.createGain(); o.type = 'sine';
+      const f = 900 + Math.random() * 500;
+      o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 2.2, t + 0.9);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+      o.connect(g).connect(out); o.start(t); o.stop(t + 1);
+      return;
+    }
+    // boom
+    const n = noise(1.2), lp = a.createBiquadFilter(), g = a.createGain(); lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(2200 + Math.random() * 1200, t); lp.frequency.exponentialRampToValueAtTime(120, t + 0.9);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.7, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+    n.connect(lp).connect(g).connect(out); n.start(t); n.stop(t + 1.2);
+    const th = a.createOscillator(), tg = a.createGain(); th.type = 'sine';
+    th.frequency.setValueAtTime(70 + Math.random() * 30, t); th.frequency.exponentialRampToValueAtTime(30, t + 0.4);
+    tg.gain.setValueAtTime(0.0001, t); tg.gain.exponentialRampToValueAtTime(0.6, t + 0.01); tg.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+    th.connect(tg).connect(out); th.start(t); th.stop(t + 0.5);
+    // crackle: lots of tiny pops scattered after the boom
+    const pops = 14 + Math.floor(Math.random() * 14);
+    for (let i = 0; i < pops; i++) {
+      const pt = t + 0.25 + Math.random() * 0.9, p = noise(0.03), hp = a.createBiquadFilter(), pg = a.createGain();
+      hp.type = 'highpass'; hp.frequency.value = 2500 + Math.random() * 3000;
+      pg.gain.setValueAtTime(0.0001, pt); pg.gain.exponentialRampToValueAtTime(0.12 + Math.random() * 0.12, pt + 0.002); pg.gain.exponentialRampToValueAtTime(0.0001, pt + 0.025);
+      p.connect(hp).connect(pg).connect(out); p.start(pt); p.stop(pt + 0.03);
+    }
+  }
+  function fireworks(ms = 10000) {
     const cv = document.createElement('canvas'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
     cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none';
     const size = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0); };
     size(); addEventListener('resize', size);
     document.body.append(cv);
-    const COLORS = ['#EAAA00', '#FFD24D', '#ffffff', '#4F8FE6', '#EAAA00'];
+    // red, orange, yellow, green, blue, purple, pink, silver, gold -- dealt out like cards (every color once before
+    // any repeats) so the show never runs to just a couple of colors
+    const COLORS = ['#ff2a2a', '#ff7a00', '#ffe600', '#22dd22', '#1e6bff', '#9b30ff', '#ff3fa4', '#c8ccd4', '#ffc21a'];
     const rockets = [], sparks = [], start = performance.now();
-    let nextLaunch = start, last = start;
+    let nextLaunch = start, last = start, deck = [];
+    const pick = () => { if (!deck.length) deck = [...COLORS].sort(() => Math.random() - 0.5); return deck.pop(); };
     const launch = () => {
-      const W = innerWidth, H = innerHeight;
-      rockets.push({ x: W * (0.15 + Math.random() * 0.7), y: H, vx: (Math.random() - 0.5) * 60, vy: -(H * 0.9 + Math.random() * H * 0.35),
-                     top: H * (0.12 + Math.random() * 0.33), color: COLORS[Math.floor(Math.random() * COLORS.length)] });
+      const W = innerWidth, H = innerHeight, x = W * (0.15 + Math.random() * 0.7);
+      // a third of the bursts are two-color, the rest one color
+      rockets.push({ x, y: H, vx: (Math.random() - 0.5) * 60, vy: -(H * 0.9 + Math.random() * H * 0.35),
+                     top: H * (0.12 + Math.random() * 0.33), color: pick(), color2: Math.random() < 0.33 ? pick() : null });
+      fwSound('launch', x);
     };
     const burst = r => {
       const n = 60 + Math.floor(Math.random() * 40), speed = 140 + Math.random() * 120;
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, s = speed * (0.55 + Math.random() * 0.45);
         sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, fade: 0.55 + Math.random() * 0.4,
-                      color: Math.random() < 0.8 ? r.color : '#ffffff' });
+                      color: r.color2 && i % 2 ? r.color2 : r.color });
       }
+      fwSound('burst', r.x);
     };
     const frame = now => {
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
       if (now - start < ms && now >= nextLaunch) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
       // fade the previous frame instead of clearing it, which leaves short trails
       g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(0, 0, innerWidth, innerHeight);
-      g.globalCompositeOperation = 'lighter';
+      // normal drawing (not additive), so the navy background doesn't tint every color toward blue/white
+      g.globalCompositeOperation = 'source-over';
       for (let i = rockets.length - 1; i >= 0; i--) {
         const r = rockets[i];
         r.vy += 380 * dt; r.x += r.vx * dt; r.y += r.vy * dt;
-        g.fillStyle = '#ffe9a8'; g.fillRect(r.x - 1.5, r.y - 1.5, 3, 3);
+        g.fillStyle = r.color; g.fillRect(r.x - 1.5, r.y - 1.5, 3, 3);
         if (r.y <= r.top || r.vy >= 0) { burst(r); rockets.splice(i, 1); }
       }
       for (let i = sparks.length - 1; i >= 0; i--) {
         const s = sparks[i];
         s.vx *= 0.985; s.vy = s.vy * 0.985 + 90 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= s.fade * dt;
         if (s.life <= 0) { sparks.splice(i, 1); continue; }
-        g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, 2, 0, Math.PI * 2); g.fill();
+        g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, 2.4, 0, Math.PI * 2); g.fill();
       }
       g.globalAlpha = 1;
       if (now - start < ms || rockets.length || sparks.length) requestAnimationFrame(frame);
