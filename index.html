@@ -512,7 +512,7 @@
     ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
   });
 
-  // Easter egg: click the UFO while it's flying and the Toasty guy pops in from the corner, like Mortal Kombat.
+  // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat.
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it, so he
   // pops in first and then says "Toasty!".
@@ -535,13 +535,6 @@
       { transform: 'translate(105%, 40%)' },
     ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   }
-  // The UFO is drawn behind the page, so it can't take clicks itself: any click that lands on it while it's
-  // in the air counts (the UFO keeps the normal cursor, like the other easter eggs)
-  document.addEventListener('click', e => {
-    if (!flying) return;
-    const r = ufo.getBoundingClientRect();
-    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) toastyPop();
-  }, true);
 
   // Easter egg: click the (R) on the Flying WV for fireworks (one show at a time)
   let fwShow = false;
@@ -553,7 +546,7 @@
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
   const mascot = document.querySelector('.mascot svg');
-  let reloading = false;
+  let reloading = false, shots = 0;
 
   function gunshotSound() {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -609,6 +602,8 @@
       puff(163 + i * 2.5, 41 - i * 3, 4 + Math.random() * 3, 18 + Math.random() * 26, -22 - Math.random() * 30, 2.4 + Math.random() * 1.6, 1600 + Math.random() * 900, i * 25);
     }
     setTimeout(() => { reloading = false; }, 1200);
+    // every third shot brings out Toasty, just after the boom
+    if (++shots % 3 === 0) setTimeout(toastyPop, 400);
   });
 </script>
 
