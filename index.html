@@ -132,7 +132,8 @@
   /* the *received-votes note sits at the very bottom of its card */
   .game { display: flex; flex-direction: column; }
   .game .footnote { margin: auto 0 0; padding-top: .6rem; font-size: .78rem; opacity: .7; }
-  .game .note.with-logo { display: flex; align-items: center; gap: .55rem; opacity: 1; color: rgba(244, 241, 232, .7); }
+  /* logo + text cards (Season Ended, Playoffs Schedule TBA): same gap under the sport label and same text as the date line on game cards */
+  .game .note.with-logo { display: flex; align-items: center; gap: .55rem; margin-top: .9rem; opacity: 1; font-size: 1.05rem; color: rgba(244, 241, 232, .85); }
   .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none; }
   .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
   .games.sville { margin-top: 4rem; }
