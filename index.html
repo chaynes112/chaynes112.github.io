@@ -514,8 +514,8 @@
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat.
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
-  // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it, so he
-  // pops in first and then says "Toasty!".
+  // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
+  // 0.15 s after he does, so he's all the way out before he says "Toasty!".
   const TOASTY_SKIP = 0.24;
   const toasty = document.getElementById('toasty');
   const toastySound = new Audio('toasty.mp3');
@@ -526,7 +526,7 @@
     toasting = true;
     toasty.hidden = false;
     toastySound.currentTime = TOASTY_SKIP;
-    toastySound.play().catch(() => {});
+    setTimeout(() => toastySound.play().catch(() => {}), 150);
     // in by 0.1 s, up until the clip ends (~0.95 s after the skip), out by 1.2 s
     toasty.animate([
       { transform: 'translate(105%, 40%)' },
@@ -1039,8 +1039,9 @@
     const taken = new Set(std.map(r => r[0]));
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
-  function manualCard({ label, games = [], done, doneLogo, rows, college, last }) {
+  function manualCard({ label, games = [], done, doneLogo, rows, college, last, first }) {
     const card = el('article', 'game');
+    if (first) card.dataset.first = '1';   // pinned to the top of its section
     card.append(el('div', 'sport', label));
     // a multi-day event (through: last day) stays up until its last day is over
     const g = games.find(x => new Date(x.through || x.date) >= Date.now() - 4 * 3600e3);
@@ -1079,7 +1080,7 @@
   }
   // upcoming games soonest first, then ended seasons with the most recent last game first
   const byDate = grid => {
-    const key = c => c.dataset.when ? [0, Number(c.dataset.when)] : c.dataset.ended ? [1, -Number(c.dataset.ended)] : [2, 0];
+    const key = c => c.dataset.first ? [-1, 0] : c.dataset.when ? [0, Number(c.dataset.when)] : c.dataset.ended ? [1, -Number(c.dataset.ended)] : [2, 0];
     [...grid.children].sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1]; }).forEach(c => grid.append(c));
   };
 
@@ -1295,11 +1296,9 @@
   // As of: football ranks WVSSAC Week 9 (Oct 27, 2026); girls soccer WVSSAC state seeds;
   // boys soccer rank MaxPreps (Oct 29, 2026); records Oct 31, 2026.
   const SVILLE = [
-    { label: 'Football', games: [
-      { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at', live: 'Sissonville',
-        us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 29, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
-        ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
-    ] },
+    // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank and final from MetroNews (Nov 7).
+    { label: 'Football', first: true, done: 'Date/Time TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z', rows: [
+      ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#3 in Class AA'], ['Sissonville record', '10-0']] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
@@ -1340,6 +1339,14 @@
     if (!SVILLE_LIVE) return;
     const WINDOW_BEFORE = 15 * 60e3, WINDOW_AFTER = 4 * 3600e3;
     const lc = s => String(s || '').trim().toLowerCase();
+    // Fireworks for a Sissonville win, same rules as a WVU win: once per browser, skipped if animations are off
+    function hsWin(id) {
+      let seen = [];
+      try { seen = JSON.parse(localStorage.getItem('wvu-wins-seen') || '[]'); } catch (e) { /* storage blocked: still celebrate */ }
+      if (seen.includes(id)) return;
+      try { localStorage.setItem('wvu-wins-seen', JSON.stringify([...seen, id].slice(-50))); } catch (e) { /* ignore */ }
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) fireworks();
+    }
     async function watch() {
       for (const x of cards) {
         // the game the card is showing (same pick as manualCard)
@@ -1353,6 +1360,7 @@
           if (!m) continue;
           const [us, them] = lc(m.away.name) === lc(g.live) ? [m.away, m.home] : [m.home, m.away];
           g._live = { state: m.state, status: m.status, us: us.score, them: them.score };
+          if (m.state === 'post' && us.score > them.score) hsWin('sville-' + lc(x.s.label) + '-' + m.id);
           const fresh = manualCard(x.s);
           x.c.replaceWith(fresh);
           x.c = fresh;
