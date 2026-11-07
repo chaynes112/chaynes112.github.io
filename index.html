@@ -33,11 +33,11 @@
     padding: 2rem 1rem 6.5rem;
   }
   .logo-wrap { position: relative; width: min(220px, 50vw); margin-bottom: 1.5rem; animation: rise 1.2s ease-out both; }
-  /* Easter egg: the (R) on the Flying WV -- invisible button centered on it (73.3% across, 95.8% down) */
-  #toasty-spot { position: absolute; left: 73.3%; top: 95.8%; width: 22px; height: 22px; transform: translate(-50%, -50%);
+  /* Easter egg: the (R) on the Flying WV sets off fireworks -- invisible button centered on it (73.3% across, 95.8% down) */
+  #r-spot { position: absolute; left: 73.3%; top: 95.8%; width: 22px; height: 22px; transform: translate(-50%, -50%);
                  padding: 0; border: 0; background: transparent; cursor: default; -webkit-tap-highlight-color: transparent; }
-  #toasty-spot:focus { outline: none; }
-  @media (pointer: coarse) { #toasty-spot { width: 44px; height: 44px; } }
+  #r-spot:focus { outline: none; }
+  @media (pointer: coarse) { #r-spot { width: 44px; height: 44px; } }
   /* The pop-up guy peeks in from the bottom-right corner, like the old arcade gag */
   #toasty { position: fixed; z-index: 5; right: 0; bottom: 0; width: min(260px, 55vw); pointer-events: none; }
   #toasty img { display: block; width: 100%; height: auto; }
@@ -208,7 +208,7 @@
 <main>
   <div class="logo-wrap">
     <img src="wvu-logo.png" alt="WVU logo" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'logo-fallback',textContent:'WV'}))">
-    <button id="toasty-spot" type="button" tabindex="-1" aria-hidden="true"></button>
+    <button id="r-spot" type="button" tabindex="-1" aria-hidden="true"></button>
   </div>
   <p class="tag">West Virginia Mountaineers</p>
   <p class="subhead">Upcoming Games</p>
@@ -512,16 +512,16 @@
     ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
   });
 
-  // Easter egg: click the (R) on the Flying WV and the Toasty guy pops in from the corner, like Mortal Kombat.
+  // Easter egg: click the UFO while it's flying and the Toasty guy pops in from the corner, like Mortal Kombat.
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
-  // sound. toasty.mp3 has 0.28 s of silence before the voice, so playback skips all of it and
-  // "Toasty!" lands as he slides in.
-  const TOASTY_SKIP = 0.28;
+  // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it, so he
+  // pops in first and then says "Toasty!".
+  const TOASTY_SKIP = 0.24;
   const toasty = document.getElementById('toasty');
   const toastySound = new Audio('toasty.mp3');
   toastySound.preload = 'auto';
   let toasting = false;
-  document.getElementById('toasty-spot').addEventListener('click', () => {
+  function toastyPop() {
     if (toasting) return;
     toasting = true;
     toasty.hidden = false;
@@ -534,6 +534,21 @@
       { transform: 'translate(0, 0)', offset: 0.79 },
       { transform: 'translate(105%, 40%)' },
     ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
+  }
+  // The UFO is drawn behind the page, so it can't take clicks itself: any click that lands on it while it's
+  // in the air counts (the UFO keeps the normal cursor, like the other easter eggs)
+  document.addEventListener('click', e => {
+    if (!flying) return;
+    const r = ufo.getBoundingClientRect();
+    if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) toastyPop();
+  }, true);
+
+  // Easter egg: click the (R) on the Flying WV for fireworks (one show at a time)
+  let fwShow = false;
+  document.getElementById('r-spot').addEventListener('click', () => {
+    if (fwShow) return;
+    fwShow = true;
+    fireworks(10000, () => { fwShow = false; });
   });
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
@@ -1178,7 +1193,7 @@
       p.connect(hp).connect(pg).connect(out); p.start(pt); p.stop(pt + 0.03);
     }
   }
-  function fireworks(ms = 10000) {
+  function fireworks(ms = 10000, done) {
     const cv = document.createElement('canvas'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
     cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none';
     const size = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0); };
@@ -1227,7 +1242,7 @@
       }
       g.globalAlpha = 1;
       if (now - start < ms || rockets.length || sparks.length) requestAnimationFrame(frame);
-      else { removeEventListener('resize', size); cv.remove(); }
+      else { removeEventListener('resize', size); cv.remove(); if (done) done(); }
     };
     requestAnimationFrame(frame);
   }
