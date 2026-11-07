@@ -136,7 +136,13 @@
   .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none; }
   .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
   .games.sville { margin-top: 4rem; }
-  .games .team-logo { display: block; width: 96px; height: auto; margin: 0 auto .6rem; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
+  .games .team-logo-wrap { position: relative; width: 96px; margin: 0 auto .6rem; }
+  /* Easter egg: the arrowhead on the Sissonville logo plays Indian Outlaw -- invisible button over it (88.7% across, 27.7% down) */
+  #outlaw-spot { position: absolute; left: 88.7%; top: 27.7%; width: 22%; height: 30%; transform: translate(-50%, -50%);
+                 padding: 0; border: 0; background: transparent; cursor: default; -webkit-tap-highlight-color: transparent; }
+  #outlaw-spot:focus { outline: none; }
+  @media (pointer: coarse) { #outlaw-spot { width: 32px; height: 32px; } }
+  .games .team-logo { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
   /* Cartoon Mountaineer -- in the page flow on narrow screens, standing on the mountains on wide ones */
   .mascot { width: 120px; margin: 2rem auto 0; pointer-events: none; }
   .mascot svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -220,7 +226,10 @@
   </section>
 
   <section class="games sville" aria-labelledby="sville-title">
-    <img class="team-logo" src="sissonville-logo.png" alt="Sissonville High School logo">
+    <div class="team-logo-wrap">
+      <img class="team-logo" src="sissonville-logo.png" alt="Sissonville High School logo">
+      <button id="outlaw-spot" type="button" tabindex="-1" aria-hidden="true"></button>
+    </div>
     <h2 id="sville-title">Sissonville Indians</h2>
     <p class="subhead">Upcoming Games</p>
     <div class="game-grid" id="sville-grid"></div>
@@ -358,23 +367,43 @@
   player.addEventListener('stop', idle);
   btn.addEventListener('click', () => {
     if (player.playing) { player.stop(); return; }
-    if (!chop.paused) chop.pause();
+    quiet(player);
     player.start();
   });
 
   // Click the Sissonville logo: the Tomahawk Chop MP3. Click again to pause, again to resume.
-  // Loaded with the page so it starts right away; skips the recording's 1.65 s of near-silence at the top.
+  // Loaded with the page so it starts right away; skips the recording's 1.74 s of faint hiss at the top.
   // Country Roads stops so the two don't clash, and the Country Roads button pauses this one.
-  const CHOP_START = 1.65;
+  const CHOP_START = 1.74;
   const chop = new Audio('tomahawk-chop.mp3');
   chop.preload = 'auto';
   chop.volume = 0.5;   // a little under full so it sits closer to the Country Roads MIDI
   document.querySelector('.sville .team-logo').addEventListener('click', () => {
     if (!chop.paused) { chop.pause(); return; }
-    if (player.playing) player.stop();
+    quiet(chop);
     if (chop.ended || chop.currentTime < CHOP_START) chop.currentTime = CHOP_START;
     chop.play();
   });
+
+  // Click the big Flying WV: Country Roads (the recording). Click the arrowhead on the Sissonville logo: Indian Outlaw.
+  // Like the Tomahawk Chop: click again to pause, again to resume. Only the start of each file loads with the page.
+  // Both files are trimmed so the music starts right at the top (no silence before it).
+  const roads = new Audio('country-roads.mp3');
+  const outlaw = new Audio('indian-outlaw.mp3');
+  for (const a of [roads, outlaw]) { a.preload = 'metadata'; a.volume = 0.5; }   // same level as the Tomahawk Chop
+  function toggle(a) {
+    if (!a.paused) { a.pause(); return; }
+    quiet(a);
+    a.play().catch(() => {});
+  }
+  document.querySelector('.logo-wrap img').addEventListener('click', () => toggle(roads));
+  document.getElementById('outlaw-spot').addEventListener('click', () => toggle(outlaw));
+
+  // One song at a time: stop everything except the one being started
+  function quiet(keep) {
+    if (keep !== player && player.playing) player.stop();
+    for (const a of [chop, roads, outlaw]) if (a !== keep && !a.paused) a.pause();
+  }
 </script>
 
 <script>
@@ -485,9 +514,9 @@
 
   // Easter egg: click the (R) on the Flying WV and the Toasty guy pops in from the corner, like Mortal Kombat.
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
-  // sound. toasty.mp3 has 0.28 s of silence before the voice, so playback skips most of it and
+  // sound. toasty.mp3 has 0.28 s of silence before the voice, so playback skips all of it and
   // "Toasty!" lands as he slides in.
-  const TOASTY_SKIP = 0.24;
+  const TOASTY_SKIP = 0.28;
   const toasty = document.getElementById('toasty');
   const toastySound = new Audio('toasty.mp3');
   toastySound.preload = 'auto';
