@@ -1015,7 +1015,10 @@
     }
     const d = new Date(g.date);
     card.dataset.when = d.getTime();
-    const matchup = teamsLine(g.us, g.prefix, g.them);
+    // g._live: live score from MetroNews (Sissonville football) -- { state: 'pre'|'in'|'post', status, us, them }
+    const lv = g._live && g._live.state !== 'pre' ? g._live : null;
+    const withScore = (t, mine, theirs) => lv ? { ...t, score: mine, lost: lv.state === 'post' && mine < theirs } : t;
+    const matchup = teamsLine(withScore(g.us, lv && lv.us, lv && lv.them), g.prefix, withScore(g.them, lv && lv.them, lv && lv.us));
     const fmtDay = x => new Date(x).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
     const day = fmtDay(g.date) + (g.through ? ' - ' + fmtDay(g.through) : '');
     const time = g.timeTBA ? 'Time TBA' : d.toLocaleTimeString('en-US', { timeZone: ET, hour: 'numeric', minute: '2-digit' }) + ' ET';
@@ -1023,7 +1026,12 @@
     const keep = s => s.replace(/ /g, '\u00a0');
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
-    card.append(el('div', 'when', [day, time, g.where].filter(Boolean).map(keep).join(' · ')),
+    const when = el('div', 'when');
+    // live: LIVE NOW · 2nd Qtr. · place; final: FINAL · day · place (same as the ESPN cards)
+    if (lv) when.append(el('span', lv.state === 'in' ? 'live' : 'final', lv.state === 'in' ? 'LIVE NOW' : 'FINAL'),
+                        ' · ' + [lv.state === 'in' ? lv.status : day, g.where].filter(Boolean).map(keep).join(' · '));
+    else when.textContent = [day, time, g.where].filter(Boolean).map(keep).join(' · ');
+    card.append(when,
                 details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), standardRows(g, college)));
     return card;
   }
@@ -1246,9 +1254,9 @@
   // boys soccer rank MaxPreps (Oct 29, 2026); records Oct 31, 2026.
   const SVILLE = [
     { label: 'Football', games: [
-      { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at',
+      { date: '2026-11-07T00:00:00Z', where: 'Wayne, WV', prefix: 'at', live: 'Sissonville',
         us: { rank: 3, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '9-0' }, them: { rank: 29, name: 'Wayne', nick: 'Pioneers', logo: 'wayne-logo.png', record: '0-9' }, rows: [
-        ['Venue', 'Wayne High School'], ['Broadcast', { text: 'Hudl', href: 'https://fan.hudl.com/usa/wv/charleston/organization/15384/sissonville-high-school/team/31991/boys-varsity-football/schedule?date=2026-11-01&range=Month&s=U2NoZWR1bGVFbnRyeTMzOTg1Njc5&ss=2026' }]] },
+        ['Venue', 'Wayne High School'], ['Broadcast', 'Hudl']] },
     ] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
@@ -1279,10 +1287,39 @@
         ['Venue', 'Sissonville High School']] },
     ] },
   ];
+  // Live score for a game marked live: (its team name on MetroNews), from the MetroNews scoreboard through the
+  // Cloudflare Worker (Desktop\Website stuff\metronews-scores-worker.js). Checked every 30 seconds from 15 minutes
+  // before the start until MetroNews shows it final (at most 4 hours after the start); not while the tab is hidden.
+  const SVILLE_LIVE = '';
   (function () {
     const grid = document.getElementById('sville-grid');
-    SVILLE.forEach(s => grid.append(manualCard(s)));
-    byDate(grid);  })();
+    const cards = SVILLE.map(s => { const c = manualCard(s); grid.append(c); return { s, c }; });
+    byDate(grid);
+    if (!SVILLE_LIVE) return;
+    const WINDOW_BEFORE = 15 * 60e3, WINDOW_AFTER = 4 * 3600e3;
+    const lc = s => String(s || '').trim().toLowerCase();
+    async function watch() {
+      for (const x of cards) {
+        // the game the card is showing (same pick as manualCard)
+        const g = (x.s.games || []).find(y => new Date(y.through || y.date) >= Date.now() - 4 * 3600e3);
+        if (!g || !g.live || document.hidden) continue;
+        const t = new Date(g.date).getTime();
+        if (Date.now() < t - WINDOW_BEFORE || Date.now() > t + WINDOW_AFTER || (g._live && g._live.state === 'post')) continue;
+        try {
+          const d = await getJSON(SVILLE_LIVE + '?team=' + encodeURIComponent(g.live));
+          const m = (d.games || []).find(y => [y.away.name, y.home.name].some(n => lc(n) === lc(g.them.name)));
+          if (!m) continue;
+          const [us, them] = lc(m.away.name) === lc(g.live) ? [m.away, m.home] : [m.home, m.away];
+          g._live = { state: m.state, status: m.status, us: us.score, them: them.score };
+          const fresh = manualCard(x.s);
+          x.c.replaceWith(fresh);
+          x.c = fresh;
+        } catch (e) { /* relay or MetroNews unavailable: keep the card as it was */ }
+      }
+      setTimeout(watch, 30e3);
+    }
+    watch();
+  })();
 </script>
 </body>
 </html>
