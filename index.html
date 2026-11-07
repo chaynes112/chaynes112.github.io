@@ -82,7 +82,7 @@
   .game .cmp-head { font: 500 .78rem "Oswald", Impact, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
   .game .cmp-label { opacity: .65; }
   .game .cmp-val { font-weight: 600; }
-  .game .cmp-val a { color: inherit; }
+  .game .cmp-val a, .game dd a { color: inherit; }
   .game .cmp-wide { grid-column: span 2; }
   .game .cmp-lines { white-space: pre; }   /* one entry per line (rifle opponents) */
   .game .details dl { margin-top: .5rem; }
@@ -134,7 +134,9 @@
   .game .footnote { margin: auto 0 0; padding-top: .6rem; font-size: .78rem; opacity: .7; }
   /* logo + text cards (Season Ended, Playoffs Schedule TBA): same gap under the sport label and same text as the date line on game cards */
   .game .note.with-logo { display: flex; align-items: center; gap: .55rem; margin-top: .9rem; opacity: 1; font-size: 1.05rem; color: rgba(244, 241, 232, .85); }
-  .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none; }
+  .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none;
+                              /* same thin light outline as the matchup logos */
+                              filter: drop-shadow(0 0 .6px rgba(255,255,255,.95)) drop-shadow(0 0 .6px rgba(255,255,255,.95)); }
   .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
   .games.sville { margin-top: 4rem; }
   .games .team-logo-wrap { position: relative; width: 96px; margin: 0 auto .6rem; }
@@ -776,8 +778,26 @@
     const table = SOCCER_STANDINGS[card.dataset.league];
     if (!table || !confRec) return null;
     const i = table.findIndex(([name]) => name === c.team.location || name === c.team.shortDisplayName);
-    return i >= 0 && table[i][1] === confRec ? ordinal(i + 1) + ' of ' + table.length : null;
+    return i >= 0 && table[i][1] === confRec ? { text: ordinal(i + 1) + ' of ' + table.length, href: SOCCER_STANDINGS_URL[card.dataset.league] } : null;
   }
+  // Links for the Conf. rank values on soccer cards (the pages the standings above come from).
+  // Big 12's page id changes each season: big12sports.com/sports/wsoc links the current one.
+  const SOCCER_STANDINGS_URL = {
+    'usa.ncaa.m.1': 'https://sunbeltsports.org/standings.aspx?path=msoc',
+    'usa.ncaa.w.1': 'https://big12sports.com/standings.aspx?standings=238&path=soc',
+  };
+  // Volleyball Conf. rank links, by the conference name in ESPN's standings header, e.g. "2026 Big 12 Conference Standings" (page id changes each season: big12sports.com/sports/wvball)
+  const VB_STANDINGS_URL = {
+    'Big 12': 'https://big12sports.com/standings.aspx?standings=237&path=vb',
+  };
+  // Poll row on the ESPN cards: the poll the card's ranks come from. Football picks its poll at load time (CFP or AP).
+  const POLL_LINK = {
+    'usa.ncaa.m.1': { text: 'United Soccer Coaches', href: 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/' },
+    'usa.ncaa.w.1': { text: 'United Soccer Coaches', href: 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-women/' },
+    'mens-college-basketball': { text: 'AP Top 25', href: 'https://www.espn.com/mens-college-basketball/rankings/_/poll/1' },
+    'womens-college-basketball': { text: 'AP Top 25', href: 'https://www.espn.com/womens-college-basketball/rankings/_/poll/1' },
+    'womens-college-volleyball': { text: 'AVCA Coaches Poll', href: 'https://www.avca.org/polls-awards/polls/' },
+  };
 
   // Team nickname (Mountaineers, Bearcats). ESPN's soccer feed puts the school in 'name', so fall back to
   // 'nickname', then to the display name minus the school ('Cincinnati Bearcats' -> 'Bearcats').
@@ -847,11 +867,15 @@
       const summary = await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/summary?event=' + ev.id).catch(() => ({}));
       // Cards with data-polls use the first listed poll ESPN currently has (football: the CFP rankings in the weeks they
       // come out, otherwise the AP poll); a team not in that poll shows no rank. Other cards use ESPN's own rank.
-      let pollRanks = null;
+      let pollRanks = null, pollLink = POLL_LINK[card.dataset.league] || null;
       if (card.dataset.polls) {
         const all = (await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/rankings').catch(() => ({}))).rankings || [];
         const poll = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).find(Boolean);
-        if (poll) pollRanks = new Map((poll.ranks || []).map(r => [String(r.team && r.team.id), r.current]));
+        if (poll) {
+          pollRanks = new Map((poll.ranks || []).map(r => [String(r.team && r.team.id), r.current]));
+          pollLink = { text: poll.name === 'Playoff Committee Rankings' ? 'CFP Rankings' : poll.name,
+                       href: 'https://www.espn.com/' + card.dataset.league + '/rankings/_/poll/' + poll.id };
+        }
       }
       const projection = c => {
         const p = summary.predictor;
@@ -885,7 +909,11 @@
           const me = recs.find(r => String(r.e.id) === String(c.id) || r.e.team === c.team.displayName || r.e.team === c.team.location);
           const val = r => pct(r.conf) ?? 0.5;   // no conference games yet counts as even
           const n = 1 + recs.filter(r => val(r) > val(me)).length;
-          return ordinal(n) + ' of ' + entries.length;
+          // linked to that conference's ESPN standings page (ESPN's own link from the summary). ESPN has no volleyball
+          // standings pages (that link is a 404), so volleyball links the conference's own page where one is listed below.
+          const vb = Object.keys(VB_STANDINGS_URL).find(k => (g.header || '').includes(' ' + k + ' '));
+          const href = card.dataset.sport === 'volleyball' ? vb && VB_STANDINGS_URL[vb] : g.href;
+          return href ? { text: ordinal(n) + ' of ' + entries.length, href } : ordinal(n) + ' of ' + entries.length;
         }
         return null;
       };
@@ -915,6 +943,7 @@
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
+        ['Poll', pollLink],
         // only when there's data
         ['Win chance', projection(wv), projection(opp)],
       ];
@@ -1040,7 +1069,10 @@
     const taken = new Set(std.map(r => r[0]));
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
-  function manualCard({ label, games = [], done, doneLogo, rows, college, last, first }) {
+  // poll: { text, href, label } adds a linked row (label defaults to 'Poll') to the card, game or no game
+  function manualCard({ label, games = [], done, doneLogo, rows, college, last, first, poll }) {
+    const pollRow = poll ? [poll.label || 'Poll', { text: poll.text, href: poll.href }] : null;
+    const link = v => { if (!v || !v.href) return v; const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; return a; };
     const card = el('article', 'game');
     if (first) card.dataset.first = '1';   // pinned to the top of its section
     card.append(el('div', 'sport', label));
@@ -1054,7 +1086,12 @@
       // last: when the final game was played -- shown on the Last game line, and used to list ended seasons newest first
       const lastDay = last && new Date(last).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       if (last) card.dataset.ended = new Date(last).getTime();
-      if (rows) { const dl = el('dl'); rows.forEach(([k, v]) => dl.append(el('dt', null, k), el('dd', null, k === 'Last game' && lastDay ? v + ' (' + lastDay + ')' : v))); card.append(dl); }
+      const all = [...(rows || []), ...(pollRow ? [pollRow] : [])];
+      if (all.length) {
+        const dl = el('dl');
+        all.forEach(([k, v]) => { const dd = el('dd'); dd.append(link(k === 'Last game' && lastDay ? v + ' (' + lastDay + ')' : v)); dl.append(el('dt', null, k), dd); });
+        card.append(dl);
+      }
       return card;
     }
     const d = new Date(g.date);
@@ -1076,7 +1113,7 @@
                         ' · ' + [lv.state === 'in' ? lv.status : day, g.where].filter(Boolean).map(keep).join(' · '));
     else when.textContent = [day, time, g.where].filter(Boolean).map(keep).join(' · ');
     card.append(when,
-                details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), standardRows(g, college)));
+                details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), [...standardRows(g, college), ...(pollRow ? [pollRow] : [])]));
     return card;
   }
   // upcoming games soonest first, then ended seasons with the most recent last game first
@@ -1089,7 +1126,7 @@
   // (scripts/update_wvu_data.py, every 2 hours) pulls these into wvu-data.json from wvusports.com, ncaarifle.org
   // and ncaa.com's CRCA poll; the games typed in below are only used if that file can't be loaded.
   const WVU_MANUAL = [
-    { label: 'Rifle', games: [
+    { label: 'Rifle', poll: { text: 'CRCA Top 20', href: 'https://www.ncaa.com/rankings/rifle/nc/crca' }, games: [
       { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
         us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png', noOutline: true }, noOpp: true, rows: [
         // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
@@ -1298,7 +1335,8 @@
   // boys soccer rank MaxPreps (Oct 29, 2026); records Oct 31, 2026.
   const SVILLE = [
     // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC Week 10 ratings (final ratings not out as of Nov 7); final score MetroNews.
-    { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z', rows: [
+    { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z',
+      poll: { label: 'Ratings', text: 'WVSSAC Football Ratings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
       ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#3 in Class AA'], ['Sissonville record', '10-0']] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
