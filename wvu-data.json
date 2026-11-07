@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-07T18:54:31Z",
+ "updated": "2026-11-07T23:43:59Z",
  "manual": {
   "Rifle": [
    {
@@ -69,10 +69,10 @@
     "them": {
      "rank": 8,
      "name": "Alaska Fairbanks",
-     "short": "UAF",
+     "short": "AKFB",
      "nick": "Nanooks",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png",
-     "record": "3-1"
+     "record": "5-1"
     },
     "pairs": [
      [
@@ -109,10 +109,10 @@
     "them": {
      "rank": 8,
      "name": "Alaska Fairbanks",
-     "short": "UAF",
+     "short": "AKFB",
      "nick": "Nanooks",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png",
-     "record": "3-1"
+     "record": "5-1"
     },
     "pairs": [
      [
@@ -192,7 +192,7 @@
      "short": "AKR",
      "nick": "Zips",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/android-chrome-192x192.png",
-     "record": "0-3 (0-2)"
+     "record": "1-4 (0-2)"
     },
     "pairs": [
      [
