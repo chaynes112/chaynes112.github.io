@@ -97,7 +97,7 @@
   .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
   /* Matchup: [logo][rank] West Virginia / record  vs  [logo][rank] Opponent / record -- the biggest text on the card */
-  .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .55rem 0 .4rem; }
+  .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .9rem 0 .75rem; }
   .game .team { display: flex; align-items: flex-start; gap: .4rem; }
   .game .team-lead { display: flex; align-items: center; gap: .4rem; height: 32px; flex: none; }
   .game .team-name { display: flex; align-items: center; height: 32px; font-weight: 600; font-size: 1.2rem; line-height: 1.25; white-space: nowrap; }
@@ -145,8 +145,8 @@
   }
   .mascot .bob { animation: bob 1.6s ease-in-out infinite; }
   .mascot .ready { transform-box: view-box; transform-origin: 77px 150px; animation: ready 2.4s ease-in-out infinite; }
-  /* Click the Mountaineer to fire the rifle */
-  .mascot svg .bob { pointer-events: visiblePainted; cursor: pointer; }
+  /* Click the Mountaineer to fire the rifle (hidden: the cursor stays an arrow) */
+  .mascot svg .bob { pointer-events: visiblePainted; cursor: default; }
   .mascot .recoil { transform-box: view-box; transform-origin: 77px 150px; }
   .mascot .smoke circle { transform-box: fill-box; transform-origin: center; }
   .mascot .tail { transform-box: view-box; transform-origin: 54px 60px; animation: tail 1.6s ease-in-out infinite; }
