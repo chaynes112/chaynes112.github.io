@@ -1290,7 +1290,7 @@
   // Live score for a game marked live: (its team name on MetroNews), from the MetroNews scoreboard through the
   // Cloudflare Worker (Desktop\Website stuff\metronews-scores-worker.js). Checked every 30 seconds from 15 minutes
   // before the start until MetroNews shows it final (at most 4 hours after the start); not while the tab is hidden.
-  const SVILLE_LIVE = '';
+  const SVILLE_LIVE = 'https://metronews-scores.chaynes112.workers.dev/';
   (function () {
     const grid = document.getElementById('sville-grid');
     const cards = SVILLE.map(s => { const c = manualCard(s); grid.append(c); return { s, c }; });
