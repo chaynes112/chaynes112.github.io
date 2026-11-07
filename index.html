@@ -753,7 +753,10 @@
     + '/seasons/' + seasonFor(card) + '/teams/' + c.id).then(tm => tm.nickname || null).catch(() => null);
 
   // Extra line under the matchup for specific ESPN games (by ESPN event id), like the high school 'State Semifinal' line
-  const GAME_NOTE = { '401929850': 'Sun Belt Quarterfinal' };   // men's soccer vs Georgia Southern, Nov 8, 2026
+  const GAME_NOTE = {
+    '401929850': 'Sun Belt Quarterfinal',   // men's soccer vs Georgia Southern, Nov 8, 2026
+    '401929890': 'Big 12 Quarterfinal',     // women's soccer vs BYU, Nov 9, 2026
+  };
 
   async function loadGame(card) {
     const label = card.querySelector('.sport').textContent;
