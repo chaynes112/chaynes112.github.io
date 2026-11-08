@@ -722,13 +722,38 @@
   // have none there, so a soccer conference game means the opponent is in WVU's conference.
   // ESPN labels the MAAC (Metro Atlantic) as just "Metro", so that one is renamed.
   const CONF_FIX = { 'Metro': 'MAAC' };
+  // ESPN's standings feed for the whole league: every conference (id, name, teams with records). Fetched once per league.
+  // (ESPN's team-page feed has each team's conference too, but it refuses requests from other sites.)
+  const allStandings = {};
+  async function conferenceOf(card, teamId) {
+    const { sport, league } = card.dataset;
+    allStandings[league] = allStandings[league] || getJSON('https://site.api.espn.com/apis/v2/sports/' + sport + '/' + league + '/standings');
+    const find = x => x.standings && (x.standings.entries || []).some(e => e.team && String(e.team.id) === String(teamId))
+      ? x : (x.children || []).map(find).find(Boolean);
+    return find(await allStandings[league]) || null;
+  }
+  const confGroupId = async (card, teamId) => { const c = await conferenceOf(card, teamId); return c && c.id || null; };
+  // A team's conference standings, shaped like a game summary's standings group (entries with id, team name and stats)
+  // plus ESPN's standings page link. Used when the game summary has none (non-conference games).
+  async function confStandings(card, teamId) {
+    const s = await conferenceOf(card, teamId);
+    if (!s) return null;
+    return { header: s.name, href: 'https://www.espn.com/' + card.dataset.league + '/standings/_/group/' + s.id,
+             standings: { entries: s.standings.entries.map(e => ({ id: e.team && e.team.id, team: e.team && e.team.displayName, stats: e.stats })) } };
+  }
   async function oppConference(card, opp, ev) {
     const { sport, league, conf } = card.dataset;
     try {
       const team = await getJSON(CORE + sport + '/leagues/' + league + '/seasons/' + seasonFor(card) + '/teams/' + opp.id);
       if (team.groups && team.groups.$ref) {
-        const g = await getJSON(team.groups.$ref.replace(/^http:/, 'https:'));
-        const name = g.shortName || g.name;
+        let g = await getJSON(team.groups.$ref.replace(/^http:/, 'https:'));
+        // ESPN sometimes files a team under a catch-all group ("NCAA Basketball", isConference false: Mercer 2026-27);
+        // its team page has the real one, so look that group up instead
+        if (g.isConference === false) {
+          const gid = await confGroupId(card, opp.id);
+          if (gid) g = await getJSON(CORE + sport + '/leagues/' + league + '/seasons/' + seasonFor(card) + '/types/2/groups/' + gid);
+        }
+        const name = g.isConference !== false && (g.shortName || g.name);
         if (name) return CONF_FIX[name] || name;
       }
     } catch (e) { /* fall through */ }
@@ -870,12 +895,11 @@
       let pollRanks = null, pollLink = POLL_LINK[card.dataset.league] || null;
       if (card.dataset.polls) {
         const all = (await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/rankings').catch(() => ({}))).rankings || [];
-        const poll = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).find(Boolean);
-        if (poll) {
-          pollRanks = new Map((poll.ranks || []).map(r => [String(r.team && r.team.id), r.current]));
-          pollLink = { text: poll.name === 'Playoff Committee Rankings' ? 'CFP Rankings' : poll.name,
-                       href: 'https://www.espn.com/' + card.dataset.league + '/rankings/_/poll/' + poll.id };
-        }
+        const polls = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).filter(Boolean);
+        if (polls.length) pollRanks = new Map((polls[0].ranks || []).map(r => [String(r.team && r.team.id), r.current]));
+        // Poll row links every listed poll ESPN has, side by side (football: CFP Rankings, then AP Top 25)
+        if (polls.length) pollLink = polls.map(p => ({ text: p.name === 'Playoff Committee Rankings' ? 'CFP Rankings' : p.name,
+                                                       href: 'https://www.espn.com/' + card.dataset.league + '/rankings/_/poll/' + p.id }));
       }
       const projection = c => {
         const p = summary.predictor;
@@ -902,7 +926,12 @@
         return groupRecs.get(g);
       };
       const confRank = async c => {
-        for (const g of (summary.standings && summary.standings.groups) || []) {
+        // the game summary's standings; when they don't include this team (non-conference games), ESPN's standings feed
+        // for the team's conference (not soccer: ESPN has no soccer conferences, those come from SOCCER_STANDINGS)
+        const groups = ((summary.standings && summary.standings.groups) || []).filter(g => g.standings && g.standings.entries);
+        const has = g => g.standings.entries.some(e => String(e.id) === String(c.id) || e.team === c.team.displayName || e.team === c.team.location);
+        if (!groups.some(has) && card.dataset.sport !== 'soccer') { const g = await confStandings(card, c.id).catch(() => null); if (g) groups.push(g); }
+        for (const g of groups) {
           const entries = (g.standings && g.standings.entries) || [];
           if (!entries.some(e => String(e.id) === String(c.id) || e.team === c.team.displayName || e.team === c.team.location)) continue;
           const recs = await recordsFor(g);
@@ -943,7 +972,6 @@
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
-        ['Poll', pollLink],
         // only when there's data
         ['Win chance', projection(wv), projection(opp)],
       ];
@@ -957,6 +985,7 @@
         rows.push(['Over/under', o.overUnder != null ? String(o.overUnder) : null]);
         rows.push(['Moneyline', line(wvSide), line(oppSide)]);
       }
+      rows.push(['Poll', pollLink || DASH]);   // always the table's last line (the votes footnote sits below the table)
 
       card.append(matchup);
       if (GAME_NOTE[ev.id]) card.append(el('div', 'matchup', GAME_NOTE[ev.id]));
@@ -1041,7 +1070,9 @@
       t.append(el('span', 'cmp-label', r[0]));
       // a value can be { text, href } to show it as a link (opens in a new tab)
       const fill = (span, v) => {
-        if (v && v.href) { const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; span.append(a); }
+        // an array of links shows them side by side, separated by a dot
+        if (Array.isArray(v)) { v.forEach((x, i) => { if (i) span.append(' · '); fill(span, x); }); }
+        else if (v && v.href) { const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; span.append(a); }
         else span.textContent = v == null ? '—' : v;
         return span;
       };
@@ -1071,7 +1102,15 @@
   }
   // poll: { text, href, label } adds a linked row (label defaults to 'Poll') to the card, game or no game
   function manualCard({ label, games = [], done, doneLogo, rows, college, last, first, poll }) {
-    const pollRow = poll ? [poll.label || 'Poll', { text: poll.text, href: poll.href }] : null;
+    // poll with no href (baseball until there's a poll to link) shows a dash
+    const pollRow = poll ? [poll.label || 'Poll', poll.href ? { text: poll.text, href: poll.href } : DASH] : null;
+    // the poll row takes the first unlabeled leftover field row (rifle: the last opponent's line) if there is one, else goes last
+    const withPoll = rows => {
+      if (!pollRow) return rows;
+      const spare = rows.find(r => r.length === 3 && r[0] === '' && !r[1]);
+      if (spare) { spare[0] = pollRow[0]; spare[1] = pollRow[1]; return rows; }
+      return [...rows, pollRow];
+    };
     const link = v => { if (!v || !v.href) return v; const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; return a; };
     const card = el('article', 'game');
     if (first) card.dataset.first = '1';   // pinned to the top of its section
@@ -1113,7 +1152,7 @@
                         ' · ' + [lv.state === 'in' ? lv.status : day, g.where].filter(Boolean).map(keep).join(' · '));
     else when.textContent = [day, time, g.where].filter(Boolean).map(keep).join(' · ');
     card.append(when,
-                details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), [...standardRows(g, college), ...(pollRow ? [pollRow] : [])]));
+                details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), withPoll(standardRows(g, college))));
     return card;
   }
   // upcoming games soonest first, then ended seasons with the most recent last game first
@@ -1138,7 +1177,7 @@
         oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
-    { label: 'Baseball', games: [
+    { label: 'Baseball', poll: {}, games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
         us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'COFC', nick: 'Cougars', logo: 'charleston-logo.png', record: '0-0 (0-0)' },
         pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
@@ -1331,13 +1370,13 @@
 
   // Sissonville High School -- no public live feed, so schedules (MaxPreps) and ranks are entered by hand.
   // Football ranks are the WVSSAC playoff ratings (Tuesdays); soccer shows WVSSAC state-tournament seeds.
-  // As of: football ranks WVSSAC Week 9 (Oct 27, 2026); girls soccer WVSSAC state seeds;
+  // As of: football ranks WVSSAC final Week 11 (Nov 7, 2026); girls soccer WVSSAC state seeds;
   // boys soccer rank MaxPreps (Oct 29, 2026); records Oct 31, 2026.
   const SVILLE = [
-    // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC Week 10 ratings (final ratings not out as of Nov 7); final score MetroNews.
+    // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC FINAL Week 11 ratings (Nov 7: Sissonville 2nd in AA, 13.4, behind Frankfort); final score MetroNews.
     { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z',
       poll: { label: 'Ratings', text: 'WVSSAC Football Ratings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
-      ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#3 in Class AA'], ['Sissonville record', '10-0']] },
+      ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '10-0']] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
     { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
