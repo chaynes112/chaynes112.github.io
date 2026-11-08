@@ -815,14 +815,18 @@
   const VB_STANDINGS_URL = {
     'Big 12': 'https://big12sports.com/standings.aspx?standings=237&path=vb',
   };
-  // Poll row on the ESPN cards: the poll the card's ranks come from. Football picks its poll at load time (CFP or AP).
-  const POLL_LINK = {
-    'usa.ncaa.m.1': { text: 'United Soccer Coaches', href: 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/' },
-    'usa.ncaa.w.1': { text: 'United Soccer Coaches', href: 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-women/' },
-    'mens-college-basketball': { text: 'AP Top 25', href: 'https://www.espn.com/mens-college-basketball/rankings/_/poll/1' },
-    'womens-college-basketball': { text: 'AP Top 25', href: 'https://www.espn.com/womens-college-basketball/rankings/_/poll/1' },
-    'womens-college-volleyball': { text: 'AVCA Coaches Poll', href: 'https://www.avca.org/polls-awards/polls/' },
+  // Poll row: one link per sport to ESPN's rankings page, whose poll menu lists every poll for that sport
+  // (rifle isn't on ESPN; its card links ncaa.com's CRCA poll)
+  const ESPN_RANKINGS = {
+    'college-football': 'https://www.espn.com/college-football/rankings',
+    'mens-college-basketball': 'https://www.espn.com/mens-college-basketball/rankings',
+    'womens-college-basketball': 'https://www.espn.com/womens-college-basketball/rankings',
+    'usa.ncaa.m.1': 'https://www.espn.com/mens-college-soccer/rankings',
+    'usa.ncaa.w.1': 'https://www.espn.com/womens-college-soccer/rankings',
+    'womens-college-volleyball': 'https://www.espn.com/college-sports/rankings/_/pollId/89/sportId/18530000',
+    'college-baseball': 'https://www.espn.com/college-sports/rankings/_/pollId/10543/sportId/10031000',
   };
+  const POLL_LINK = Object.fromEntries(Object.entries(ESPN_RANKINGS).map(([k, href]) => [k, { text: 'ESPN Rankings', href }]));
 
   // Team nickname (Mountaineers, Bearcats). ESPN's soccer feed puts the school in 'name', so fall back to
   // 'nickname', then to the display name minus the school ('Cincinnati Bearcats' -> 'Bearcats').
@@ -897,9 +901,6 @@
         const all = (await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/rankings').catch(() => ({}))).rankings || [];
         const polls = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).filter(Boolean);
         if (polls.length) pollRanks = new Map((polls[0].ranks || []).map(r => [String(r.team && r.team.id), r.current]));
-        // Poll row links every listed poll ESPN has, side by side (football: CFP Rankings, then AP Top 25)
-        if (polls.length) pollLink = polls.map(p => ({ text: p.name === 'Playoff Committee Rankings' ? 'CFP Rankings' : p.name,
-                                                       href: 'https://www.espn.com/' + card.dataset.league + '/rankings/_/poll/' + p.id }));
       }
       const projection = c => {
         const p = summary.predictor;
@@ -1102,7 +1103,7 @@
   }
   // poll: { text, href, label } adds a linked row (label defaults to 'Poll') to the card, game or no game
   function manualCard({ label, games = [], done, doneLogo, rows, college, last, first, poll }) {
-    // poll with no href (baseball until there's a poll to link) shows a dash
+    // poll with no href shows a dash
     const pollRow = poll ? [poll.label || 'Poll', poll.href ? { text: poll.text, href: poll.href } : DASH] : null;
     // the poll row takes the first unlabeled leftover field row (rifle: the last opponent's line) if there is one, else goes last
     const withPoll = rows => {
@@ -1177,7 +1178,7 @@
         oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
-    { label: 'Baseball', poll: {}, games: [
+    { label: 'Baseball', poll: POLL_LINK['college-baseball'], games: [
       { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
         us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'COFC', nick: 'Cougars', logo: 'charleston-logo.png', record: '0-0 (0-0)' },
         pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
