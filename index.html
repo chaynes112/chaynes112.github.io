@@ -1183,11 +1183,11 @@
         oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
-    { label: 'Baseball', poll: POLL_LINK['college-baseball'], games: [
-      { date: '2027-02-19T17:00:00Z', timeTBA: true, where: 'Charleston, SC', prefix: 'at',
-        us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '0-0 (0-0)' }, them: { name: 'College of Charleston', short: 'COFC', nick: 'Cougars', logo: 'charleston-logo.png', record: '0-0 (0-0)' },
-        pairs: [['Conference', 'Big 12', 'CAA']], rows: [['Venue', 'The Ballpark at Patriots Point']] },
-    ] },
+    // 2026 season over (ESPN; final USA TODAY Coaches Poll Jun 23, 2026). Won the Morgantown Regional and Super Regional,
+    // 2-2 at the program's first College World Series, eliminated by North Carolina 12-7 on Jun 17.
+    // Next spring's opener (for when this goes back to a game card): at College of Charleston, Feb 19, 2027.
+    { label: 'Baseball', poll: POLL_LINK['college-baseball'], done: 'Season Ended', doneLogo: WVU_CARD_LOGO, last: '2026-06-17T23:00:00Z', result: 'L 7-12', rows: [
+      ['Last game', 'College World Series'], ['Last opponent', 'North Carolina'], ['WVU rank', '#4'], ['WVU record', '47-17 (21-9)']] },
   ];
   // Soonest game first; cards with no game go last
   const grid = document.getElementById('game-grid');
@@ -1210,7 +1210,7 @@
     const logo = t => t && t.logo === 'WVU_CARD_LOGO' ? { ...t, logo: WVU_CARD_LOGO } : t;
     WVU_MANUAL.forEach(s => {
       const games = d.manual && d.manual[s.label];
-      if (Array.isArray(games)) s.games = games.map(g => ({ ...g, us: logo(g.us), them: logo(g.them) }));
+      if (Array.isArray(games) && !s.done) s.games = games.map(g => ({ ...g, us: logo(g.us), them: logo(g.them) }));
     });
     Object.entries(d.soccerStandings || {}).forEach(([league, table]) => { if (Array.isArray(table) && table.length) SOCCER_STANDINGS[league] = table; });
   }
