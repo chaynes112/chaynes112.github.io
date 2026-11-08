@@ -826,7 +826,7 @@
     'womens-college-volleyball': 'https://www.espn.com/college-sports/rankings/_/pollId/89/sportId/18530000',
     'college-baseball': 'https://www.espn.com/college-sports/rankings/_/pollId/10543/sportId/10031000',
   };
-  const POLL_LINK = Object.fromEntries(Object.entries(ESPN_RANKINGS).map(([k, href]) => [k, { text: 'ESPN Rankings', href }]));
+  const POLL_LINK = Object.fromEntries(Object.entries(ESPN_RANKINGS).map(([k, href]) => [k, { text: 'Rankings', href }]));
 
   // Team nickname (Mountaineers, Bearcats). ESPN's soccer feed puts the school in 'name', so fall back to
   // 'nickname', then to the display name minus the school ('Cincinnati Bearcats' -> 'Bearcats').
