@@ -122,6 +122,8 @@
   @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
   @media (prefers-reduced-motion: reduce) { .game .live { animation: none; } }
   .game .final { color: var(--gold); font-weight: 700; }
+  /* a card with a game in progress: the gold border turns the same red as LIVE NOW */
+  .game:has(.live) { border-color: rgba(255, 59, 47, .35); border-top-color: #ff3b2f; }
   /* live / final score, right after each team's name */
   .game .team-score { font: 700 1.6rem/32px "Oswald", Impact, sans-serif; margin-left: .35rem; flex: none; }
   .game .team-score.lost { opacity: .55; }
