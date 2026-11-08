@@ -1156,7 +1156,8 @@
     // live: LIVE NOW · 2nd Qtr. · place; final: FINAL · day · place (same as the ESPN cards)
     if (lv) when.append(el('span', lv.state === 'in' ? 'live' : 'final', lv.state === 'in' ? 'LIVE NOW' : 'FINAL'),
                         ' · ' + [lv.state === 'in' ? lv.status : day, g.where].filter(Boolean).map(keep).join(' · '));
-    else when.textContent = [day, time, g.where].filter(Boolean).map(keep).join(' · ');
+    // dateTBA: opponent known but no date yet -- 'date' only holds the card up (and sorts it) until the real one is in
+    else when.textContent = (g.dateTBA ? ['Date/Time TBA', g.where] : [day, time, g.where]).filter(Boolean).map(keep).join(' · ');
     card.append(when,
                 details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), withPoll(standardRows(g, college))));
     return card;
@@ -1380,7 +1381,16 @@
   // boys soccer and volleyball ranks MaxPreps (last updated Nov 5 / Nov 7, 2026); records checked against MaxPreps Nov 8, 2026.
   const SVILLE = [
     // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC FINAL Week 11 ratings (Nov 7: Sissonville 2nd in AA, 13.4, behind Frankfort); final score MetroNews.
+    // Class AA first round (WVSSAC bracket, Nov 7, 2026): No. 2 Sissonville vs No. 15 Mingo Central. Date from MaxPreps
+    // (Fri Nov 13); no kickoff time posted yet as of Nov 8 -- 'date' holds 7 PM ET for the live-score window.
     { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z',
+      games: [
+        { date: '2026-11-14T00:00:00Z', timeTBA: true, where: 'Charleston, WV', prefix: 'vs', subtitle: 'Class AA First Round', live: 'Sissonville',
+          us: { rank: 2, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '10-0' },
+          them: { rank: 15, name: 'Mingo Central', nick: 'Miners', logo: 'mingo-central-logo.png', record: '6-4' }, rows: [
+          // home game: higher seed hosts round 1, and MaxPreps lists it at Sissonville (same place/venue as the other home cards)
+          ['Venue', 'Sissonville High School'], ['Broadcast', 'TBA']] },
+      ],
       poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
       ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '10-0']] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', result: 'L 1-3', rows: [
