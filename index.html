@@ -1166,7 +1166,7 @@
   // (scripts/update_wvu_data.py, every 2 hours) pulls these into wvu-data.json from wvusports.com, ncaarifle.org
   // and ncaa.com's CRCA poll; the games typed in below are only used if that file can't be loaded.
   const WVU_MANUAL = [
-    { label: 'Rifle', poll: { text: 'CRCA Top 20', href: 'https://www.ncaa.com/rankings/rifle/nc/crca' }, games: [
+    { label: 'Rifle', poll: { text: 'Rankings', href: 'https://www.ncaa.com/rankings/rifle/nc/crca' }, games: [
       { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
         us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png', noOutline: true }, noOpp: true, rows: [
         // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
@@ -1376,7 +1376,7 @@
   const SVILLE = [
     // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC FINAL Week 11 ratings (Nov 7: Sissonville 2nd in AA, 13.4, behind Frankfort); final score MetroNews.
     { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z',
-      poll: { label: 'Ratings', text: 'WVSSAC Football Ratings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
+      poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
       ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '10-0']] },
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
