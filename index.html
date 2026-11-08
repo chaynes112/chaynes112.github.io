@@ -1106,7 +1106,7 @@
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
   // poll: { text, href, label } adds a linked row (label defaults to 'Poll') to the card, game or no game
-  function manualCard({ label, games = [], done, doneLogo, rows, college, last, first, poll }) {
+  function manualCard({ label, games = [], done, doneLogo, rows, college, last, first, poll, result }) {
     // poll with no href shows a dash
     const pollRow = poll ? [poll.label || 'Poll', poll.href ? { text: poll.text, href: poll.href } : DASH] : null;
     // the poll row takes the first unlabeled leftover field row (rifle: the last opponent's line) if there is one, else goes last
@@ -1127,13 +1127,14 @@
       if (doneLogo) note.append(teamLogo(doneLogo));   // same sizing as the logos on the other cards
       note.append(done || 'No upcoming game scheduled');
       card.append(note);
+      // result: final score of that game, Sissonville first (W 3-0, L 1-3), at the end of the Last game line
       // last: when the final game was played -- shown on the Last game line, and used to list ended seasons newest first
       const lastDay = last && new Date(last).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       if (last) card.dataset.ended = new Date(last).getTime();
       const all = [...(rows || []), ...(pollRow ? [pollRow] : [])];
       if (all.length) {
         const dl = el('dl');
-        all.forEach(([k, v]) => { const dd = el('dd'); dd.append(link(k === 'Last game' && lastDay ? v + ' (' + lastDay + ')' : v)); dl.append(el('dt', null, k), dd); });
+        all.forEach(([k, v]) => { const dd = el('dd'); dd.append(link(k === 'Last game' ? [[v, lastDay && '(' + lastDay + ')'].filter(Boolean).join(' '), result].filter(Boolean).join(' · ') : v)); dl.append(el('dt', null, k), dd); });
         card.append(dl);
       }
       return card;
@@ -1382,11 +1383,11 @@
     { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z',
       poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
       ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '10-0']] },
-    { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', rows: [
+    { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', result: 'L 1-3', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', 'Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
-    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
+    { label: 'Boys Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', result: 'L 1-3', rows: [
       ['Last game', 'Regional Semifinal'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#8 in Class AA/A'], ['Sissonville record', '13-8']] },
-    { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', rows: [
+    { label: 'Volleyball', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-10-27T22:00:00Z', result: 'L 1-3', rows: [
       // Last game: Class AA Region IV first round, 9 seed Sissonville at 8 seed Buffalo, Oct 27 (WVSSAC bracket)
       ['Last game', 'Regional First Round'], ['Last opponent', 'Buffalo'], ['Sissonville rank', '#31 in Class AA'], ['Sissonville record', '4-30 (0-11)']] },
     // Winter and spring schedules from MaxPreps (Nov 5, 2026); the next listed game for each
