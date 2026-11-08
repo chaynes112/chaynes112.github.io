@@ -124,6 +124,8 @@
   .game .final { color: var(--gold); font-weight: 700; }
   /* a card with a game in progress: the gold border turns the same red as LIVE NOW */
   .game:has(.live) { border-color: rgba(255, 59, 47, .35); border-top-color: #ff3b2f; }
+  /* a finished game (FINAL), until the card moves on to the next game: light blue border */
+  .game:has(.final) { border-color: rgba(91, 192, 235, .35); border-top-color: #5bc0eb; }
   /* live / final score, right after each team's name */
   .game .team-score { font: 700 1.6rem/32px "Oswald", Impact, sans-serif; margin-left: .35rem; flex: none; }
   .game .team-score.lost { opacity: .55; }
