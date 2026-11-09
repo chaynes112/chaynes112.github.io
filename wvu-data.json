@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-08T23:49:47Z",
+ "updated": "2026-11-09T18:57:06Z",
  "manual": {
   "Rifle": [
    {
@@ -41,10 +41,10 @@
     ],
     "oppHead": "Opponents",
     "field": [
-     "#4 UK 4-1 (1-1)",
-     "#5 NEB 3-5",
-     "#6 TCU 6-3",
-     "#7 MISS 8-0"
+     "#6 UK 4-1 (1-1)",
+     "#12 NEB 3-5",
+     "#8 TCU 6-3",
+     "#2 MISS 8-0"
     ]
    },
    {
@@ -67,7 +67,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 8,
+     "rank": 4,
      "name": "Alaska Fairbanks",
      "short": "UAF",
      "nick": "Nanooks",
@@ -107,7 +107,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 8,
+     "rank": 4,
      "name": "Alaska Fairbanks",
      "short": "UAF",
      "nick": "Nanooks",
@@ -147,7 +147,7 @@
     "timeTBA": true,
     "prefix": "vs",
     "them": {
-     "rank": 2,
+     "rank": 3,
      "name": "Navy",
      "short": "NAVY",
      "nick": "Midshipmen ",
@@ -187,7 +187,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 12,
+     "rank": 9,
      "name": "Akron",
      "short": "AKR",
      "nick": "Zips",
@@ -227,7 +227,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 4,
+     "rank": 6,
      "name": "Kentucky",
      "short": "UK",
      "nick": "Wildcats",
