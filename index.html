@@ -224,7 +224,7 @@
     <div class="game-grid" id="game-grid">
       <article class="game" data-sport="football" data-league="college-football" data-team="277" data-conf="Big 12" data-groups="80" data-polls="Playoff Committee Rankings|AP Top 25"><div class="sport">Football</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="soccer" data-league="usa.ncaa.m.1" data-team="5658" data-conf="Sun Belt"><div class="sport">Men's Soccer</div><p class="note">Loading&hellip;</p></article>
-      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382" data-conf="Big 12" data-votes="1"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
+      <article class="game" data-sport="soccer" data-league="usa.ncaa.w.1" data-team="20382" data-conf="Big 12" data-votes="1" data-fallback="Women's Soccer"><div class="sport">Women's Soccer</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="mens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1" data-votes="Coaches Poll"><div class="sport">Men's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="basketball" data-league="womens-college-basketball" data-team="277" data-conf="Big 12" data-groups="50" data-season-end="1"><div class="sport">Women's Basketball</div><p class="note">Loading&hellip;</p></article>
       <article class="game" data-sport="volleyball" data-league="womens-college-volleyball" data-team="277" data-conf="Big 12"><div class="sport">Volleyball</div><p class="note">Loading&hellip;</p></article>
@@ -1201,6 +1201,12 @@
     // Next spring's opener (for when this goes back to a game card): at College of Charleston, Feb 19, 2027.
     { label: 'Baseball', poll: POLL_LINK['college-baseball'], done: 'Season Ended', doneLogo: WVU_CARD_LOGO, last: '2026-06-17T23:00:00Z', result: 'L 7-12', rows: [
       ['Last game', 'College World Series'], ['Last opponent', 'North Carolina'], ['WVU rank', '#4'], ['WVU record', '47-17 (21-9)']] },
+    // Out of the Big 12 Tournament (1-1 at BYU, lost 2-4 on penalties, Nov 9, 2026); waiting on the NCAA bracket (Nov 16).
+    // Shows only while ESPN has no upcoming game: an NCAA tournament game in ESPN's schedule brings the ESPN card back.
+    // Rank: United Soccer Coaches poll of Nov 10, 2026 (WVU unranked, no votes); 12th in the NCAA committee's top 16 of Oct 24.
+    { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], done: 'NCAA Selection Nov 16', doneLogo: WVU_CARD_LOGO,
+      last: '2026-11-09T20:20:00Z', result: 'T 1-1 (2-4 PK)', rows: [
+      ['Last game', 'Big 12 Quarterfinal'], ['Last opponent', 'BYU'], ['WVU rank', 'Unranked'], ['WVU record', '9-4-5 (4-4-3)']] },
   ];
   // Soonest game first; cards with no game go last
   const grid = document.getElementById('game-grid');
