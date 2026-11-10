@@ -636,10 +636,17 @@
     return Promise.all((list.items || []).map(i => getJSON(i.$ref.replace(/^http:/, 'https:')).catch(() => null)));
   }
 
+  // End of each soccer conference's regular season. ESPN flags conference tournament games as conference games
+  // too (with nothing else telling them apart), so games after this date are left out of the conference record
+  // and it matches the official standings. Update each season.
+  const CONF_REG_END = {
+    'usa.ncaa.m.1': '2026-11-06T00:00:00Z',   // Sun Belt, last regular-season games Nov 3-5, 2026
+    'usa.ncaa.w.1': '2026-11-07T00:00:00Z',   // Big 12, last regular-season games Nov 5-6, 2026
+  };
   // Conference record counted from finished conference games; soccer adds ties (W-L-T)
-  function confRecord(events, team, sport) {
+  function confRecord(events, team, sport, league) {
     let w = 0, l = 0, t = 0;
-    const done = Date.now() - 3 * 3600e3;
+    const done = Math.min(Date.now() - 3 * 3600e3, CONF_REG_END[league] ? Date.parse(CONF_REG_END[league]) : Infinity);
     for (const e of events) {
       const c = e && e.competitions && e.competitions[0];
       if (!c || !c.conferenceCompetition || new Date(e.date) > done) continue;
@@ -655,7 +662,7 @@
     const conf = (competitor.records || []).find(r => r.type === 'vsconf');
     if (conf) return conf.summary;
     const { sport, league } = card.dataset;
-    return confRecord(events || await seasonEvents(sport, league, competitor.id, seasonFor(card)), competitor.id, sport);
+    return confRecord(events || await seasonEvents(sport, league, competitor.id, seasonFor(card)), competitor.id, sport, league);
   }
 
   // The game to show: one in progress first; otherwise a game that finished recently (FINAL, kept up until
