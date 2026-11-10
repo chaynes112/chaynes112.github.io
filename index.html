@@ -797,6 +797,10 @@
     const names = [...new Set((comp.broadcasts || []).flatMap(b => b.names || []))];
     return names.length ? names.join(', ') : null;
   };
+  // Broadcast for games ESPN's feed has none for yet, by ESPN event id (ESPN's own listing wins once it has one)
+  const GAME_TV = {
+    '401929854': 'ESPN+',   // men's soccer vs Coastal Carolina, Nov 11, 2026 (ESPN watch page)
+  };
 
   // Soccer conference standings from sunbeltsports.org and big12sports.com, in order, with each team's conference
   // record. wvu-data.json (updated every 2 hours by the GitHub job) replaces these; the copy below is the fallback. A rank only shows while ESPN's count of that team's conference
@@ -981,7 +985,7 @@
       const rows = [
         // always shown (TBA / dash when ESPN has nothing yet)
         ['Venue', (comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName)) || 'TBA'],
-        ['Broadcast', gameTV(comp) || 'TBA'],
+        ['Broadcast', gameTV(comp) || GAME_TV[ev.id] || 'TBA'],
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
