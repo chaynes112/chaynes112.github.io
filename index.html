@@ -153,8 +153,14 @@
   /* Cartoon Mountaineer and Sissonville Indian side by side -- in the page flow on narrow screens, standing on the mountains on wide ones */
   .mascot { display: flex; gap: 10px; width: 250px; margin: 2rem auto 0; pointer-events: none; }
   .mascot svg { display: block; flex: 1 1 0; min-width: 0; height: auto; overflow: visible; }
+  /* wide screens: centered in the empty strip between the left edge of the screen and the 1280px game cards,
+     shrinking to fit when that strip is narrower than 290px */
   @media (min-width: 1640px) {
-    .mascot { position: fixed; z-index: 2; left: 2rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); width: 290px; margin: 0; }
+    .mascot { position: fixed; z-index: 2; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); margin: 0;
+              width: min(290px, calc((100% - 1280px) / 2 - 16px));
+              left: calc(((100% - 1280px) / 2 - min(290px, calc((100% - 1280px) / 2 - 16px))) / 2); }
+    /* Country Roads button centered in the strip between the cards and the right edge */
+    .music { right: calc((100% - 1280px) / 4); transform: translateX(50%); }
   }
   .mascot .bob { animation: bob 1.6s ease-in-out infinite; }
   .mascot .ready { transform-box: view-box; transform-origin: 77px 150px; animation: ready 2.4s ease-in-out infinite; }
@@ -356,8 +362,8 @@
         <ellipse cx="80" cy="72" rx="25" ry="27" fill="#f2c29b" stroke="#141414" stroke-width="2.2"/>
         <path d="M95 52 Q104 62 103 80 Q98 70 92 66 Z" fill="#dca37c"/>
         <!-- big bushy auburn beard -->
-        <path d="M54 68 Q51 90 58 104 C58 110.5 68 116 80 116 C92 116 102 110.5 102 104 Q109 90 106 68 Q101 83 93 86 Q80 81 67 86 Q59 83 54 68 Z" fill="#8a4420" stroke="#141414" stroke-width="2"/>
-        <path d="M62 92 Q64 100 70 104 M98 92 Q96 100 90 104 M76 107.5 l1 5 M84 107.5 l-1 5 M58 80 Q59 88 63 92 M102 80 Q101 88 97 92" stroke="#5a260c" stroke-width="1.6" fill="none"/>
+        <path d="M54 68 Q51 90 58 104 C58 109.5 68 113.5 80 113.5 C92 113.5 102 109.5 102 104 Q109 90 106 68 Q101 83 93 86 Q80 81 67 86 Q59 83 54 68 Z" fill="#8a4420" stroke="#141414" stroke-width="2"/>
+        <path d="M62 92 Q64 100 70 104 M98 92 Q96 100 90 104 M76 107 l.8 4 M84 107 l-.8 4 M58 80 Q59 88 63 92 M102 80 Q101 88 97 92" stroke="#5a260c" stroke-width="1.6" fill="none"/>
         <!-- closed mouth set in a hard scowl -->
         <path d="M70 100 Q80 93 90 100" stroke="#141414" stroke-width="2.8" fill="none"/>
         <path d="M74 103 Q80 101 86 103" stroke="#5a260c" stroke-width="1.4" fill="none"/>
