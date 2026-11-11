@@ -162,7 +162,7 @@
   .mascot svg .bob { pointer-events: visiblePainted; cursor: default; }
   .mascot .recoil { transform-box: view-box; transform-origin: 77px 150px; }
   .mascot .smoke circle { transform-box: fill-box; transform-origin: center; }
-  .mascot .tail { transform-box: view-box; transform-origin: 54px 60px; animation: tail 1.6s ease-in-out infinite; }
+  .mascot .tail { transform-box: view-box; transform-origin: 54px 56px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   @keyframes ready { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
@@ -271,35 +271,39 @@
         <path d="M45 106 Q80 94 115 106 L112 121 Q80 131 48 121 Z" fill="#b27a42" stroke="#141414" stroke-width="2"/>
         <path d="M50 122 l-1 7 M56 124 l-1 7 M62 126 l0 7 M68 127 l0 7 M92 127 l0 7 M98 126 l0 7 M104 124 l1 7 M110 122 l1 7" stroke="#141414" stroke-width="3.2"/>
         <path d="M50 122 l-1 7 M56 124 l-1 7 M62 126 l0 7 M68 127 l0 7 M92 127 l0 7 M98 126 l0 7 M104 124 l1 7 M110 122 l1 7" stroke="#d29a5c" stroke-width="1.6"/>
-        <!-- crossed straps: brown one over his right shoulder to the shot pouch, dark brown one over his left shoulder to the leather case at his right hip -->
+        <!-- belt, under the straps -->
+        <rect x="44" y="138" width="72" height="8" fill="#5e3818" stroke="#141414" stroke-width="1.8"/>
+        <rect x="73" y="135.5" width="14" height="13" rx="2" fill="#b8860b" stroke="#141414" stroke-width="1.8"/>
+        <rect x="77" y="139.5" width="6" height="5" fill="#5e3818"/>
+        <!-- crossed straps: brown one over his right shoulder to the shot pouch, dark brown one over his left shoulder to the knife sheath at his right hip -->
         <path d="M106 105 L54 152" stroke="#141414" stroke-width="5"/>
         <path d="M106 105 L54 152" stroke="#2f1c0c" stroke-width="3"/>
         <path d="M54 105 L104 150" stroke="#141414" stroke-width="5.6"/>
         <path d="M54 105 L104 150" stroke="#8a5a2e" stroke-width="3.6"/>
         <path d="M58 109 L100 147" stroke="#5e3818" stroke-width=".9" stroke-dasharray="2 3"/>
-        <rect x="44" y="138" width="72" height="8" fill="#2f1d0e" stroke="#141414" stroke-width="1.8"/>
-        <rect x="73" y="135.5" width="14" height="13" rx="2" fill="#EAAA00" stroke="#141414" stroke-width="1.8"/>
-        <rect x="77" y="139.5" width="6" height="5" fill="#2f1d0e"/>
-        <!-- two whitish pieces hanging on long thongs from the dark strap, mid-chest: a curved horn and a small bone tube -->
-        <path d="M99 111 L101 127 M102 108 L108.6 124" stroke="#3a2412" stroke-width="1.1"/>
-        <path d="M99 126 Q105 125 105 131 Q104 140 98 147 Q100 139 99.5 134 Q98.5 129 99 126 Z" fill="#efe2c2" stroke="#141414" stroke-width="1.4"/>
-        <path d="M102 129 Q102.5 137 99.5 143" stroke="#b8a77f" stroke-width=".9" fill="none"/>
-        <rect x="106.8" y="124" width="3.8" height="11" rx="1.7" fill="#e6dcc4" stroke="#141414" stroke-width="1.2"/>
-        <rect x="106.6" y="123" width="4.2" height="3" rx="1" fill="#5e3818" stroke="#141414" stroke-width=".8"/>
-        <!-- leather shot pouch with a flap at his left hip -->
-        <path d="M95 148 L117 148 L118 166 Q106 171 94 166 Z" fill="#4a2c14" stroke="#141414" stroke-width="1.8"/>
-        <path d="M94 147 L118 147 L117 157 Q106 162 95 157 Z" fill="#5e3818" stroke="#141414" stroke-width="1.6"/>
-        <path d="M97 150 Q106 154 115 150" stroke="#7b4a22" stroke-width="1" fill="none"/>
-        <circle cx="106" cy="158" r="1.6" fill="#c9a25f" stroke="#141414" stroke-width=".7"/>
-        <!-- knife in a dark leather sheath at his right hip: antler handle and brass guard sticking out the top -->
+        <!-- two pieces hanging on thongs in the middle of his chest: a whitish tooth (point up) and a dark gold medallion -->
+        <path d="M72.2 111 L72.6 122.5 M81.5 111 L81.5 124.5" stroke="#3a2412" stroke-width="1.1"/>
+        <path d="M72.6 121.5 Q77.2 128 76.6 135 Q72.4 137.6 68.2 135.2 Q71 129 72.6 121.5 Z" fill="#efe2c2" stroke="#141414" stroke-width="1.4"/>
+        <path d="M73.2 126 Q74.8 130 73.8 134" stroke="#b8a77f" stroke-width=".9" fill="none"/>
+        <circle cx="81.5" cy="129" r="4.8" fill="#6b4f10" stroke="#141414" stroke-width="1.3"/>
+        <circle cx="81.5" cy="129" r="2.9" fill="none" stroke="#9c7a20" stroke-width=".9"/>
+        <circle cx="81.5" cy="129" r="1" fill="#9c7a20"/>
+        <!-- leather shot pouch with a flap at his left hip, turned partway so its side shows -->
+        <path d="M110 149 L118 147 L119 164 Q115 168 111 167 Z" fill="#3a2210" stroke="#141414" stroke-width="1.6"/>
+        <path d="M94 150 L110 149 L111 167 Q102 171 94 166 Z" fill="#4a2c14" stroke="#141414" stroke-width="1.8"/>
+        <path d="M110.5 147 L118.5 145.5 L118 154 Q114.5 157 110.5 157 Z" fill="#4a2c14" stroke="#141414" stroke-width="1.4"/>
+        <path d="M93.5 148 L110.5 147 L110.5 157 Q102 161 94.5 157 Z" fill="#5e3818" stroke="#141414" stroke-width="1.6"/>
+        <path d="M96 150 Q102 153.5 108.5 150" stroke="#7b4a22" stroke-width="1" fill="none"/>
+        <circle cx="102" cy="158" r="1.6" fill="#c9a25f" stroke="#141414" stroke-width=".7"/>
+        <!-- knife in a black leather sheath at his right hip: antler handle and brass guard sticking out the top -->
         <g transform="translate(49 160) rotate(-20)">
           <path d="M-2 -22 Q-3 -15 -2.5 -9 L2.5 -9 Q3 -15 2 -22 Q0 -24 -2 -22 Z" fill="#d9c9a3" stroke="#141414" stroke-width="1.2"/>
           <path d="M-1 -19 l2 1 M-1.2 -15 l2.2 1 M-1.2 -12 l2.2 1" stroke="#8c7a55" stroke-width=".8"/>
           <rect x="-5" y="-10" width="10" height="2.6" rx="1" fill="#c9a25f" stroke="#141414" stroke-width=".9"/>
-          <path d="M-5 -7.5 L5 -7.5 L4 10 Q1 18 0 21 Q-1 18 -4 10 Z" fill="#3a2412" stroke="#141414" stroke-width="1.5"/>
-          <path d="M-3.5 -5 L3.5 -5 M-3 0 L3 0 M-2.6 5 L2.6 5" stroke="#5e3818" stroke-width="1"/>
+          <path d="M-5 -7.5 L5 -7.5 L4 10 Q1 18 0 21 Q-1 18 -4 10 Z" fill="#151515" stroke="#000" stroke-width="1.5"/>
+          <path d="M-3.5 -5 L3.5 -5 M-3 0 L3 0 M-2.6 5 L2.6 5" stroke="#3c3c3c" stroke-width="1"/>
           <path d="M-4.2 -3 l-3 2 M-4.1 2 l-3 2 M-3.8 7 l-3 2" stroke="#141414" stroke-width="2.2"/>
-          <path d="M-4.2 -3 l-3 2 M-4.1 2 l-3 2 M-3.8 7 l-3 2" stroke="#5e3818" stroke-width="1"/>
+          <path d="M-4.2 -3 l-3 2 M-4.1 2 l-3 2 M-3.8 7 l-3 2" stroke="#3c3c3c" stroke-width="1"/>
         </g>
         <!-- flintlock long rifle held across the body, both hands on it -->
         <g class="ready"><g class="recoil">
@@ -347,11 +351,11 @@
         <g class="smoke"></g>
         <!-- ringed raccoon tail hanging off the cap: black and tawny brown bands, black tip -->
         <g class="tail" stroke="#141414" stroke-width="1.8">
-          <ellipse cx="34" cy="116" rx="5" ry="6.5" fill="#1e1915"/>
-          <ellipse cx="36" cy="106" rx="5.5" ry="7" fill="#a07a52"/>
-          <ellipse cx="39" cy="95" rx="6.5" ry="7.5" fill="#1e1915"/>
-          <ellipse cx="43" cy="83" rx="7" ry="8" fill="#a07a52"/>
-          <ellipse cx="48" cy="71" rx="7.5" ry="9" fill="#1e1915"/>
+          <ellipse cx="34" cy="112" rx="5" ry="6.5" fill="#1e1915"/>
+          <ellipse cx="36" cy="102" rx="5.5" ry="7" fill="#a07a52"/>
+          <ellipse cx="39" cy="91" rx="6.5" ry="7.5" fill="#1e1915"/>
+          <ellipse cx="43" cy="79" rx="7" ry="8" fill="#a07a52"/>
+          <ellipse cx="48" cy="67" rx="7.5" ry="9" fill="#1e1915"/>
         </g>
         <!-- head: ears, face, nose -->
         <circle cx="54" cy="74" r="5" fill="#f2c29b" stroke="#141414" stroke-width="2"/>
@@ -376,9 +380,9 @@
           <circle cx="89" cy="69" r="2" fill="#111"/>
         </g>
         <!-- real coonskin cap: a shaggy, flat-crowned cap of brown raccoon fur, the raccoon's face on the front -->
-        <path d="M48.5 59.0 Q45.6 53.4 48.6 47.8 Q46.1 44.5 49.0 42.6 Q46.2 39.4 49.6 38.6 Q47.7 35.7 50.5 35.4 Q48.4 32.2 51.7 32.6 Q50.0 29.6 53.1 30.3 Q52.0 27.5 54.9 28.3 Q53.7 25.1 56.9 26.7 Q56.5 23.9 59.3 25.3 Q59.0 22.2 62.2 24.3 Q62.6 21.6 65.7 23.6 Q66.9 20.9 70.2 23.1 Q74.6 20.0 80.0 23.0 Q85.5 19.5 89.8 23.1 Q93.1 20.8 94.3 23.6 Q97.5 21.4 97.8 24.3 Q101.1 22.0 100.7 25.3 Q104.2 23.1 103.1 26.7 Q106.4 25.1 105.1 28.3 Q108.3 27.2 106.9 30.3 Q110.6 29.1 108.3 32.6 Q111.1 32.5 109.5 35.4 Q113.1 35.3 110.4 38.6 Q113.4 39.5 111.0 42.6 Q113.9 44.5 111.4 47.8 Q114.2 53.4 111.5 59.0 Q108.8 64.4 106.0 58.9 Q103.0 65.4 100.0 59.9 Q97.0 66.2 94.0 60.7 Q91.0 66.7 88.0 61.2 Q85.0 67.0 82.0 61.5 Q79.0 66.9 76.0 61.4 Q73.0 66.6 70.0 61.1 Q67.0 65.9 64.0 60.4 Q61.0 65.1 58.0 59.6 Q55.5 64.3 53.0 58.8 Q50.8 63.5 48.5 58.0 Z" fill="#7a5532" stroke="#141414" stroke-width="2"/>
-        <path d="M61.5 42.5 l-2.6 -3.4 M65.8 52.1 l-3.0 -3.2 M61.2 51.6 l-2.6 -2.1 M56.4 46.2 l-2.4 -2.2 M102.8 38.2 l2.2 -2.8 M93.4 53.4 l2.3 -2.4 M59.2 45.1 l-2.2 -2.3 M66.4 55.4 l-2.4 -2.1 M54.2 47.8 l-3.4 -2.5 M105.6 37.7 l2.6 -3.0 M67.8 52.3 l-2.4 -2.8 M52.9 47.3 l-3.3 -2.4 M101.2 42.6 l2.3 -2.7 M97.0 51.1 l2.5 -2.3" stroke="#3e2714" stroke-width="1.5"/>
-        <path d="M99.6 39.7 l2.0 -2.8 M92.9 54.6 l2.8 -2.7 M57.8 48.6 l-3.5 -2.9 M104.6 38.0 l2.5 -3.0 M57.5 46.8 l-3.2 -2.9 M62.0 48.5 l-2.9 -2.9 M61.9 53.2 l-3.0 -2.3 M102.5 47.8 l3.1 -2.6 M103.2 43.4 l3.3 -3.4 M58.3 40.2 l-2.6 -3.2 M104.3 36.0 l2.9 -3.7 M100.8 40.0 l2.1 -2.7 M64.4 52.8 l-2.6 -2.4 M98.4 50.4 l3.6 -3.3 M58.5 45.8 l-3.4 -3.4" stroke="#b08458" stroke-width="1.5"/>
+        <path d="M48.5 55.0 Q45.6 50.1 48.6 45.0 Q46.1 42.2 49.0 40.4 Q46.1 37.6 49.6 36.9 Q47.6 34.3 50.5 34.0 Q48.3 31.2 51.7 31.6 Q49.9 28.8 53.1 29.5 Q51.9 26.9 54.9 27.7 Q53.5 24.8 56.9 26.3 Q56.3 23.7 59.3 25.1 Q58.8 22.2 62.2 24.2 Q62.5 21.6 65.7 23.5 Q66.8 20.9 70.2 23.1 Q74.5 20.0 80.0 23.0 Q85.6 19.5 89.8 23.1 Q93.3 20.8 94.3 23.5 Q97.6 21.4 97.8 24.2 Q101.3 22.0 100.7 25.1 Q104.4 22.9 103.1 26.3 Q106.5 24.8 105.1 27.7 Q108.4 26.7 106.9 29.5 Q110.7 28.4 108.3 31.6 Q111.2 31.5 109.5 34.0 Q113.2 34.0 110.4 36.9 Q113.5 37.7 111.0 40.4 Q113.9 42.2 111.4 45.0 Q114.2 50.1 111.5 55.0 Q108.8 60.9 106.0 55.4 Q103.0 61.9 100.0 56.4 Q97.0 62.7 94.0 57.2 Q91.0 63.2 88.0 57.7 Q85.0 63.5 82.0 58.0 Q79.0 63.4 76.0 57.9 Q73.0 63.1 70.0 57.6 Q67.0 62.4 64.0 56.9 Q61.0 61.6 58.0 56.1 Q55.5 60.8 53.0 55.3 Q50.8 60.0 48.5 54.5 Z" fill="#7a5532" stroke="#141414" stroke-width="2"/>
+        <path d="M61.5 40.5 l-2.7 -3.3 M61.2 48.6 l-2.6 -2.0 M56.4 43.8 l-2.5 -2.1 M102.8 36.7 l2.3 -2.7 M59.2 42.9 l-2.2 -2.2 M66.4 52.0 l-2.5 -2.0 M54.2 45.2 l-3.5 -2.4 M105.6 36.3 l2.7 -2.8 M52.9 44.8 l-3.4 -2.3 M101.2 40.7 l2.4 -2.6" stroke="#3e2714" stroke-width="1.5"/>
+        <path d="M99.6 38.1 l2.2 -2.7 M92.9 51.3 l2.8 -2.6 M57.8 45.9 l-3.6 -2.8 M104.6 36.5 l2.7 -2.9 M57.5 44.4 l-3.3 -2.7 M62.0 45.9 l-3.0 -2.8 M61.9 50.0 l-3.0 -2.2 M102.5 45.3 l3.2 -2.5 M103.2 41.4 l3.5 -3.2 M58.3 38.5 l-2.7 -3.0 M104.3 34.7 l3.1 -3.6 M100.8 38.4 l2.2 -2.6 M98.4 47.6 l3.7 -3.1" stroke="#b08458" stroke-width="1.5"/>
         <!-- raccoon face: ears, tan face, black mask, white brows, pointed snout -->
         <path d="M67 31 L69 21 L76 27 Z M93 31 L91 21 L84 27 Z" fill="#3a2f24" stroke="#141414" stroke-width="1.4"/>
         <path d="M69.5 28 L70 23.5 L73 26.5 Z M90.5 28 L90 23.5 L87 26.5 Z" fill="#c9bba3"/>
@@ -516,10 +520,10 @@
         <path d="M62.5 56.5 l3 -1 l0 3 l-3 1 Z M73 53 l3 -0.6 l0 3 l-3 0.6 Z M84 52.4 l3 0.6 l0 3 l-3 -0.6 Z M94.5 55.5 l3 1 l0 3 l-3 -1 Z" fill="#141414"/>
         <!-- rosettes at the temples -->
         <g stroke="#141414">
-          <circle cx="52" cy="66" r="8" fill="#ffffff" stroke-width="1.6"/><circle cx="52" cy="66" r="8" fill="none" stroke="#c8102e" stroke-width="2.4"/>
-          <path d="M52 61 L52 71 M47 66 L57 66 M48.5 62.5 L55.5 69.5 M55.5 62.5 L48.5 69.5" stroke-width="1.4"/>
-          <circle cx="108" cy="66" r="8" fill="#ffffff" stroke-width="1.6"/><circle cx="108" cy="66" r="8" fill="none" stroke="#c8102e" stroke-width="2.4"/>
-          <path d="M108 61 L108 71 M103 66 L113 66 M104.5 62.5 L111.5 69.5 M111.5 62.5 L104.5 69.5" stroke-width="1.4"/>
+          <circle cx="52" cy="66" r="6.4" fill="#ffffff" stroke-width="1.4"/><circle cx="52" cy="66" r="6.4" fill="none" stroke="#c8102e" stroke-width="2"/>
+          <path d="M52 62 L52 70 M48 66 L56 66 M49.2 63.2 L54.8 68.8 M54.8 63.2 L49.2 68.8" stroke-width="1.2"/>
+          <circle cx="108" cy="66" r="6.4" fill="#ffffff" stroke-width="1.4"/><circle cx="108" cy="66" r="6.4" fill="none" stroke="#c8102e" stroke-width="2"/>
+          <path d="M108 62 L108 70 M104 66 L112 66 M105.2 63.2 L110.8 68.8 M110.8 63.2 L105.2 68.8" stroke-width="1.2"/>
         </g>
         <!-- fierce angled brows, drawn last -->
         <path d="M58 61 L77 65.5 L76 69 L60 66.5 Z" fill="#141414" stroke="#141414" stroke-width="1.6"/>
