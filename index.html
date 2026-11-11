@@ -162,7 +162,7 @@
   .mascot svg .bob { pointer-events: visiblePainted; cursor: default; }
   .mascot .recoil { transform-box: view-box; transform-origin: 77px 150px; }
   .mascot .smoke circle { transform-box: fill-box; transform-origin: center; }
-  .mascot .tail { transform-box: view-box; transform-origin: 54px 56px; animation: tail 1.6s ease-in-out infinite; }
+  .mascot .tail { transform-box: view-box; transform-origin: 54px 53px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   @keyframes ready { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
@@ -281,13 +281,6 @@
         <path d="M54 105 L104 150" stroke="#141414" stroke-width="5.6"/>
         <path d="M54 105 L104 150" stroke="#8a5a2e" stroke-width="3.6"/>
         <path d="M58 109 L100 147" stroke="#5e3818" stroke-width=".9" stroke-dasharray="2 3"/>
-        <!-- two pieces hanging on thongs in the middle of his chest: a whitish tooth (point up) and a dark gold medallion -->
-        <path d="M72.2 111 L72.6 122.5 M81.5 111 L81.5 124.5" stroke="#3a2412" stroke-width="1.1"/>
-        <path d="M72.6 121.5 Q77.2 128 76.6 135 Q72.4 137.6 68.2 135.2 Q71 129 72.6 121.5 Z" fill="#efe2c2" stroke="#141414" stroke-width="1.4"/>
-        <path d="M73.2 126 Q74.8 130 73.8 134" stroke="#b8a77f" stroke-width=".9" fill="none"/>
-        <circle cx="81.5" cy="129" r="4.8" fill="#6b4f10" stroke="#141414" stroke-width="1.3"/>
-        <circle cx="81.5" cy="129" r="2.9" fill="none" stroke="#9c7a20" stroke-width=".9"/>
-        <circle cx="81.5" cy="129" r="1" fill="#9c7a20"/>
         <!-- leather shot pouch with a flap at his left hip, turned partway so its side shows -->
         <path d="M110 149 L118 147 L119 164 Q115 168 111 167 Z" fill="#3a2210" stroke="#141414" stroke-width="1.6"/>
         <path d="M94 150 L110 149 L111 167 Q102 171 94 166 Z" fill="#4a2c14" stroke="#141414" stroke-width="1.8"/>
@@ -295,6 +288,13 @@
         <path d="M93.5 148 L110.5 147 L110.5 157 Q102 161 94.5 157 Z" fill="#5e3818" stroke="#141414" stroke-width="1.6"/>
         <path d="M96 150 Q102 153.5 108.5 150" stroke="#7b4a22" stroke-width="1" fill="none"/>
         <circle cx="102" cy="158" r="1.6" fill="#c9a25f" stroke="#141414" stroke-width=".7"/>
+        <!-- hanging from the belt on short thongs, below it: a small dark gold tube with a cap, and a whitish tooth (point up) -->
+        <path d="M91.4 143 L91.4 148.5 M95 143 L95 152" stroke="#3a2412" stroke-width="1.1"/>
+        <rect x="89.4" y="148" width="4" height="9.5" rx="1.8" fill="#6b4f10" stroke="#141414" stroke-width="1.2"/>
+        <rect x="89.1" y="147" width="4.6" height="2.8" rx="1" fill="#4a360a" stroke="#141414" stroke-width=".8"/>
+        <path d="M90.4 151 L90.4 155.5" stroke="#9c7a20" stroke-width=".8"/>
+        <path d="M95 151.5 Q99 158 98.4 166 Q95.6 168.4 92.4 166.2 Q94.2 159 95 151.5 Z" fill="#efe2c2" stroke="#141414" stroke-width="1.4"/>
+        <path d="M95.6 156 Q96.8 160 96 164.5" stroke="#b8a77f" stroke-width=".9" fill="none"/>
         <!-- knife in a black leather sheath at his right hip: antler handle and brass guard sticking out the top -->
         <g transform="translate(49 160) rotate(-20)">
           <path d="M-2 -22 Q-3 -15 -2.5 -9 L2.5 -9 Q3 -15 2 -22 Q0 -24 -2 -22 Z" fill="#d9c9a3" stroke="#141414" stroke-width="1.2"/>
@@ -351,11 +351,11 @@
         <g class="smoke"></g>
         <!-- ringed raccoon tail hanging off the cap: black and tawny brown bands, black tip -->
         <g class="tail" stroke="#141414" stroke-width="1.8">
-          <ellipse cx="34" cy="112" rx="5" ry="6.5" fill="#1e1915"/>
-          <ellipse cx="36" cy="102" rx="5.5" ry="7" fill="#a07a52"/>
-          <ellipse cx="39" cy="91" rx="6.5" ry="7.5" fill="#1e1915"/>
-          <ellipse cx="43" cy="79" rx="7" ry="8" fill="#a07a52"/>
-          <ellipse cx="48" cy="67" rx="7.5" ry="9" fill="#1e1915"/>
+          <ellipse cx="34" cy="109" rx="5" ry="6.5" fill="#1e1915"/>
+          <ellipse cx="36" cy="99" rx="5.5" ry="7" fill="#a07a52"/>
+          <ellipse cx="39" cy="88" rx="6.5" ry="7.5" fill="#1e1915"/>
+          <ellipse cx="43" cy="76" rx="7" ry="8" fill="#a07a52"/>
+          <ellipse cx="48" cy="64" rx="7.5" ry="9" fill="#1e1915"/>
         </g>
         <!-- head: ears, face, nose -->
         <circle cx="54" cy="74" r="5" fill="#f2c29b" stroke="#141414" stroke-width="2"/>
@@ -380,9 +380,9 @@
           <circle cx="89" cy="69" r="2" fill="#111"/>
         </g>
         <!-- real coonskin cap: a shaggy, flat-crowned cap of brown raccoon fur, the raccoon's face on the front -->
-        <path d="M48.5 55.0 Q45.6 50.1 48.6 45.0 Q46.1 42.2 49.0 40.4 Q46.1 37.6 49.6 36.9 Q47.6 34.3 50.5 34.0 Q48.3 31.2 51.7 31.6 Q49.9 28.8 53.1 29.5 Q51.9 26.9 54.9 27.7 Q53.5 24.8 56.9 26.3 Q56.3 23.7 59.3 25.1 Q58.8 22.2 62.2 24.2 Q62.5 21.6 65.7 23.5 Q66.8 20.9 70.2 23.1 Q74.5 20.0 80.0 23.0 Q85.6 19.5 89.8 23.1 Q93.3 20.8 94.3 23.5 Q97.6 21.4 97.8 24.2 Q101.3 22.0 100.7 25.1 Q104.4 22.9 103.1 26.3 Q106.5 24.8 105.1 27.7 Q108.4 26.7 106.9 29.5 Q110.7 28.4 108.3 31.6 Q111.2 31.5 109.5 34.0 Q113.2 34.0 110.4 36.9 Q113.5 37.7 111.0 40.4 Q113.9 42.2 111.4 45.0 Q114.2 50.1 111.5 55.0 Q108.8 60.9 106.0 55.4 Q103.0 61.9 100.0 56.4 Q97.0 62.7 94.0 57.2 Q91.0 63.2 88.0 57.7 Q85.0 63.5 82.0 58.0 Q79.0 63.4 76.0 57.9 Q73.0 63.1 70.0 57.6 Q67.0 62.4 64.0 56.9 Q61.0 61.6 58.0 56.1 Q55.5 60.8 53.0 55.3 Q50.8 60.0 48.5 54.5 Z" fill="#7a5532" stroke="#141414" stroke-width="2"/>
-        <path d="M61.5 40.5 l-2.7 -3.3 M61.2 48.6 l-2.6 -2.0 M56.4 43.8 l-2.5 -2.1 M102.8 36.7 l2.3 -2.7 M59.2 42.9 l-2.2 -2.2 M66.4 52.0 l-2.5 -2.0 M54.2 45.2 l-3.5 -2.4 M105.6 36.3 l2.7 -2.8 M52.9 44.8 l-3.4 -2.3 M101.2 40.7 l2.4 -2.6" stroke="#3e2714" stroke-width="1.5"/>
-        <path d="M99.6 38.1 l2.2 -2.7 M92.9 51.3 l2.8 -2.6 M57.8 45.9 l-3.6 -2.8 M104.6 36.5 l2.7 -2.9 M57.5 44.4 l-3.3 -2.7 M62.0 45.9 l-3.0 -2.8 M61.9 50.0 l-3.0 -2.2 M102.5 45.3 l3.2 -2.5 M103.2 41.4 l3.5 -3.2 M58.3 38.5 l-2.7 -3.0 M104.3 34.7 l3.1 -3.6 M100.8 38.4 l2.2 -2.6 M98.4 47.6 l3.7 -3.1" stroke="#b08458" stroke-width="1.5"/>
+        <path d="M48.5 52.0 Q45.6 47.6 48.6 42.9 Q46.1 40.4 49.0 38.8 Q46.1 36.3 49.6 35.6 Q47.6 33.3 50.5 33.0 Q48.2 30.4 51.7 30.8 Q49.8 28.3 53.1 28.9 Q51.8 26.6 54.9 27.3 Q53.4 24.6 56.9 25.9 Q56.2 23.6 59.3 24.9 Q58.7 22.1 62.2 24.1 Q62.3 21.6 65.7 23.5 Q66.6 20.9 70.2 23.1 Q74.4 20.0 80.0 23.0 Q85.7 19.5 89.8 23.1 Q93.4 20.9 94.3 23.5 Q97.8 21.4 97.8 24.1 Q101.5 22.0 100.7 24.9 Q104.6 22.9 103.1 25.9 Q106.7 24.5 105.1 27.3 Q108.5 26.3 106.9 28.9 Q110.8 27.9 108.3 30.8 Q111.3 30.7 109.5 33.0 Q113.3 33.0 110.4 35.6 Q113.5 36.4 111.0 38.8 Q113.9 40.4 111.4 42.9 Q114.2 47.6 111.5 52.0 Q108.8 57.9 106.0 52.4 Q103.0 58.9 100.0 53.4 Q97.0 59.7 94.0 54.2 Q91.0 60.2 88.0 54.7 Q85.0 60.5 82.0 55.0 Q79.0 60.4 76.0 54.9 Q73.0 60.1 70.0 54.6 Q67.0 59.4 64.0 53.9 Q61.0 58.6 58.0 53.1 Q55.5 57.8 53.0 52.3 Q50.8 57.0 48.5 51.5 Z" fill="#7a5532" stroke="#141414" stroke-width="2"/>
+        <path d="M61.5 39.1 l-2.8 -3.2 M61.2 46.4 l-2.7 -2.0 M56.4 42.1 l-2.6 -2.0 M102.8 35.6 l2.4 -2.6 M59.2 41.2 l-2.3 -2.1 M54.2 43.3 l-3.6 -2.3 M105.6 35.3 l2.8 -2.7 M52.9 43.0 l-3.4 -2.2 M101.2 39.2 l2.5 -2.5" stroke="#3e2714" stroke-width="1.5"/>
+        <path d="M99.6 36.9 l2.3 -2.7 M57.8 44.0 l-3.7 -2.7 M104.6 35.4 l2.8 -2.8 M57.5 42.5 l-3.4 -2.6 M62.0 43.9 l-3.1 -2.7 M61.9 47.7 l-3.1 -2.1 M102.5 43.4 l3.2 -2.4 M103.2 39.9 l3.6 -3.1 M58.3 37.2 l-2.8 -2.9 M104.3 33.8 l3.2 -3.4 M100.8 37.1 l2.3 -2.6 M98.4 45.5 l3.8 -3.0" stroke="#b08458" stroke-width="1.5"/>
         <!-- raccoon face: ears, tan face, black mask, white brows, pointed snout -->
         <path d="M67 31 L69 21 L76 27 Z M93 31 L91 21 L84 27 Z" fill="#3a2f24" stroke="#141414" stroke-width="1.4"/>
         <path d="M69.5 28 L70 23.5 L73 26.5 Z M90.5 28 L90 23.5 L87 26.5 Z" fill="#c9bba3"/>
