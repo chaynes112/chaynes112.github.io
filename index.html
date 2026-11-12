@@ -470,14 +470,17 @@
         <!-- tomahawk hanging in front of the belt at his right hip in a leather sling: steel head up top, red wraps and a feather on the handle -->
         <g transform="translate(65 158) rotate(6) scale(1.3)">
           <rect x="-1.7" y="-20" width="3.4" height="36" rx="1.5" fill="#7a4520" stroke="#141414" stroke-width="1.2"/>
-          <path d="M1.2 -19.5 L7.5 -22.5 Q10.5 -17 7.5 -11.5 L1.2 -14.5 Z" fill="#9aa1a8" stroke="#141414" stroke-width="1.3"/>
-          <path d="M7 -21.2 Q9.2 -17 7 -12.8" stroke="#d6dbe0" stroke-width=".9" fill="none"/>
-          <rect x="-4.6" y="-19.6" width="3.2" height="4.4" rx=".8" fill="#6b7178" stroke="#141414" stroke-width="1"/>
+          <!-- steel head (blade and back), enlarged around the top of the handle -->
+          <g transform="translate(0 -17) scale(1.35) translate(0 17)">
+            <path d="M1.2 -19.5 L7.5 -22.5 Q10.5 -17 7.5 -11.5 L1.2 -14.5 Z" fill="#9aa1a8" stroke="#141414" stroke-width=".96"/>
+            <path d="M7 -21.2 Q9.2 -17 7 -12.8" stroke="#d6dbe0" stroke-width=".67" fill="none"/>
+            <rect x="-4.6" y="-19.6" width="3.2" height="4.4" rx=".8" fill="#6b7178" stroke="#141414" stroke-width=".74"/>
+          </g>
           <path d="M-1.7 8 h3.4 M-1.7 10.6 h3.4 M-1.7 13.2 h3.4" stroke="#c8102e" stroke-width="1.6"/>
           <path d="M0 16 Q-3 21 -1 27 Q2 22 0 16 Z" fill="#ffffff" stroke="#141414" stroke-width=".9"/>
           <path d="M-1.6 22.4 Q-2 25 -1 27 Q0.6 24 0.4 21.6 Z" fill="#c8102e"/>
-          <!-- small black sling worked into the belt, cupping the handle -->
-          <path d="M-3.2 -10 Q0 -5.6 3.2 -10" stroke="#141414" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+          <!-- small very dark brown sling worked into the belt, cupping the handle -->
+          <path d="M-3.2 -10 Q0 -5.6 3.2 -10" stroke="#2b170a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
         </g>
         <!-- left arm, fist on the hip, red armband -->
         <path d="M54 110 Q40 128 50 144" stroke="#141414" stroke-width="20" fill="none"/>
