@@ -649,31 +649,6 @@
 </button>
 <!-- ?v= changes whenever the .mid file is replaced, so browsers don't keep playing a cached old copy -->
 <midi-player id="player" src="country-roads.mid?v=2" sound-font loop></midi-player>
-<!-- TEMPORARY: sound diagnostics, only with ?debug in the address (for the Nvidia Shield MIDI problem) -->
-<script>
-  window.DBG = /[?&]debug/.test(location.search) ? { log: [], fetches: [] } : null;
-  if (window.DBG) {
-    const note = m => { DBG.log.push(new Date().toISOString().slice(11, 19) + ' ' + m); if (DBG.log.length > 18) DBG.log.shift(); };
-    DBG.note = note;
-    addEventListener('error', e => note('ERR ' + (e.message || e.type)));
-    addEventListener('unhandledrejection', e => note('REJ ' + (e.reason && (e.reason.message || e.reason))));
-    for (const k of ['log', 'warn', 'error']) {
-      const o = console[k];
-      console[k] = function () {
-        const m = Array.prototype.map.call(arguments, String).join(' ').replace(/%c|background:[^;]*;|color:\S*/g, '');
-        if (/soundfont|audiocontext|tone|sample/i.test(m)) note(k + ': ' + m.slice(0, 110));
-        return o.apply(this, arguments);
-      };
-    }
-    const f = window.fetch;
-    window.fetch = function (u) {
-      if (!/soundfont|magenta|\.mid/i.test(String(u))) return f.apply(this, arguments);
-      const r = { url: String(u).split('/').slice(-2).join('/'), st: '...' };
-      DBG.fetches.push(r); if (DBG.fetches.length > 8) DBG.fetches.shift();
-      return f.apply(this, arguments).then(x => { r.st = x.status; return x; }, e => { r.st = 'FAIL ' + e.message; throw e; });
-    };
-  }
-</script>
 <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.5.0"></script>
 <script>
   // Country Roads MIDI -- browsers block audio until a click, so it starts from the button
@@ -1817,35 +1792,6 @@
     }
     watch();
   })();
-</script>
-<!-- TEMPORARY: sound diagnostics readout, only with ?debug in the address -->
-<script>
-  if (window.DBG) {
-    const box = document.createElement('div');
-    box.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;max-width:46vw;background:rgba(0,0,0,.85);color:#7f7;font:13px/1.35 monospace;padding:8px;border:1px solid #7f7;white-space:pre-wrap;word-break:break-all';
-    const out = document.createElement('div');
-    const mk = (t, fn) => { const b = document.createElement('button'); b.textContent = t; b.style.cssText = 'margin:6px 6px 0 0;font:14px monospace'; b.addEventListener('click', () => { try { fn(); } catch (e) { DBG.note(t + ' threw ' + e.message); } }); box.append(b); };
-    box.append(out);
-    mk('Tone beep', () => { Tone.start(); new Tone.Synth().toDestination().triggerAttackRelease('A4', 0.4); DBG.note('Tone beep sent'); });
-    mk('Silent unlock', () => { const c = Tone.context.rawContext; const s = c.createBufferSource(); s.buffer = c.createBuffer(1, 1, 22050); s.connect(c.destination); s.start(0); Tone.start(); DBG.note('unlock sent'); });
-    document.body.append(box);
-    const pl = document.getElementById('player');
-    pl.addEventListener('start', () => DBG.note('player start event'));
-    pl.addEventListener('stop', () => DBG.note('player stop event'));
-    pl.addEventListener('load', () => DBG.note('player load event'));
-    setInterval(() => {
-      const c = window.Tone && Tone.context;
-      out.textContent = [
-        navigator.userAgent,
-        'Tone: ' + (c ? c.state + ' t=' + c.currentTime.toFixed(2) + ' rate=' + c.sampleRate : 'missing'),
-        'Dest muted=' + (window.Tone && Tone.Destination.mute) + ' vol=' + (window.Tone && Tone.Destination.volume.value.toFixed(1)),
-        'UFO/gun ctx: ' + (typeof audio !== 'undefined' && audio ? audio.state : 'not made yet'),
-        'player.playing=' + pl.playing + ' t=' + (pl.currentTime || 0).toFixed(1),
-        '-- fetches --', ...DBG.fetches.map(r => r.st + ' ' + r.url),
-        '-- log --', ...DBG.log,
-      ].join(String.fromCharCode(10));
-    }, 500);
-  }
 </script>
 </body>
 </html>
