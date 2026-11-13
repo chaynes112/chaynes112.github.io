@@ -1114,8 +1114,8 @@
     'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH', Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA',
     'Rhode Island': 'RI', 'South Carolina': 'SC', 'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT',
     Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY', 'District of Columbia': 'DC' };
-  // venue names ESPN has out of date (WVU volleyball plays in Hope Coliseum)
-  const VENUE_FIX = { 'WVU Coliseum': 'Hope Coliseum' };
+  // venue names ESPN has out of date (WVU volleyball plays in Hope Coliseum), or that need a note (Colonial Hall is at The Greenbrier)
+  const VENUE_FIX = { 'WVU Coliseum': 'Hope Coliseum', 'Colonial Hall': 'Colonial Hall (The Greenbrier)' };
   // venues where ESPN leaves the state off -- add to this as they come up
   const CITY_STATE = { Harrisonburg: 'VA', Morgantown: 'WV' };
   function gameCity(comp) {
