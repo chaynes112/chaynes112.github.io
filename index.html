@@ -1591,7 +1591,7 @@
     audio = audio || new AC();
     if (audio.state === 'suspended') audio.resume().catch(() => {});
     const a = audio, t = a.currentTime + delay;
-    const out = a.createGain(); out.gain.value = 0.5;
+    const out = a.createGain(); out.gain.value = 0.92;   // raised from 0.5 so the show averages about the same level as the songs
     const pan = a.createStereoPanner ? a.createStereoPanner() : null;
     if (pan) { pan.pan.value = Math.max(-1, Math.min(1, (x / innerWidth) * 2 - 1)) * 0.8; out.connect(pan).connect(a.destination); }
     else out.connect(a.destination);
