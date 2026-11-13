@@ -663,6 +663,9 @@
   btn.addEventListener('click', () => {
     if (player.playing) { player.stop(); return; }
     quiet(player);
+    // Wake the MIDI's audio engine right here in the click. player.start() loads the instrument sounds
+    // first, and some browsers (e.g. on the Nvidia Shield) refuse to start audio after that wait.
+    if (window.Tone) Tone.start();
     player.start();
   });
 
@@ -816,12 +819,30 @@
   const toastySound = new Audio('toasty.mp3');
   toastySound.preload = 'auto';
   let toasting = false;
+  // Some browsers (e.g. on the Nvidia Shield) only let an MP3 start right inside a click, and Toasty comes
+  // half a second after the third shot. So the clip is also decoded into the gunshot's audio engine,
+  // which the shot's click already woke up, and played from there; the plain MP3 is the fallback.
+  let toastyBuf = null;
+  function loadToasty() {
+    if (toastyBuf || !audio) return;
+    toastyBuf = 'loading';
+    fetch('toasty.mp3').then(r => r.arrayBuffer())
+      .then(b => new Promise((ok, no) => audio.decodeAudioData(b, ok, no)))
+      .then(d => { toastyBuf = d; }, () => { toastyBuf = null; });
+  }
   function toastyPop() {
     if (toasting) return;
     toasting = true;
     toasty.hidden = false;
-    toastySound.currentTime = TOASTY_SKIP;
-    setTimeout(() => toastySound.play().catch(() => {}), 150);
+    if (toastyBuf instanceof AudioBuffer && audio.state === 'running') {
+      const src = audio.createBufferSource();
+      src.buffer = toastyBuf;
+      src.connect(audio.destination);
+      src.start(audio.currentTime + 0.15, TOASTY_SKIP);
+    } else {
+      toastySound.currentTime = TOASTY_SKIP;
+      setTimeout(() => toastySound.play().catch(() => {}), 150);
+    }
     // in by 0.1 s, up until the clip ends (~0.95 s after the skip), out by 1.2 s
     toasty.animate([
       { transform: 'translate(105%, 40%)' },
@@ -848,6 +869,7 @@
     if (!AC) return;
     audio = audio || new AC();
     if (audio.state === 'suspended') audio.resume();
+    loadToasty();
     const t = audio.currentTime;
     // heavy black powder: a darker crack with a long rolling tail
     const len = Math.floor(audio.sampleRate * 1.7), buf = audio.createBuffer(1, len, audio.sampleRate), d = buf.getChannelData(0);
