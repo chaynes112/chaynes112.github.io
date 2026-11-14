@@ -113,7 +113,7 @@
   .game .when { opacity: .85; font-size: 1.05rem; }
   /* a kickoff time that was changed (GAME_TIME): gold highlight so it stands out */
   /* rifle: live team scores above LIVE NOW, highest first */
-  .game .rifle-scores { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: .4rem 0 .3rem; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .game .rifle-scores { display: flex; flex-wrap: wrap; gap: .25rem 1.6rem; margin: .4rem 0 .8rem; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
   .game .rifle-scores .team-short { font-weight: 700; margin-right: .3em; }
   .game .rifle-scores .na { opacity: .6; }
   .game .when .changed, .game .cmp-val .changed { background: var(--gold); color: var(--navy); font-weight: 700; padding: 0 .35em; border-radius: 4px; }
@@ -1485,7 +1485,9 @@
   function standardRows(g, college) {
     const row = k => (g.rows || []).find(r => r[0] === k), pair = k => (g.pairs || []).find(r => r[0] === k);
     // Live (rifle: ncaarifle.org scorecard link) sits right under Broadcast when there is one
-    const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'], ...(row('Live') ? [row('Live')] : []),
+    // a field event (rifle) skips Broadcast unless one is listed -- they're rarely on TV, so 'TBA' just takes space
+    const bc = (row('Broadcast') || [])[1];
+    const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ...(bc || !g.noOpp ? [['Broadcast', bc || 'TBA']] : []), ...(row('Live') ? [row('Live')] : []),
                  ['Nickname', g.us.nick || DASH, g.noOpp ? '' : g.them.nick || DASH]];
     // a field event (noOpp: rifle meets) has no single opponent, so its column stays empty instead of dashes
     if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, g.noOpp ? '' : r[2] || DASH]; }));
