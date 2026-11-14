@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-14T19:20:25Z",
+ "updated": "2026-11-14T20:48:46Z",
  "manual": {
   "Rifle": [
    {
@@ -37,11 +37,6 @@
      {
       "name": "Nebraska",
       "short": "NEB"
-     },
-     {
-      "name": "Ole Miss",
-      "short": "MISS",
-      "withdrew": true
      },
      {
       "name": "TCU",
