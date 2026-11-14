@@ -390,7 +390,10 @@ def rifle():
         if end_day > datetime.fromisoformat(first['date']).date():
             t = datetime.fromisoformat(first['date']).time() if not tba else datetime.min.time().replace(hour=12)
             through = datetime.combine(end_day, t, ET).astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-        if datetime.fromisoformat(through or start.replace('Z', '+00:00')) < NOW - timedelta(hours=4):
+        # a multi-day meet stays until 6 PM ET on its last day (same as the page); a one-day one until 4 h after its start
+        over = (datetime.combine(end_day, datetime.min.time().replace(hour=18), ET) if through
+                else datetime.fromisoformat(start.replace('Z', '+00:00')) + timedelta(hours=4))
+        if over < NOW:
             continue   # already over
         teams = []
         for g in gs:

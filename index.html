@@ -1023,7 +1023,11 @@
   const FINAL_HOURS = 15;
   // hand-entered games stay on their card just as long (FINAL_HOURS after the start, same as WVU);
   // a multi-day event (through: last day) stays up until its last day is over
-  const stillUp = x => x.through ? new Date(x.through) >= Date.now() - 4 * 3600e3 : new Date(x.date) >= Date.now() - FINAL_HOURS * 3600e3;
+  // (multi-day: until 6 PM ET on the last day, or 4 hours after its listed time if that's later)
+  const sixPmET = x => { const d = new Date(x), h = Number(d.toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
+                         return d.getTime() + ((18 - h) * 60 - d.getUTCMinutes()) * 60e3; };
+  const stillUp = x => x.through ? Math.max(sixPmET(x.through), new Date(x.through).getTime() + 4 * 3600e3) >= Date.now()
+                                 : new Date(x.date) >= Date.now() - FINAL_HOURS * 3600e3;
   // liveWindow (rifle: an ncaarifle.org match with live pages, set by the GitHub job): LIVE NOW 8 AM - 6 PM ET on each
   // match day. There's no live feed to say when shooting starts or stops, and the schools post different start times.
   const ymdOf = x => new Date(x).toLocaleDateString('en-CA', { timeZone: ET });
@@ -1554,12 +1558,12 @@
     const keep = s => s.replace(/ /g, '\u00a0');
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
-    // rifle: every team's score so far (smallbore + air rifle), highest first, ties by school name (Kentucky before TCU);
+    // rifle: every team's score so far (smallbore + air rifle), highest first, ties alphabetically by the name shown (TCU before UK);
     // a team that withdrew shows N/A, last
     if (onNow && g.liveTeams && g._rifle) {
       const score = t => { const x = g._rifle.find(r => r.name === t.name); return t.withdrew || !x ? null : x.agg; };
       const list = el('div', 'rifle-scores');
-      [...g.liveTeams].sort((a, b) => (score(b) ?? -1) - (score(a) ?? -1) || a.name.localeCompare(b.name)).forEach(t => {
+      [...g.liveTeams].sort((a, b) => (score(b) ?? -1) - (score(a) ?? -1) || a.short.localeCompare(b.short)).forEach(t => {
         const item = el('span');
         const v = score(t);
         item.append(el('span', 'team-short', t.short), v == null ? el('span', 'na', 'N/A') : String(v));
