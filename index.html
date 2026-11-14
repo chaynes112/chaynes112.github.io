@@ -1032,7 +1032,7 @@
   // match day. There's no live feed to say when shooting starts or stops, and the schools post different start times.
   const ymdOf = x => new Date(x).toLocaleDateString('en-CA', { timeZone: ET });
   // live team scores: the Cloudflare Worker reads ncaarifle.org's scorecard (?rifle=<MatchId>), every 30 s while LIVE NOW shows
-  const RIFLE_LIVE = 'https://metronews-scores.chaynes112.workers.dev/';
+  const RIFLE_LIVE = 'https://live-scores.chaynes112.workers.dev/';
   const fieldLive = g => {
     if (!g || !g.liveWindow) return false;
     const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
@@ -1881,9 +1881,9 @@
       ['Last game', 'State Tournament'], ['Last opponent', '#4 Oak Glen'], ['Sissonville rank', '#5 in Class AA'], ['Sissonville record', '26-8']] },
   ];
   // Live score for a game marked live: (its team name on MetroNews), from the MetroNews scoreboard through the
-  // Cloudflare Worker (Desktop\Website stuff\metronews-scores-worker.js). Checked every 30 seconds from 15 minutes
+  // Cloudflare Worker (Desktop\Website stuff\live-scores-worker.js). Checked every 30 seconds from 15 minutes
   // before the start until MetroNews shows it final (at most 4 hours after the start); not while the tab is hidden.
-  const SVILLE_LIVE = 'https://metronews-scores.chaynes112.workers.dev/';
+  const SVILLE_LIVE = 'https://live-scores.chaynes112.workers.dev/';
   (function () {
     const grid = document.getElementById('sville-grid');
     const cards = SVILLE.map(s => { const c = manualCard(s); grid.append(c); return { s, c }; });
