@@ -292,6 +292,23 @@ def conf_rank(conf, team):
     return ordinal(1 + sum(pct(r) > pct(conf[team]) for r in conf.values())) + ' of ' + str(len(conf))
 
 
+def rifle_live():
+    """WVU matches on ncaarifle.org's schedule (today onward) -> {first day: MatchId}, for its live standings/scorecard pages."""
+    page = get('http://ncaarifle.org/Home/Schedule')
+    out, day = {}, None
+    for row in re.findall(r'<tr class="Level[12]Item">.*?</tr>', page, re.S):
+        if 'Level1Item' in row:
+            # "November 14 - 15, 2026", "November 14, 2026" or "November 30 - December 1, 2026": the first day counts
+            m = re.search(r'([A-Z][a-z]+) (\d{1,2})\b.*?(\d{4})', text(row))
+            day = datetime.strptime(' '.join(m.groups()), '%B %d %Y').date().isoformat() if m else None
+            continue
+        results = re.search(r'Schedule_Results">(.*?)</td>', row, re.S)
+        mid = re.search(r'Scorecard\?MatchId=(\d+)', row)
+        if day and mid and results and 'West Virginia' in text(results.group(1)).split(', '):
+            out.setdefault(day, mid.group(1))
+    return out
+
+
 def rifle():
     games, conf_abbr = sidearm_games('https://wvusports.com/sports/rifle/schedule')
     rec, matches = rifle_results()
@@ -301,6 +318,11 @@ def rifle():
         log('CRCA ranks failed:', e)
         ranks = {}
     conf = garc_standings(games, matches)
+    try:
+        live = rifle_live()
+    except Exception as e:
+        log('ncaarifle.org schedule failed:', e)
+        live = {}
     known = set(rec) | set(ranks) | GARC   # real teams, as opposed to "GARC Championship (SB)" entries
 
     def team_rec(t, with_conf):
@@ -347,10 +369,17 @@ def rifle():
         venue = (first.get('facility') or {}).get('title')
         tv = tba_or((first.get('media') or {}).get('tv'))
         rows = [['Venue', venue or 'TBA']] + ([['Broadcast', tv]] if tv else [])
+        # ncaarifle.org's live pages for this match; liveWindow: the card shows LIVE NOW on match days (see the page)
+        mid = live.get(datetime.fromisoformat(first['date']).date().isoformat())
+        if mid:
+            rows.append(['Live', [{'text': 'Standings', 'href': f'http://ncaarifle.org/Home/BoardTeamDisplay?MatchId={mid}'},
+                                  {'text': 'Scorecard', 'href': f'http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId={mid}'}]])
         tourney = (first.get('tournament') or {}).get('title')
         game = {'date': start, 'where': place(first['location']), 'us': wv, 'rows': rows}
         if through:
             game['through'] = through
+        if mid:
+            game['liveWindow'] = True
         if tba:
             game['timeTBA'] = True
         if tourney or len(teams) != 1:

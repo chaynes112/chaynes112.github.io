@@ -1020,6 +1020,14 @@
   // hand-entered games stay on their card just as long (FINAL_HOURS after the start, same as WVU);
   // a multi-day event (through: last day) stays up until its last day is over
   const stillUp = x => x.through ? new Date(x.through) >= Date.now() - 4 * 3600e3 : new Date(x.date) >= Date.now() - FINAL_HOURS * 3600e3;
+  // liveWindow (rifle: an ncaarifle.org match with live pages, set by the GitHub job): LIVE NOW 8 AM - 6 PM ET on each
+  // match day. There's no live feed to say when shooting starts or stops, and the schools post different start times.
+  const ymdOf = x => new Date(x).toLocaleDateString('en-CA', { timeZone: ET });
+  const fieldLive = g => {
+    if (!g || !g.liveWindow) return false;
+    const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
+    return today >= ymdOf(g.date) && today <= ymdOf(g.through || g.date) && hour >= 8 && hour < 18;
+  };
   async function nextGame(card) {
     const { sport, league, team, groups } = card.dataset;
     const cutoff = Date.now() - FINAL_HOURS * 3600e3;
@@ -1518,6 +1526,9 @@
     card.dataset.when = d.getTime();
     // g._live: live score from MetroNews (Sissonville football) -- { state: 'pre'|'in'|'post', status, us, them }
     const lv = g._live && g._live.state !== 'pre' ? g._live : null;
+    const onNow = !lv && fieldLive(g);
+    card._liveArgs = g.liveWindow ? arguments[0] : null;   // re-rendered by the minute check when LIVE NOW turns on or off
+    card._onNow = onNow;
     const withScore = (t, mine, theirs) => lv ? { ...t, score: mine, lost: lv.state === 'post' && mine < theirs } : t;
     const matchup = teamsLine(withScore(g.us, lv && lv.us, lv && lv.them), g.prefix, withScore(g.them, lv && lv.them, lv && lv.us));
     const fmtDay = x => new Date(x).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
@@ -1532,6 +1543,7 @@
     if (lv) when.append(el('span', lv.state === 'in' ? 'live' : 'final', lv.state === 'in' ? 'LIVE NOW' : 'FINAL'),
                         ' · ' + [lv.state === 'in' ? lv.status : day, g.where].filter(Boolean).map(keep).join(' · '));
     // dateTBA: opponent known but no date yet -- 'date' only holds the card up (and sorts it) until the real one is in
+    else if (onNow) when.append(el('span', 'live', 'LIVE NOW'), ' · ' + [day, g.where].filter(Boolean).map(keep).join(' · '));
     else when.textContent = (g.dateTBA ? ['Date/Time TBA', g.where] : [day, time, g.where]).filter(Boolean).map(keep).join(' · ');
     card.append(when,
                 details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), withPoll(standardRows(g, college))));
@@ -1554,7 +1566,9 @@
         // (TCU publishes none: counted from match results, 3-2 per Navy's Oct 4 recap + 3 wins since)
         // GARC publishes no standings; rank from each member's conference record on its own schedule page (Nov 5):
         // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
-        ['Venue', 'WVU Rifle Range']],
+        ['Venue', 'WVU Rifle Range'],
+        ['Live', [{ text: 'Standings', href: 'http://ncaarifle.org/Home/BoardTeamDisplay?MatchId=2202' }, { text: 'Scorecard', href: 'http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId=2202' }]]],
+        liveWindow: true,   // ncaarifle.org match 2202
         // field event: the second column is headed "Opponents", one team per row down that column
         oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
@@ -1596,6 +1610,10 @@
     });
     Object.entries(d.soccerStandings || {}).forEach(([league, table]) => { if (Array.isArray(table) && table.length) SOCCER_STANDINGS[league] = table; });
   }
+  // rifle-style cards (liveWindow) have no feed to refresh them, so check each minute whether LIVE NOW should turn on or off
+  setInterval(() => grid.querySelectorAll('.game').forEach(c => {
+    if (c._liveArgs && fieldLive(c._liveArgs.games.find(stillUp)) !== c._onNow) { c.replaceWith(manualCard(c._liveArgs)); byDate(grid); }
+  }), 60e3);
   wvuData.then(d => {
     applyData(d);
     WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
