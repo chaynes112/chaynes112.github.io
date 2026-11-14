@@ -1760,16 +1760,15 @@
   // boys soccer and volleyball ranks MaxPreps (last updated Nov 5 / Nov 7, 2026); records checked against MaxPreps Nov 8, 2026.
   const SVILLE = [
     // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC FINAL Week 11 ratings (Nov 7: Sissonville 2nd in AA, 13.4, behind Frankfort); final score MetroNews.
-    // Class AA first round (WVSSAC bracket, Nov 7, 2026): No. 2 Sissonville vs No. 15 Mingo Central. Date from MaxPreps
-    // (Fri Nov 13); no kickoff time posted yet as of Nov 8 -- 'date' holds 7 PM ET for the live-score window.
+    // Class AA quarterfinal (MaxPreps WVSSAC AA bracket, Nov 14, 2026): No. 2 Sissonville vs No. 7 Roane County (beat No. 10 Liberty 44-7),
+    // Fri Nov 20, 7:00 PM EST at Sissonville High School (MaxPreps game page). Roane County 10-1 per MaxPreps Nov 14.
     { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-14T00:00:00Z', result: 'W 28-8',
       games: [
-        { date: '2026-11-14T00:00:00Z', where: 'Charleston, WV', prefix: 'vs', subtitle: 'Class AA First Round', live: 'Sissonville',
+        { date: '2026-11-21T00:00:00Z', where: 'Charleston, WV', prefix: 'vs', subtitle: 'Class AA Quarterfinal', live: 'Sissonville',
           us: { rank: 2, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '11-0' },
-          them: { rank: 15, name: 'Mingo Central', nick: 'Miners', logo: 'mingo-central-logo.png', record: '6-5' }, rows: [
-          // home game: higher seed hosts round 1, and MaxPreps lists it at Sissonville (same place/venue as the other home cards)
-          // stream: HD Media Gameday live video on wvgazettemail.com (posted Nov 12, 2026)
-          ['Venue', 'Sissonville High School'], ['Broadcast', { text: 'HD Media', href: 'https://www.wvgazettemail.com/gameday/watch-live-15-mingo-central-at-2-sissonville-hd-media-high-school-gameday-football-aa/video_15057c40-802c-4cdf-893d-53cc6c0c9650.html' }]] },
+          them: { rank: 7, name: 'Roane County', nick: 'Raiders', logo: 'roane-county-logo.png', record: '10-1' }, rows: [
+          // higher seed hosts; MaxPreps lists it at Sissonville High School
+          ['Venue', 'Sissonville High School']] },
       ],
       poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
       // Last game: Class AA first round, Sissonville 28, Mingo Central 8 (MetroNews final, Nov 13, 2026)
