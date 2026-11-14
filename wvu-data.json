@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-14T18:45:35Z",
+ "updated": "2026-11-14T18:49:57Z",
  "manual": {
   "Rifle": [
    {
@@ -28,6 +28,30 @@
     ],
     "through": "2026-11-15T14:00:00Z",
     "liveWindow": true,
+    "liveMatch": "2202",
+    "liveTeams": [
+     {
+      "name": "Kentucky",
+      "short": "UK"
+     },
+     {
+      "name": "Nebraska",
+      "short": "NEB"
+     },
+     {
+      "name": "Ole Miss",
+      "short": "MISS",
+      "withdrew": true
+     },
+     {
+      "name": "TCU",
+      "short": "TCU"
+     },
+     {
+      "name": "West Virginia",
+      "short": "WVU"
+     }
+    ],
     "prefix": "at",
     "them": {
      "name": "WVU Fall Classic",

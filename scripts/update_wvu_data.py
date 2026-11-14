@@ -401,6 +401,11 @@ def rifle():
             game['through'] = through
         if mid:
             game['liveWindow'] = True
+            # live team scores (page asks the Cloudflare Worker, which reads ncaarifle.org's scorecard for this match);
+            # names exactly as ncaarifle.org spells them, so the page can match the Worker's teams
+            gone = {norm(t) for t in WITHDREW.get(datetime.fromisoformat(first['date']).date().isoformat(), [])}
+            game['liveMatch'] = mid
+            game['liveTeams'] = [{'name': t, 'short': abbr(t), **({'withdrew': True} if norm(t) in gone else {})} for t in nr['teams']]
         if tba:
             game['timeTBA'] = True
         if tourney or len(teams) != 1:

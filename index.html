@@ -112,6 +112,10 @@
   .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
   .game .when { opacity: .85; font-size: 1.05rem; }
   /* a kickoff time that was changed (GAME_TIME): gold highlight so it stands out */
+  /* rifle: live team scores above LIVE NOW, highest first */
+  .game .rifle-scores { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: .4rem 0 .3rem; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  .game .rifle-scores .team-short { font-weight: 700; margin-right: .3em; }
+  .game .rifle-scores .na { opacity: .6; }
   .game .when .changed, .game .cmp-val .changed { background: var(--gold); color: var(--navy); font-weight: 700; padding: 0 .35em; border-radius: 4px; }
   /* phones: the bigger names don't fit side by side, so each team gets its own line */
   @media (max-width: 480px) {
@@ -1023,6 +1027,8 @@
   // liveWindow (rifle: an ncaarifle.org match with live pages, set by the GitHub job): LIVE NOW 8 AM - 6 PM ET on each
   // match day. There's no live feed to say when shooting starts or stops, and the schools post different start times.
   const ymdOf = x => new Date(x).toLocaleDateString('en-CA', { timeZone: ET });
+  // live team scores: the Cloudflare Worker reads ncaarifle.org's scorecard (?rifle=<MatchId>), every 30 s while LIVE NOW shows
+  const RIFLE_LIVE = 'https://metronews-scores.chaynes112.workers.dev/';
   const fieldLive = g => {
     if (!g || !g.liveWindow) return false;
     const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
@@ -1546,6 +1552,18 @@
     const keep = s => s.replace(/ /g, '\u00a0');
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
+    // rifle: every team's score so far (smallbore + air rifle), highest first; a team that withdrew shows N/A, last
+    if (onNow && g.liveTeams && g._rifle) {
+      const score = t => { const x = g._rifle.find(r => r.name === t.name); return t.withdrew || !x ? null : x.agg; };
+      const list = el('div', 'rifle-scores');
+      [...g.liveTeams].sort((a, b) => (score(b) ?? -1) - (score(a) ?? -1)).forEach(t => {
+        const item = el('span');
+        const v = score(t);
+        item.append(el('span', 'team-short', t.short), v == null ? el('span', 'na', 'N/A') : String(v));
+        list.append(item);
+      });
+      card.append(list);
+    }
     const when = el('div', 'when');
     // live: LIVE NOW · 2nd Qtr. · place; final: FINAL · day · place (same as the ESPN cards)
     if (lv) when.append(el('span', lv.state === 'in' ? 'live' : 'final', lv.state === 'in' ? 'LIVE NOW' : 'FINAL'),
@@ -1576,7 +1594,9 @@
         // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
         ['Venue', 'WVU Rifle Range'],
         ['Live', { text: 'Scorecard', href: 'http://ncaarifle.org/Home/Scorecard?MatchId=2202' }]],
-        liveWindow: true,   // ncaarifle.org match 2202
+        liveWindow: true, liveMatch: '2202',   // ncaarifle.org match 2202
+        liveTeams: [{ name: 'Kentucky', short: 'UK' }, { name: 'Nebraska', short: 'NEB' }, { name: 'Ole Miss', short: 'MISS', withdrew: true },
+                    { name: 'TCU', short: 'TCU' }, { name: 'West Virginia', short: 'WVU' }],
         // field event: the second column is headed "Opponents", one team per row down that column
         oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', { text: '#2 MISS 8-0', note: '(Withdrew)' }],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
@@ -1623,11 +1643,26 @@
   setInterval(() => grid.querySelectorAll('.game').forEach(c => {
     if (c._liveArgs && fieldLive(c._liveArgs.games.find(stillUp)) !== c._onNow) { c.replaceWith(manualCard(c._liveArgs)); byDate(grid); }
   }), 60e3);
+  // rifle live scores: ask the Worker for each LIVE NOW card's match, then redraw that card
+  async function rifleScores() {
+    for (const c of [...grid.querySelectorAll('.game')]) {
+      const g = c._liveArgs && c._onNow && c._liveArgs.games.find(stillUp);
+      if (!g || !g.liveMatch || !g.liveTeams || document.hidden) continue;
+      try {
+        const d = await getJSON(RIFLE_LIVE + '?rifle=' + encodeURIComponent(g.liveMatch));
+        if (!Array.isArray(d.teams)) continue;
+        g._rifle = d.teams;
+        if (c.isConnected) c.replaceWith(manualCard(c._liveArgs));
+      } catch (e) { /* Worker or ncaarifle.org unavailable: keep the card as it was */ }
+    }
+    setTimeout(rifleScores, 30e3);
+  }
   wvuData.then(d => {
     applyData(d);
     WVU_MANUAL.filter(s => !espnCards.some(c => c.dataset.fallback === s.label)).forEach(s => grid.append(manualCard({ ...s, college: true })));
     // each card checks for a win as soon as it loads, so the fireworks don't wait for the slowest card
     Promise.all(espnCards.map(c => loadGame(c).then(celebrate))).then(() => { byDate(grid); setTimeout(tick, nextTick()); });
+    rifleScores();
   });
 
   // Fireworks when a card shows a WVU win (FINAL). Each win sets them off once per browser -- on the first visit
