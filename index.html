@@ -142,6 +142,7 @@
   .game .footnote { margin: auto 0 0; padding-top: .6rem; font-size: .78rem; opacity: .7; }
   /* logo + text cards (Season Ended, Playoffs Schedule TBA): same gap under the sport label and same text as the date line on game cards */
   .game .note.with-logo { display: flex; align-items: center; gap: .55rem; margin-top: .9rem; opacity: 1; font-size: 1.05rem; color: rgba(244, 241, 232, .85); }
+  .game .note.with-logo.strong { font-weight: 600; font-size: 1.1rem; color: inherit; }
   .game .note.with-logo img { width: 42px; height: 30px; object-fit: contain; flex: none;
                               /* same thin light outline as the matchup logos */
                               filter: drop-shadow(0 0 .6px rgba(255,255,255,.95)) drop-shadow(0 0 .6px rgba(255,255,255,.95)); }
@@ -1480,7 +1481,7 @@
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
   // poll: { text, href, label } adds a linked row (label defaults to 'Poll') to the card, game or no game
-  function manualCard({ label, games = [], done, doneLogo, rows, college, last, first, poll, result }) {
+  function manualCard({ label, games = [], done, doneStrong, doneLogo, rows, college, last, first, poll, result }) {
     // poll with no href shows a dash
     const pollRow = poll ? [poll.label || 'Poll', poll.href ? { text: poll.text, href: poll.href } : DASH] : null;
     // the poll row takes the first unlabeled leftover field row (rifle: the last opponent's line) if there is one, else goes last
@@ -1496,7 +1497,8 @@
     card.append(el('div', 'sport', label));
     const g = games.find(stillUp);
     if (!g) {
-      const note = el('p', 'note' + (doneLogo ? ' with-logo' : ''));
+      // doneStrong: the line in the matchup-note font (weight, size, full color), like 'Players Era 8'
+      const note = el('p', 'note' + (doneLogo ? ' with-logo' : '') + (doneStrong ? ' strong' : ''));
       if (doneLogo) note.append(teamLogo(doneLogo));   // same sizing as the logos on the other cards
       note.append(done || 'No upcoming game scheduled');
       card.append(note);
@@ -1565,7 +1567,7 @@
     // Out of the Big 12 Tournament (1-1 at BYU, lost 2-4 on penalties, Nov 9, 2026); waiting on the NCAA bracket (Nov 16).
     // Shows only while ESPN has no upcoming game: an NCAA tournament game in ESPN's schedule brings the ESPN card back.
     // Ranks: United Soccer Coaches poll of Nov 10, 2026 (WVU unranked, no votes; BYU 14th); 12th in the NCAA committee's top 16 of Oct 24.
-    { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], done: 'NCAA Selection Nov 16', doneLogo: WVU_CARD_LOGO,
+    { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], done: 'NCAA Selection, Nov 16', doneStrong: true, doneLogo: WVU_CARD_LOGO,
       last: '2026-11-09T20:20:00Z', result: 'T 1-1 (2-4 PK)', rows: [
       ['Last game', 'Big 12 Quarterfinal'], ['Last opponent', '#14 BYU'], ['WVU rank', 'Unranked'], ['WVU record', '9-4-5 (4-4-3)']] },
   ];
