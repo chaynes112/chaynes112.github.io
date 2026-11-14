@@ -1010,6 +1010,9 @@
   // The game to show: one in progress first; otherwise a game that finished recently (FINAL, kept up until
   // FINAL_HOURS after its start); otherwise the next game. Walks the season list from FINAL_HOURS ago forward.
   const FINAL_HOURS = 15;
+  // hand-entered games stay on their card just as long (FINAL_HOURS after the start, same as WVU);
+  // a multi-day event (through: last day) stays up until its last day is over
+  const stillUp = x => x.through ? new Date(x.through) >= Date.now() - 4 * 3600e3 : new Date(x.date) >= Date.now() - FINAL_HOURS * 3600e3;
   async function nextGame(card) {
     const { sport, league, team, groups } = card.dataset;
     const cutoff = Date.now() - FINAL_HOURS * 3600e3;
@@ -1482,8 +1485,7 @@
     const card = el('article', 'game');
     if (first) card.dataset.first = '1';   // pinned to the top of its section
     card.append(el('div', 'sport', label));
-    // a multi-day event (through: last day) stays up until its last day is over
-    const g = games.find(x => new Date(x.through || x.date) >= Date.now() - 4 * 3600e3);
+    const g = games.find(stillUp);
     if (!g) {
       const note = el('p', 'note' + (doneLogo ? ' with-logo' : ''));
       if (doneLogo) note.append(teamLogo(doneLogo));   // same sizing as the logos on the other cards
@@ -1751,17 +1753,18 @@
     // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC FINAL Week 11 ratings (Nov 7: Sissonville 2nd in AA, 13.4, behind Frankfort); final score MetroNews.
     // Class AA first round (WVSSAC bracket, Nov 7, 2026): No. 2 Sissonville vs No. 15 Mingo Central. Date from MaxPreps
     // (Fri Nov 13); no kickoff time posted yet as of Nov 8 -- 'date' holds 7 PM ET for the live-score window.
-    { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-07T00:00:00Z',
+    { label: 'Football', first: true, done: 'Playoffs Schedule TBA', doneLogo: 'sissonville-logo.png', last: '2026-11-14T00:00:00Z',
       games: [
         { date: '2026-11-14T00:00:00Z', where: 'Charleston, WV', prefix: 'vs', subtitle: 'Class AA First Round', live: 'Sissonville',
-          us: { rank: 2, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '10-0' },
-          them: { rank: 15, name: 'Mingo Central', nick: 'Miners', logo: 'mingo-central-logo.png', record: '6-4' }, rows: [
+          us: { rank: 2, name: 'Sissonville', nick: 'Indians', logo: 'sissonville-logo.png', record: '11-0' },
+          them: { rank: 15, name: 'Mingo Central', nick: 'Miners', logo: 'mingo-central-logo.png', record: '6-5' }, rows: [
           // home game: higher seed hosts round 1, and MaxPreps lists it at Sissonville (same place/venue as the other home cards)
           // stream: HD Media Gameday live video on wvgazettemail.com (posted Nov 12, 2026)
           ['Venue', 'Sissonville High School'], ['Broadcast', { text: 'HD Media', href: 'https://www.wvgazettemail.com/gameday/watch-live-15-mingo-central-at-2-sissonville-hd-media-high-school-gameday-football-aa/video_15057c40-802c-4cdf-893d-53cc6c0c9650.html' }]] },
       ],
       poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
-      ['Last game', 'W 48-0'], ['Last opponent', 'Wayne'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '10-0']] },
+      // Last game: Class AA first round, Sissonville 28, Mingo Central 8 (MetroNews final, Nov 13, 2026)
+      ['Last game', 'W 28-8'], ['Last opponent', 'Mingo Central'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '11-0']] },
     // Last opponent ranks: MaxPreps class rankings, same lists as Sissonville's (fall: Nov 9, 2026; spring: final, Jun 26, 2026)
     { label: 'Girls Soccer', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-05T17:00:00Z', result: 'L 1-3', rows: [
       ['Last game', 'State Semifinal'], ['Last opponent', '#2 Lincoln'], ['Sissonville rank', '#3 in Class AA/A'], ['Sissonville record', '16-5']] },
@@ -1800,7 +1803,7 @@
     const cards = SVILLE.map(s => { const c = manualCard(s); grid.append(c); return { s, c }; });
     byDate(grid);
     if (!SVILLE_LIVE) return;
-    const WINDOW_BEFORE = 15 * 60e3, WINDOW_AFTER = 4 * 3600e3;
+    const WINDOW_BEFORE = 15 * 60e3, WINDOW_AFTER = FINAL_HOURS * 3600e3;   // keep checking until MetroNews says Final
     const lc = s => String(s || '').trim().toLowerCase();
     // Fireworks for a Sissonville win, same rules as a WVU win: once per browser, skipped if animations are off
     function hsWin(id) {
@@ -1813,7 +1816,7 @@
     async function watch() {
       for (const x of cards) {
         // the game the card is showing (same pick as manualCard)
-        const g = (x.s.games || []).find(y => new Date(y.through || y.date) >= Date.now() - 4 * 3600e3);
+        const g = (x.s.games || []).find(stillUp);
         if (!g || !g.live || document.hidden) continue;
         const t = new Date(g.date).getTime();
         if (Date.now() < t - WINDOW_BEFORE || Date.now() > t + WINDOW_AFTER || (g._live && g._live.state === 'post')) continue;
