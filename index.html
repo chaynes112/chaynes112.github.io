@@ -112,7 +112,7 @@
   .game .matchup img { width: 30px; height: 30px; object-fit: contain; flex: none; }
   .game .when { opacity: .85; font-size: 1.05rem; }
   /* a kickoff time that was changed (GAME_TIME): gold highlight so it stands out */
-  .game .when .changed { background: var(--gold); color: var(--navy); font-weight: 700; padding: 0 .35em; border-radius: 4px; }
+  .game .when .changed, .game .cmp-val .changed { background: var(--gold); color: var(--navy); font-weight: 700; padding: 0 .35em; border-radius: 4px; }
   /* phones: the bigger names don't fit side by side, so each team gets its own line */
   @media (max-width: 480px) {
     .game .teams { flex-direction: column; gap: .1rem; }
@@ -1344,7 +1344,8 @@
       const rows = [
         // always shown (TBA / dash when ESPN has nothing yet)
         ['Venue', (comp.venue && (VENUE_FIX[comp.venue.fullName] || comp.venue.fullName)) || 'TBA'],
-        ['Broadcast', gameTV(comp) || GAME_TV[ev.id] || 'TBA'],
+        // a moved game's broadcast gets the same gold highlight as its changed time
+        ['Broadcast', (tv => moved && tv !== 'TBA' ? { text: tv, changed: true } : tv)(gameTV(comp) || GAME_TV[ev.id] || 'TBA')],
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
@@ -1448,6 +1449,7 @@
       const fill = (span, v) => {
         // an array of links shows them side by side, separated by a dot
         if (Array.isArray(v)) { v.forEach((x, i) => { if (i) span.append(' · '); fill(span, x); }); }
+        else if (v && v.changed) span.append(el('span', 'changed', v.text));
         else if (v && v.href) { const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; span.append(a); }
         else span.textContent = v == null ? '—' : v;
         return span;
