@@ -335,7 +335,8 @@ def rifle():
         log('CRCA ranks failed:', e)
         ranks = {}
     conf = garc_standings(games, matches)
-    # WVU's matches on ncaarifle.org, by first day: live pages, and the full field (wvusports.com can drop a team)
+    # WVU's matches on ncaarifle.org, by first day, for the live scorecard link. The field comes from wvusports.com only:
+    # ncaarifle.org keeps a team that withdrew (Ole Miss, 2026 Fall Classic, FAA ground stop) on the match listing.
     live = {x['start'].isoformat(): x for x in schedule if 'West Virginia' in x['teams']}
     known = set(rec) | set(ranks) | GARC   # real teams, as opposed to "GARC Championship (SB)" entries
 
@@ -381,9 +382,6 @@ def rifle():
             if norm(nm) in known and nm not in teams:
                 teams.append(nm)
         nr = live.get(datetime.fromisoformat(first['date']).date().isoformat())
-        for nm in (nr['teams'] if nr else []):
-            if norm(nm) != 'west virginia' and norm(nm) not in {norm(t) for t in teams}:
-                teams.append(nm)
         venue = (first.get('facility') or {}).get('title')
         tv = tba_or((first.get('media') or {}).get('tv'))
         rows = [['Venue', venue or 'TBA']] + ([['Broadcast', tv]] if tv else [])
