@@ -1460,6 +1460,8 @@
         // an array of links shows them side by side, separated by a dot
         if (Array.isArray(v)) { v.forEach((x, i) => { if (i) span.append(' · '); fill(span, x); }); }
         else if (v && v.changed) span.append(el('span', 'changed', v.text));
+        // { text, note }: text with a gold note after it (rifle: '#2 MISS 8-0 (Withdrew)')
+        else if (v && v.note) span.append(v.text + ' ', el('span', 'changed', v.note));
         else if (v && v.href) { const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; span.append(a); }
         else span.textContent = v == null ? '—' : v;
         return span;
@@ -1576,7 +1578,7 @@
         ['Live', { text: 'Scorecard', href: 'http://ncaarifle.org/Home/Scorecard?MatchId=2202' }]],
         liveWindow: true,   // ncaarifle.org match 2202
         // field event: the second column is headed "Opponents", one team per row down that column
-        oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)'],
+        oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', { text: '#2 MISS 8-0', note: '(Withdrew)' }],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
     // 2026 season over (ESPN; final USA TODAY Coaches Poll Jun 23, 2026). Won the Morgantown Regional and Super Regional,

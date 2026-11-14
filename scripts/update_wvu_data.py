@@ -224,6 +224,11 @@ GARC_SIDEARM = {'army': 'https://goarmywestpoint.com/sports/rifle/schedule',
 GARC_LEGACY = {'navy': 'https://navysports.com/sports/rifle/schedule'}
 GARC = {'west virginia', 'navy', 'army', 'kentucky', 'memphis', 'akron'}
 
+# Teams that withdrew from a WVU meet, by the meet's first day (ET). They stay in the Opponents list, marked (Withdrew).
+WITHDREW = {
+    '2026-11-14': ['Ole Miss'],   # WVU Fall Classic: FAA ground stop kept them from reaching Morgantown (sportsmississippi.com, Nov 14, 2026)
+}
+
 
 def legacy_conf_games(url):
     """Older Sidearm pages: (date, opponent) for each game marked with the conference badge."""
@@ -406,8 +411,10 @@ def rifle():
                                   'logo': 'wvu-logo.png' if home else ((first['opponent'] or {}).get('image') or {}).get('fullpath'),
                                   'noOutline': home},
                          'noOpp': True, 'pairs': [['Conference', conf_abbr, None], ['Conf. rank', conf_rank(conf, 'west virginia'), None]]})
-            if teams:
-                game.update({'oppHead': 'Opponents', 'field': [field_line(t) for t in teams]})
+            out_teams = [t for t in WITHDREW.get(datetime.fromisoformat(first['date']).date().isoformat(), []) if norm(t) not in {norm(x) for x in teams}]
+            if teams or out_teams:
+                game.update({'oppHead': 'Opponents', 'field': [field_line(t) for t in teams]
+                             + [{'text': field_line(t), 'note': '(Withdrew)'} for t in out_teams]})
         else:
             o = first['opponent']
             t = norm(o['title'])
