@@ -320,10 +320,21 @@ def rifle_schedule():
         results = re.search(r'Schedule_Results">(.*?)</td>', row, re.S)
         mid = re.search(r'Scorecard\?MatchId=(\d+)', row)
         if start and mid and results:
-            out.append({'id': mid.group(1), 'start': start, 'end': end, 'teams': text(results.group(1)).split(', ')})
+            # before scores: "Kentucky, Nebraska, ..."; once scores are in: "WVU: 1769, UK: 1756, ..." (short names)
+            teams = [re.sub(r':\s*\d+\s*$', '', x).strip() for x in text(results.group(1)).split(', ')]
+            out.append({'id': mid.group(1), 'start': start, 'end': end, 'teams': teams})
     if not out:
         raise RuntimeError('ncaarifle.org schedule returned no matches')
     return out
+
+
+def scorecard_teams(mid):
+    """Team names on a match's ncaarifle.org scorecard, spelled the way the Cloudflare Worker reports them."""
+    page = get(f'http://ncaarifle.org/Home/Scorecard?MatchId={mid}')
+    names = [text(re.sub(r'<img[^>]*>', '', m)) for m in re.findall(r'class="teamName">(.*?)</div>', page, re.S)]
+    if not names:
+        raise RuntimeError(f'ncaarifle.org scorecard {mid} has no teams')
+    return names
 
 
 def rifle():
@@ -342,7 +353,7 @@ def rifle():
     conf = garc_standings(games, matches)
     # WVU's matches on ncaarifle.org, by first day, for the live scorecard link. The field comes from wvusports.com only:
     # ncaarifle.org keeps a team that withdrew (Ole Miss, 2026 Fall Classic, FAA ground stop) on the match listing.
-    live = {x['start'].isoformat(): x for x in schedule if 'West Virginia' in x['teams']}
+    live = {x['start'].isoformat(): x for x in schedule if {'West Virginia', 'WVU'} & set(x['teams'])}
     known = set(rec) | set(ranks) | GARC   # real teams, as opposed to "GARC Championship (SB)" entries
 
     def team_rec(t, with_conf):
@@ -405,7 +416,7 @@ def rifle():
             # names exactly as ncaarifle.org spells them, so the page can match the Worker's teams
             gone = {norm(t) for t in WITHDREW.get(datetime.fromisoformat(first['date']).date().isoformat(), [])}
             game['liveMatch'] = mid
-            game['liveTeams'] = [{'name': t, 'short': abbr(t), **({'withdrew': True} if norm(t) in gone else {})} for t in nr['teams']]
+            game['liveTeams'] = [{'name': t, 'short': abbr(t), **({'withdrew': True} if norm(t) in gone else {})} for t in scorecard_teams(mid)]
         if tba:
             game['timeTBA'] = True
         if tourney or len(teams) != 1:
@@ -418,8 +429,11 @@ def rifle():
                          'noOpp': True, 'pairs': [['Conference', conf_abbr, None], ['Conf. rank', conf_rank(conf, 'west virginia'), None]]})
             out_teams = [t for t in WITHDREW.get(datetime.fromisoformat(first['date']).date().isoformat(), []) if norm(t) not in {norm(x) for x in teams}]
             if teams or out_teams:
-                game.update({'oppHead': 'Opponents', 'field': [field_line(t) for t in teams]
-                             + [{'text': field_line(t), 'note': '(Withdrew)'} for t in out_teams]})
+                # by CRCA rank (unranked last, then by name), withdrawn teams included in their rank's place
+                both = sorted([(t, False) for t in teams] + [(t, True) for t in out_teams],
+                              key=lambda x: (ranks.get(norm(x[0])) or 999, norm(x[0])))
+                game.update({'oppHead': 'Opponents', 'field': [{'text': field_line(t), 'note': '(Withdrew)'} if gone else field_line(t)
+                                                               for t, gone in both]})
         else:
             o = first['opponent']
             t = norm(o['title'])

@@ -1554,11 +1554,12 @@
     const keep = s => s.replace(/ /g, '\u00a0');
     card.append(matchup);
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
-    // rifle: every team's score so far (smallbore + air rifle), highest first; a team that withdrew shows N/A, last
+    // rifle: every team's score so far (smallbore + air rifle), highest first, ties by school name (Kentucky before TCU);
+    // a team that withdrew shows N/A, last
     if (onNow && g.liveTeams && g._rifle) {
       const score = t => { const x = g._rifle.find(r => r.name === t.name); return t.withdrew || !x ? null : x.agg; };
       const list = el('div', 'rifle-scores');
-      [...g.liveTeams].sort((a, b) => (score(b) ?? -1) - (score(a) ?? -1)).forEach(t => {
+      [...g.liveTeams].sort((a, b) => (score(b) ?? -1) - (score(a) ?? -1) || a.name.localeCompare(b.name)).forEach(t => {
         const item = el('span');
         const v = score(t);
         item.append(el('span', 'team-short', t.short), v == null ? el('span', 'na', 'N/A') : String(v));
@@ -1600,7 +1601,7 @@
         liveTeams: [{ name: 'Kentucky', short: 'UK' }, { name: 'Nebraska', short: 'NEB' }, { name: 'Ole Miss', short: 'MISS', withdrew: true },
                     { name: 'TCU', short: 'TCU' }, { name: 'West Virginia', short: 'WVU' }],
         // field event: the second column is headed "Opponents", one team per row down that column
-        oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', { text: '#2 MISS 8-0', note: '(Withdrew)' }],
+        oppHead: 'Opponents', field: [{ text: '#2 MISS 8-0', note: '(Withdrew)' }, '#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)'],
         pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
     // 2026 season over (ESPN; final USA TODAY Coaches Poll Jun 23, 2026). Won the Morgantown Regional and Super Regional,
