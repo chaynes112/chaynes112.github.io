@@ -1476,7 +1476,8 @@
   const DASH = '—';
   function standardRows(g, college) {
     const row = k => (g.rows || []).find(r => r[0] === k), pair = k => (g.pairs || []).find(r => r[0] === k);
-    const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'],
+    // Live (rifle: ncaarifle.org scorecard link) sits right under Broadcast when there is one
+    const std = [['Venue', (row('Venue') || [])[1] || 'TBA'], ['Broadcast', (row('Broadcast') || [])[1] || 'TBA'], ...(row('Live') ? [row('Live')] : []),
                  ['Nickname', g.us.nick || DASH, g.noOpp ? '' : g.them.nick || DASH]];
     // a field event (noOpp: rifle meets) has no single opponent, so its column stays empty instead of dashes
     if (college) std.push(...['Conference', 'Conf. rank'].map(k => { const r = pair(k) || [k]; return [k, r[1] || DASH, g.noOpp ? '' : r[2] || DASH]; }));
@@ -1572,7 +1573,7 @@
         // GARC publishes no standings; rank from each member's conference record on its own schedule page (Nov 5):
         // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
         ['Venue', 'WVU Rifle Range'],
-        ['Live', [{ text: 'Standings', href: 'http://ncaarifle.org/Home/BoardTeamDisplay?MatchId=2202' }, { text: 'Scorecard', href: 'http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId=2202' }]]],
+        ['Live', { text: 'Scorecard', href: 'http://ncaarifle.org/Home/Scorecard?MatchId=2202' }]],
         liveWindow: true,   // ncaarifle.org match 2202
         // field event: the second column is headed "Opponents", one team per row down that column
         oppHead: 'Opponents', field: ['#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)', '#7 MISS 7-0 (4-0)'],

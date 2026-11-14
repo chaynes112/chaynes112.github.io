@@ -390,8 +390,8 @@ def rifle():
         # ncaarifle.org's live pages for this match; liveWindow: the card shows LIVE NOW on match days (see the page)
         mid = nr and nr['id']
         if mid:
-            rows.append(['Live', [{'text': 'Standings', 'href': f'http://ncaarifle.org/Home/BoardTeamDisplay?MatchId={mid}'},
-                                  {'text': 'Scorecard', 'href': f'http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId={mid}'}]])
+            # the regular scorecard page: it updates during the match (the "Board" live pages stay blank)
+            rows.append(['Live', {'text': 'Scorecard', 'href': f'http://ncaarifle.org/Home/Scorecard?MatchId={mid}'}])
         tourney = (first.get('tournament') or {}).get('title')
         game = {'date': start, 'where': place(first['location']), 'us': wv, 'rows': rows}
         if through:

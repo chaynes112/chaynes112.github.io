@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-14T18:15:16Z",
+ "updated": "2026-11-14T18:36:50Z",
  "manual": {
   "Rifle": [
    {
@@ -20,16 +20,10 @@
      ],
      [
       "Live",
-      [
-       {
-        "text": "Standings",
-        "href": "http://ncaarifle.org/Home/BoardTeamDisplay?MatchId=2202"
-       },
-       {
-        "text": "Scorecard",
-        "href": "http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId=2202"
-       }
-      ]
+      {
+       "text": "Scorecard",
+       "href": "http://ncaarifle.org/Home/Scorecard?MatchId=2202"
+      }
      ]
     ],
     "through": "2026-11-15T14:00:00Z",
