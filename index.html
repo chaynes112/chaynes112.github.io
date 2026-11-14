@@ -1138,6 +1138,11 @@
     return names.length ? names.join(', ') : null;
   };
   // Broadcast for games ESPN's feed has none for yet, by ESPN event id (ESPN's own listing wins once it has one)
+  // kickoff times ESPN hasn't caught up with, by ESPN game id (UTC)
+  const GAME_TIME = {
+    '401856861': '2026-11-14T20:30Z',   // football vs Kansas moved up to 3:30 PM ET after the FAA ground stop (On3 / WVSports, Nov 13, 2026)
+  };
+
   const GAME_TV = {
     '401929854': 'ESPN+',   // men's soccer vs Coastal Carolina, Nov 11, 2026 (ESPN watch page)
   };
@@ -1207,6 +1212,7 @@
     const label = card.querySelector('.sport').textContent;
     try {
       const ev = await nextGame(card);
+      if (ev && GAME_TIME[ev.id]) ev.date = GAME_TIME[ev.id];
       card.replaceChildren(el('div', 'sport', label));
       if (!ev) { if (!useFallback(card)) { card.append(el('p', 'note', 'No upcoming game scheduled')); card._ok = true; } return; }
 
