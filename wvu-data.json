@@ -1,9 +1,9 @@
 {
- "updated": "2026-11-14T15:12:55Z",
+ "updated": "2026-11-14T18:15:16Z",
  "manual": {
   "Rifle": [
    {
-    "date": "2026-11-14T16:00:00Z",
+    "date": "2026-11-14T14:00:00Z",
     "where": "Morgantown, WV",
     "us": {
      "rank": 1,
@@ -17,9 +17,23 @@
      [
       "Venue",
       "WVU Rifle Range"
+     ],
+     [
+      "Live",
+      [
+       {
+        "text": "Standings",
+        "href": "http://ncaarifle.org/Home/BoardTeamDisplay?MatchId=2202"
+       },
+       {
+        "text": "Scorecard",
+        "href": "http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId=2202"
+       }
+      ]
      ]
     ],
-    "through": "2026-11-15T16:00:00Z",
+    "through": "2026-11-15T14:00:00Z",
+    "liveWindow": true,
     "prefix": "at",
     "them": {
      "name": "WVU Fall Classic",
@@ -192,7 +206,7 @@
      "short": "AKR",
      "nick": "Zips",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/android-chrome-192x192.png",
-     "record": "3-4 (1-2)"
+     "record": "2-4 (0-2)"
     },
     "pairs": [
      [

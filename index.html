@@ -1359,6 +1359,7 @@
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
+        ['Poll', pollLink || DASH],   // right under Conf. rank (the votes footnote still sits below the table)
         // only when there's data
         ['Win chance', projection(wv), projection(opp)],
       ];
@@ -1372,7 +1373,6 @@
         rows.push(['Over/under', o.overUnder != null ? String(o.overUnder) : null]);
         rows.push(['Moneyline', line(wvSide), line(oppSide)]);
       }
-      rows.push(['Poll', pollLink || DASH]);   // always the table's last line (the votes footnote sits below the table)
 
       card.append(matchup);
       if (GAME_NOTE[ev.id]) card.append(el('div', 'matchup', GAME_NOTE[ev.id]));
@@ -1489,15 +1489,18 @@
     return [...std, ...[...(g.rows || []), ...(g.pairs || [])].filter(r => !taken.has(r[0]))];
   }
   // poll: { text, href, label } adds a linked row (label defaults to 'Poll') to the card, game or no game
-  function manualCard({ label, games = [], done, doneStrong, doneLogo, rows, college, last, first, poll, result }) {
+  function manualCard({ label, games = [], done, doneStrong, soon, doneLogo, rows, college, last, first, poll, result }) {
     // poll with no href shows a dash
     const pollRow = poll ? [poll.label || 'Poll', poll.href ? { text: poll.text, href: poll.href } : DASH] : null;
-    // the poll row takes the first unlabeled leftover field row (rifle: the last opponent's line) if there is one, else goes last
+    // the poll row goes right under Conf. rank (else last); if the row there is an unlabeled leftover field row
+    // (rifle: an opponent's line), the poll takes it over so the opponents stay one per line
     const withPoll = rows => {
       if (!pollRow) return rows;
-      const spare = rows.find(r => r.length === 3 && r[0] === '' && !r[1]);
-      if (spare) { spare[0] = pollRow[0]; spare[1] = pollRow[1]; return rows; }
-      return [...rows, pollRow];
+      const at = rows.findIndex(r => r[0] === 'Conf. rank') + 1;
+      if (!at) return [...rows, pollRow];
+      const next = rows[at];
+      if (next && next.length === 3 && next[0] === '' && !next[1]) { next[0] = pollRow[0]; next[1] = pollRow[1]; return rows; }
+      return [...rows.slice(0, at), pollRow, ...rows.slice(at)];
     };
     const link = v => { if (!v || !v.href) return v; const a = el('a', null, v.text); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; return a; };
     const card = el('article', 'game');
@@ -1514,6 +1517,8 @@
       // last: when the final game was played -- shown on the Last game line, and used to list ended seasons newest first
       const lastDay = last && new Date(last).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
       if (last) card.dataset.ended = new Date(last).getTime();
+      // soon: when the thing the note is waiting on happens (selection show) -- sorts the card with the upcoming games
+      if (soon && new Date(soon) >= Date.now() - FINAL_HOURS * 3600e3) card.dataset.when = new Date(soon).getTime();
       const all = [...(rows || []), ...(pollRow ? [pollRow] : [])];
       if (all.length) {
         const dl = el('dl');
@@ -1582,6 +1587,7 @@
     // Shows only while ESPN has no upcoming game: an NCAA tournament game in ESPN's schedule brings the ESPN card back.
     // Ranks: United Soccer Coaches poll of Nov 10, 2026 (WVU unranked, no votes; BYU 14th); 12th in the NCAA committee's top 16 of Oct 24.
     { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], done: 'NCAA Tournament Selection, Nov 16', doneStrong: true, doneLogo: WVU_CARD_LOGO,
+      soon: '2026-11-16T21:00:00Z',   // selection show 4 PM ET on NCAA.com (ncaa.com, Nov 9, 2026)
       last: '2026-11-09T20:20:00Z', result: 'T 1-1 (2-4 PK)', rows: [
       ['Last game', 'Big 12 Quarterfinal'], ['Last opponent', '#14 BYU'], ['WVU rank', 'Unranked'], ['WVU record', '9-4-5 (4-4-3)']] },
   ];

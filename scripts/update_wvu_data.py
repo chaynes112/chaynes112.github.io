@@ -174,15 +174,16 @@ def tba_or(v):
 
 
 # ======================================== RIFLE ========================================
-def rifle_results():
-    """Every match on ncaarifle.org this season -> overall W-L-T per team (head-to-head inside each match)."""
+def rifle_results(unfinished=()):
+    """Every match on ncaarifle.org this season -> overall W-L-T per team (head-to-head inside each match).
+    unfinished: MatchIds still being shot (last day today or later) -- their partial scores aren't results yet."""
     page = get('http://ncaarifle.org/Home/TeamResults', {
         'Filtered': 'True', 'SelectedTeamId': '0', 'SelectedSort': 'date',
         'DateFilterStart': SEASON_START.strftime('%m/%d/%Y'), 'DateFilterEnd': TODAY.strftime('%m/%d/%Y')})
     matches = defaultdict(list)
     for row in re.findall(r'<tr.*?</tr>', page, re.S):
         m = re.search(r'MatchId=(\d+)', row)
-        if not m:
+        if not m or m.group(1) in unfinished:
             continue
         c = [text(x) for x in re.findall(r'<td[^>]*>(.*?)</td>', row, re.S)]
         try:
@@ -292,37 +293,50 @@ def conf_rank(conf, team):
     return ordinal(1 + sum(pct(r) > pct(conf[team]) for r in conf.values())) + ' of ' + str(len(conf))
 
 
-def rifle_live():
-    """WVU matches on ncaarifle.org's schedule (today onward) -> {first day: MatchId}, for its live standings/scorecard pages."""
-    page = get('http://ncaarifle.org/Home/Schedule')
-    out, day = {}, None
+def rifle_schedule():
+    """Every match on ncaarifle.org's schedule this season: [{id, start, end, teams}] (dates are ET calendar days)."""
+    page = get('http://ncaarifle.org/Home/Schedule', {
+        'Filtered': 'True', 'SelectedTeamId': '0',
+        'DateFilterStart': SEASON_START.strftime('%m/%d/%Y'), 'DateFilterEnd': (TODAY + timedelta(days=200)).strftime('%m/%d/%Y')})
+    out, start, end = [], None, None
     for row in re.findall(r'<tr class="Level[12]Item">.*?</tr>', page, re.S):
         if 'Level1Item' in row:
-            # "November 14 - 15, 2026", "November 14, 2026" or "November 30 - December 1, 2026": the first day counts
-            m = re.search(r'([A-Z][a-z]+) (\d{1,2})\b.*?(\d{4})', text(row))
-            day = datetime.strptime(' '.join(m.groups()), '%B %d %Y').date().isoformat() if m else None
+            # "November 14, 2026", "November 14 - 15, 2026" or "November 30 - December 1, 2026"
+            m = re.search(r'([A-Z][a-z]+) (\d{1,2})(?: - (?:([A-Z][a-z]+) )?(\d{1,2}))?, (\d{4})', text(row))
+            if not m:
+                start = end = None
+                continue
+            mon1, d1, mon2, d2, yr = m.groups()
+            start = datetime.strptime(f'{mon1} {d1} {yr}', '%B %d %Y').date()
+            end = datetime.strptime(f'{mon2 or mon1} {d2 or d1} {yr}', '%B %d %Y').date()
+            if end < start:   # "December 31 - January 1"
+                end = end.replace(year=end.year + 1)
             continue
         results = re.search(r'Schedule_Results">(.*?)</td>', row, re.S)
         mid = re.search(r'Scorecard\?MatchId=(\d+)', row)
-        if day and mid and results and 'West Virginia' in text(results.group(1)).split(', '):
-            out.setdefault(day, mid.group(1))
+        if start and mid and results:
+            out.append({'id': mid.group(1), 'start': start, 'end': end, 'teams': text(results.group(1)).split(', ')})
+    if not out:
+        raise RuntimeError('ncaarifle.org schedule returned no matches')
     return out
 
 
 def rifle():
     games, conf_abbr = sidearm_games('https://wvusports.com/sports/rifle/schedule')
-    rec, matches = rifle_results()
+    try:
+        schedule = rifle_schedule()
+    except Exception as e:
+        log('ncaarifle.org schedule failed:', e)
+        schedule = []
+    rec, matches = rifle_results({x['id'] for x in schedule if x['end'] >= TODAY})
     try:
         ranks = crca_ranks()
     except Exception as e:
         log('CRCA ranks failed:', e)
         ranks = {}
     conf = garc_standings(games, matches)
-    try:
-        live = rifle_live()
-    except Exception as e:
-        log('ncaarifle.org schedule failed:', e)
-        live = {}
+    # WVU's matches on ncaarifle.org, by first day: live pages, and the full field (wvusports.com can drop a team)
+    live = {x['start'].isoformat(): x for x in schedule if 'West Virginia' in x['teams']}
     known = set(rec) | set(ranks) | GARC   # real teams, as opposed to "GARC Championship (SB)" entries
 
     def team_rec(t, with_conf):
@@ -366,11 +380,15 @@ def rifle():
             nm = ((g['opponent'] or {}).get('title') or '').strip()
             if norm(nm) in known and nm not in teams:
                 teams.append(nm)
+        nr = live.get(datetime.fromisoformat(first['date']).date().isoformat())
+        for nm in (nr['teams'] if nr else []):
+            if norm(nm) != 'west virginia' and norm(nm) not in {norm(t) for t in teams}:
+                teams.append(nm)
         venue = (first.get('facility') or {}).get('title')
         tv = tba_or((first.get('media') or {}).get('tv'))
         rows = [['Venue', venue or 'TBA']] + ([['Broadcast', tv]] if tv else [])
         # ncaarifle.org's live pages for this match; liveWindow: the card shows LIVE NOW on match days (see the page)
-        mid = live.get(datetime.fromisoformat(first['date']).date().isoformat())
+        mid = nr and nr['id']
         if mid:
             rows.append(['Live', [{'text': 'Standings', 'href': f'http://ncaarifle.org/Home/BoardTeamDisplay?MatchId={mid}'},
                                   {'text': 'Scorecard', 'href': f'http://ncaarifle.org/Home/BoardScorecardDisplay?MatchId={mid}'}]])
