@@ -180,6 +180,8 @@
   .mascot .tail { transform-box: view-box; transform-origin: 54px 53px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   .mascot svg.indian .eyes { animation-delay: -2s; } /* blinks halfway between the Mountaineer's blinks */
+  .mascot .spear { animation: spear 2.4s ease-in-out infinite; }
+  @keyframes spear { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   @keyframes ready { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
   @keyframes tail { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(8deg); } }
@@ -586,6 +588,8 @@
         <path d="M106 110 Q130 118 121 100" stroke="#e0a07c" stroke-width="16" fill="none"/>
         <path d="M112 106 L114 117" stroke="#141414" stroke-width="6.5"/>
         <path d="M112 106 L114 117" stroke="#c8102e" stroke-width="4"/>
+        <!-- lance and gripping fist: barely raised and lowered (like the Mountaineer's musket) -->
+        <g class="spear">
         <!-- lance: long narrow stone point with a center ridge, feathers tied below it with red wraps (like the arrow on the Sissonville logo) -->
         <rect x="118.38" y="43" width="5.74" height="163" rx="2.6" fill="#6b4220" stroke="#141414" stroke-width="1.4"/>
         <!-- shaft decoration (like the line-art lance): diagonal painted stripes low on the shaft -->
@@ -629,6 +633,7 @@
         <!-- right fist drawn over the lance so he grips it -->
         <path d="M113 93 Q113 88 120 88 Q129 89 129 97 Q129 106 120 106 Q113 105 113 98 Z" fill="#e0a07c" stroke="#141414" stroke-width="2"/>
         <path d="M116 93 l8 1 M116 98 l8 1" stroke="#9c5638" stroke-width="1.2"/>
+        </g>
         <!-- head: ears, square-jawed, weathered face -->
         <circle cx="55" cy="74" r="5" fill="#e0a07c" stroke="#141414" stroke-width="2"/>
         <circle cx="105" cy="74" r="5" fill="#e0a07c" stroke="#141414" stroke-width="2"/>
