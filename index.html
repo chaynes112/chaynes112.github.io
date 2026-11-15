@@ -180,7 +180,7 @@
   .mascot .tail { transform-box: view-box; transform-origin: 54px 53px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   .mascot svg.indian .eyes { animation-delay: -2s; } /* blinks halfway between the Mountaineer's blinks */
-  .mascot .spear { animation: spear 2.4s ease-in-out infinite; }
+  .mascot .spear { animation: spear 1.6s ease-in-out -0.4s infinite; } /* same beat as the bounce, a quarter-beat ahead, so the two never fight */
   @keyframes spear { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
   @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
   @keyframes ready { 0%, 100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
