@@ -1038,12 +1038,12 @@
   // FINAL_HOURS after its start); otherwise the next game. Walks the season list from FINAL_HOURS ago forward.
   const FINAL_HOURS = 15;
   // hand-entered games stay on their card just as long (FINAL_HOURS after the start, same as WVU);
-  // a multi-day event (through: last day) stays up until its last day is over
-  // (multi-day: until 6 PM ET on the last day, or 4 hours after its listed time if that's later)
+  // a multi-day event (through: last day) ends at 6 PM ET on its last day (or 4 hours after its listed time if that's later),
+  // and stays up FINAL_HOURS after it ends
   const sixPmET = x => { const d = new Date(x), h = Number(d.toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
                          return d.getTime() + ((18 - h) * 60 - d.getUTCMinutes()) * 60e3; };
-  const stillUp = x => x.through ? Math.max(sixPmET(x.through), new Date(x.through).getTime() + 4 * 3600e3) >= Date.now()
-                                 : new Date(x.date) >= Date.now() - FINAL_HOURS * 3600e3;
+  const fieldEnd = x => { const e = x.through || x.date; return Math.max(sixPmET(e), new Date(e).getTime() + 4 * 3600e3); };
+  const stillUp = x => (x.through ? fieldEnd(x) : new Date(x.date).getTime()) >= Date.now() - FINAL_HOURS * 3600e3;
   // liveWindow (rifle: an ncaarifle.org match with live pages, set by the GitHub job): LIVE NOW 8 AM - 6 PM ET on each
   // match day. There's no live feed to say when shooting starts or stops, and the schools post different start times.
   const ymdOf = x => new Date(x).toLocaleDateString('en-CA', { timeZone: ET });
@@ -1054,9 +1054,13 @@
     const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
     return today >= ymdOf(g.date) && today <= ymdOf(g.through || g.date) && hour >= 8 && hour < 18;
   };
-  // the score line stays up from 8 AM ET on the first day to 6 PM ET on the last, overnight between match days included
+  // a rifle-style event that's over: FINAL (blue card, like the ESPN finals), its final team scores stay up with it
+  const fieldDone = g => !!g && !!g.liveWindow && Date.now() >= fieldEnd(g);
+  // the score line stays up from 8 AM ET on the first day to 6 PM ET on the last, overnight between match days included,
+  // then as final scores for as long as the card shows the event
   const fieldScores = g => {
     if (!g || !g.liveWindow) return false;
+    if (fieldDone(g)) return true;
     const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
     const first = ymdOf(g.date), last = ymdOf(g.through || g.date);
     return today >= first && today <= last && !(today === first && hour < 8) && !(today === last && hour >= 18);
@@ -1566,7 +1570,10 @@
       return card;
     }
     const d = new Date(g.date);
-    card.dataset.when = d.getTime();
+    // a multi-day event that's over sorts by when it ended (Fall Classic, done 6 PM: after that day's 1 PM soccer game)
+    const isDone = fieldDone(g);
+    card._done = isDone;
+    card.dataset.when = isDone ? fieldEnd(g) : d.getTime();
     // g._live: live score from MetroNews (Sissonville football) -- { state: 'pre'|'in'|'post', status, us, them }
     const lv = g._live && g._live.state !== 'pre' ? g._live : null;
     const onNow = !lv && fieldLive(g);
@@ -1602,6 +1609,7 @@
                         ' · ' + [lv.state === 'in' ? lv.status : day, g.where].filter(Boolean).map(keep).join(' · '));
     // dateTBA: opponent known but no date yet -- 'date' only holds the card up (and sorts it) until the real one is in
     else if (onNow) when.append(el('span', 'live', 'LIVE NOW'), ' · ' + [day, g.where].filter(Boolean).map(keep).join(' · '));
+    else if (isDone) when.append(el('span', 'final', 'FINAL'), ' · ' + [day, g.where].filter(Boolean).map(keep).join(' · '));
     else when.textContent = (g.dateTBA ? ['Date/Time TBA', g.where] : [day, time, g.where]).filter(Boolean).map(keep).join(' · ');
     card.append(when,
                 details(g.us.short || g.us.name, g.oppHead || (g.noOpp ? '' : g.them.short || g.them.name), withPoll(standardRows(g, college))));
@@ -1674,7 +1682,7 @@
   // rifle-style cards (liveWindow) have no feed to refresh them, so check each minute whether LIVE NOW should turn on or off
   setInterval(() => grid.querySelectorAll('.game').forEach(c => {
     const g = c._liveArgs && c._liveArgs.games.find(stillUp);
-    if (c._liveArgs && (fieldLive(g) !== c._onNow || fieldScores(g) !== c._scoresUp)) { c.replaceWith(manualCard(c._liveArgs)); byDate(grid); }
+    if (c._liveArgs && (fieldLive(g) !== c._onNow || fieldScores(g) !== c._scoresUp || fieldDone(g) !== c._done)) { c.replaceWith(manualCard(c._liveArgs)); byDate(grid); }
   }), 60e3);
   // rifle live scores: ask the Worker for each card whose score line is up (fieldScores), then redraw that card. Every 30 s while the tab
   // is visible; right away when it comes back into view (a page opened in a background tab still gets them at once)
@@ -1683,7 +1691,8 @@
     clearTimeout(rifleTimer);
     for (const c of [...grid.querySelectorAll('.game')]) {
       const args = c._liveArgs, g = args && c._scoresUp && args.games.find(stillUp);
-      if (!g || !g.liveMatch || !g.liveTeams || (document.hidden && !rifleFirst)) continue;
+      // final scores don't change: fetched once
+      if (!g || !g.liveMatch || !g.liveTeams || (document.hidden && !rifleFirst) || (fieldDone(g) && g._rifle)) continue;
       try {
         const d = await getJSON(RIFLE_LIVE + '?rifle=' + encodeURIComponent(g.liveMatch));
         if (!Array.isArray(d.teams)) continue;

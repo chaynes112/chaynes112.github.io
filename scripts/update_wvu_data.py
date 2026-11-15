@@ -390,9 +390,10 @@ def rifle():
         if end_day > datetime.fromisoformat(first['date']).date():
             t = datetime.fromisoformat(first['date']).time() if not tba else datetime.min.time().replace(hour=12)
             through = datetime.combine(end_day, t, ET).astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-        # a multi-day meet stays until 6 PM ET on its last day (same as the page); a one-day one until 4 h after its start
+        # kept as long as the page keeps it up: a multi-day meet until 15 h after 6 PM ET on its last day,
+        # a one-day one until 15 h after its start (the page's FINAL_HOURS)
         over = (datetime.combine(end_day, datetime.min.time().replace(hour=18), ET) if through
-                else datetime.fromisoformat(start.replace('Z', '+00:00')) + timedelta(hours=4))
+                else datetime.fromisoformat(start.replace('Z', '+00:00'))) + timedelta(hours=15)
         if over < NOW:
             continue   # already over
         teams = []
@@ -417,11 +418,11 @@ def rifle():
             game['liveWindow'] = True
             # live team scores (page asks the Cloudflare Worker, which reads ncaarifle.org's scorecard for this match);
             # names exactly as ncaarifle.org spells them, so the page can match the Worker's teams
-            out = WITHDREW.get(datetime.fromisoformat(first['date']).date().isoformat(), [])
-            gone = {norm(t) for t in out}
+            wd = WITHDREW.get(datetime.fromisoformat(first['date']).date().isoformat(), [])
+            gone = {norm(t) for t in wd}
             on_card = scorecard_teams(mid)
             # ncaarifle.org drops a withdrawn team from the scorecard once scores post; keep it in the live line (N/A)
-            on_card += [t for t in out if norm(t) not in {norm(x) for x in on_card}]
+            on_card += [t for t in wd if norm(t) not in {norm(x) for x in on_card}]
             game['liveMatch'] = mid
             game['liveTeams'] = [{'name': t, 'short': abbr(t), **({'withdrew': True} if norm(t) in gone else {})} for t in on_card]
         if tba:
