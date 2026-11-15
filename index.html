@@ -1038,6 +1038,13 @@
     const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
     return today >= ymdOf(g.date) && today <= ymdOf(g.through || g.date) && hour >= 8 && hour < 18;
   };
+  // the score line stays up from 8 AM ET on the first day to 6 PM ET on the last, overnight between match days included
+  const fieldScores = g => {
+    if (!g || !g.liveWindow) return false;
+    const today = ymdOf(Date.now()), hour = Number(new Date().toLocaleString('en-US', { timeZone: ET, hour: 'numeric', hourCycle: 'h23' }));
+    const first = ymdOf(g.date), last = ymdOf(g.through || g.date);
+    return today >= first && today <= last && !(today === first && hour < 8) && !(today === last && hour >= 18);
+  };
   async function nextGame(card) {
     const { sport, league, team, groups } = card.dataset;
     const cutoff = Date.now() - FINAL_HOURS * 3600e3;
@@ -1548,6 +1555,8 @@
     const onNow = !lv && fieldLive(g);
     card._liveArgs = g.liveWindow ? arguments[0] : null;   // re-rendered by the minute check when LIVE NOW turns on or off
     card._onNow = onNow;
+    const scoresUp = !lv && fieldScores(g);
+    card._scoresUp = scoresUp;
     const withScore = (t, mine, theirs) => lv ? { ...t, score: mine, lost: lv.state === 'post' && mine < theirs } : t;
     const matchup = teamsLine(withScore(g.us, lv && lv.us, lv && lv.them), g.prefix, withScore(g.them, lv && lv.them, lv && lv.us));
     const fmtDay = x => new Date(x).toLocaleDateString('en-US', { timeZone: ET, weekday: 'short', month: 'short', day: 'numeric' });
@@ -1559,7 +1568,7 @@
     if (g.subtitle) card.append(el('div', 'matchup', g.subtitle));
     // rifle: every team's score so far (smallbore + air rifle), highest first, ties alphabetically by the name shown (TCU before UK);
     // a team that withdrew shows N/A, last
-    if (onNow && g.liveTeams && g._rifle) {
+    if (scoresUp && g.liveTeams && g._rifle) {
       const score = t => { const x = g._rifle.find(r => r.name === t.name); return t.withdrew || !x ? null : x.agg; };
       const list = el('div', 'rifle-scores');
       [...g.liveTeams].sort((a, b) => (score(b) ?? -1) - (score(a) ?? -1) || a.short.localeCompare(b.short)).forEach(t => {
@@ -1647,15 +1656,16 @@
   }
   // rifle-style cards (liveWindow) have no feed to refresh them, so check each minute whether LIVE NOW should turn on or off
   setInterval(() => grid.querySelectorAll('.game').forEach(c => {
-    if (c._liveArgs && fieldLive(c._liveArgs.games.find(stillUp)) !== c._onNow) { c.replaceWith(manualCard(c._liveArgs)); byDate(grid); }
+    const g = c._liveArgs && c._liveArgs.games.find(stillUp);
+    if (c._liveArgs && (fieldLive(g) !== c._onNow || fieldScores(g) !== c._scoresUp)) { c.replaceWith(manualCard(c._liveArgs)); byDate(grid); }
   }), 60e3);
-  // rifle live scores: ask the Worker for each LIVE NOW card's match, then redraw that card. Every 30 s while the tab
+  // rifle live scores: ask the Worker for each card whose score line is up (fieldScores), then redraw that card. Every 30 s while the tab
   // is visible; right away when it comes back into view (a page opened in a background tab still gets them at once)
   let rifleTimer = null, rifleFirst = true;
   async function rifleScores() {
     clearTimeout(rifleTimer);
     for (const c of [...grid.querySelectorAll('.game')]) {
-      const args = c._liveArgs, g = args && c._onNow && args.games.find(stillUp);
+      const args = c._liveArgs, g = args && c._scoresUp && args.games.find(stillUp);
       if (!g || !g.liveMatch || !g.liveTeams || (document.hidden && !rifleFirst)) continue;
       try {
         const d = await getJSON(RIFLE_LIVE + '?rifle=' + encodeURIComponent(g.liveMatch));
