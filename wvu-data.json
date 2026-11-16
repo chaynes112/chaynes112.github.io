@@ -1,92 +1,12 @@
 {
- "updated": "2026-11-16T06:52:37Z",
+ "updated": "2026-11-16T18:42:08Z",
  "manual": {
   "Rifle": [
-   {
-    "date": "2026-11-14T14:00:00Z",
-    "where": "Morgantown, WV",
-    "us": {
-     "rank": 1,
-     "name": "West Virginia",
-     "short": "WVU",
-     "nick": "Mountaineers",
-     "logo": "WVU_CARD_LOGO",
-     "record": "10-1 (2-0)"
-    },
-    "rows": [
-     [
-      "Venue",
-      "WVU Rifle Range"
-     ],
-     [
-      "Live",
-      {
-       "text": "Scorecard",
-       "href": "http://ncaarifle.org/Home/Scorecard?MatchId=2202"
-      }
-     ]
-    ],
-    "through": "2026-11-15T14:00:00Z",
-    "liveWindow": true,
-    "liveMatch": "2202",
-    "liveTeams": [
-     {
-      "name": "Kentucky",
-      "short": "UK"
-     },
-     {
-      "name": "Nebraska",
-      "short": "NEB"
-     },
-     {
-      "name": "TCU",
-      "short": "TCU"
-     },
-     {
-      "name": "West Virginia",
-      "short": "WVU"
-     },
-     {
-      "name": "Ole Miss",
-      "short": "MISS",
-      "withdrew": true
-     }
-    ],
-    "prefix": "at",
-    "them": {
-     "name": "WVU Fall Classic",
-     "logo": "wvu-logo.png",
-     "noOutline": true
-    },
-    "noOpp": true,
-    "pairs": [
-     [
-      "Conference",
-      "GARC",
-      null
-     ],
-     [
-      "Conf. rank",
-      "1st of 6",
-      null
-     ]
-    ],
-    "oppHead": "Opponents",
-    "field": [
-     {
-      "text": "#2 MISS 8-0",
-      "note": "(Withdrew)"
-     },
-     "#6 UK 5-3 (1-1)",
-     "#8 TCU 8-4",
-     "#12 NEB 3-8"
-    ]
-   },
    {
     "date": "2027-01-15T17:00:00Z",
     "where": "Fairbanks, AK",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -102,7 +22,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 4,
+     "rank": 6,
      "name": "Alaska Fairbanks",
      "short": "UAF",
      "nick": "Nanooks",
@@ -126,7 +46,7 @@
     "date": "2027-01-16T17:00:00Z",
     "where": "Fairbanks, AK",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -142,7 +62,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 4,
+     "rank": 6,
      "name": "Alaska Fairbanks",
      "short": "UAF",
      "nick": "Nanooks",
@@ -166,7 +86,7 @@
     "date": "2027-01-23T17:00:00Z",
     "where": "Morgantown, WV",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -182,7 +102,7 @@
     "timeTBA": true,
     "prefix": "vs",
     "them": {
-     "rank": 3,
+     "rank": 4,
      "name": "Navy",
      "short": "NAVY",
      "nick": "Midshipmen ",
@@ -206,7 +126,7 @@
     "date": "2027-01-30T17:00:00Z",
     "where": "Akron, OH",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -222,7 +142,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 9,
+     "rank": 15,
      "name": "Akron",
      "short": "AKR",
      "nick": "Zips",
@@ -246,7 +166,7 @@
     "date": "2027-02-13T17:00:00Z",
     "where": "Lexington, KY",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -262,7 +182,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 6,
+     "rank": 8,
      "name": "Kentucky",
      "short": "UK",
      "nick": "Wildcats",
@@ -286,7 +206,7 @@
     "date": "2027-02-20T17:00:00Z",
     "where": "Morgantown, WV",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -324,7 +244,7 @@
     "date": "2027-02-27T17:00:00Z",
     "where": "Morgantown, WV",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -363,7 +283,7 @@
     "date": "2027-03-12T17:00:00Z",
     "where": "Statesboro, GA",
     "us": {
-     "rank": 1,
+     "rank": null,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
