@@ -1265,6 +1265,10 @@
     '401929856': 'Sun Belt Championship Final', // men's soccer vs South Carolina, Nov 15, 2026
     '401920512': 'Players Era 8',           // men's basketball vs Auburn, Las Vegas, Nov 17, 2026
   };
+  // NCAA tournament seeds for specific ESPN games: [WVU, opponent] (null = no seed / not known yet)
+  const GAME_SEED = {
+    '401932602': ['No. 4', null],   // men's soccer second round vs Washington/Cleveland St. winner, Nov 22, 2026 (wvusports.com, Nov 16)
+  };
 
   async function loadGame(card) {
     const label = card.querySelector('.sport').textContent;
@@ -1397,6 +1401,7 @@
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
         ['Poll', pollLink || DASH],   // right under Conf. rank (the votes footnote still sits below the table)
+        ...(GAME_SEED[ev.id] ? [['Seed', GAME_SEED[ev.id][0] || DASH, GAME_SEED[ev.id][1] || DASH]] : []),
         // only when there's data
         ['Win chance', projection(wv), projection(opp)],
       ];
