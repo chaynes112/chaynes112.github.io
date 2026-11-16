@@ -1378,6 +1378,8 @@
       const [wvRank, oppRank] = await Promise.all([confRank(wv).catch(() => null), confRank(opp).catch(() => null)]);
 
       const abbr = c => c.team.abbreviation || c.team.location;
+      // ESPN's placeholder for a bracket opponent not decided yet ('TBD Away'): shown as TBD, no record, column headed Opponent
+      const tbd = /^TBD\b/i.test(opp.team.location || opp.team.displayName || '');
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
       const rankNum = c => { const r = pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
@@ -1386,7 +1388,7 @@
       const lost = c => state === 'post' && comp.competitors.some(x => x !== c && x.winner);
       const matchup = teamsLine(
         { rank: rankNum(wv), name: 'West Virginia', logo: WVU_CARD_LOGO, star: starred, record: record(wv, wvConf), score: score(wv), lost: lost(wv) }, prefix,
-        { rank: rankNum(opp), name: opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: record(opp, oppConf), score: score(opp), lost: lost(opp) });
+        { rank: rankNum(opp), name: tbd ? 'TBD' : opp.team.location || opp.team.shortDisplayName || opp.team.displayName, logo, record: tbd ? null : record(opp, oppConf), score: score(opp), lost: lost(opp) });
       card._scores = [...matchup.querySelectorAll('.team-score')];
       if (state === 'post' && wv.winner) card.dataset.win = ev.id;   // fireworks (see celebrate)
 
@@ -1418,7 +1420,7 @@
 
       card.append(matchup);
       if (GAME_NOTE[ev.id]) card.append(el('div', 'matchup', GAME_NOTE[ev.id]));
-      card.append(when, details('WVU', abbr(opp), rows));
+      card.append(when, details('WVU', tbd ? 'Opponent' : abbr(opp), rows));
       if (starred) card.append(el('p', 'footnote', '*' + votes));
       card._ok = true;
     } catch (e) {
