@@ -7,6 +7,7 @@
   Baseball schedule              wvusports.com (used until ESPN posts the season)
   Soccer conference standings    sunbeltsports.org (men), big12sports.com (women)
   Soccer opponents' conf. ranks  the opponent's conference site (ESPN says which conference)
+  Soccer national ranks          unitedsoccercoaches.org (ESPN's copy of the poll stopped updating)
   Team abbreviations/conference  ESPN
 
 Run by .github/workflows/update-wvu-data.yml. Any source that fails is left out of the file, and the
@@ -557,6 +558,12 @@ CONF_SITES = {'ACC': 'theacc.com', 'AEAST': 'americaeast.com', 'American': 'thea
               'SUMM': 'thesummitleague.org', 'SBELT': 'sunbeltsports.org', 'WCC': 'wccsports.com', 'BSKY': 'bigskyconf.com',
               'CUSA': 'conferenceusa.com', 'MIDAM': 'getsomemaction.com', 'SLAND': 'southland.org', 'SWAC': 'swac.org',
               'UAC': 'uacsports.com'}
+CONF_NAMES = {'SEC': 'SEC', 'ACC': 'ACC', 'Big 12': 'Big 12', 'AEAST': 'America East', 'American': 'American', 'ATL10': 'Atlantic 10',
+              'ASUN': 'ASUN', 'BIGE': 'Big East', 'BSOU': 'Big South', 'BIG10': 'Big Ten', 'BIGW': 'Big West', 'COLN': 'CAA',
+              'HORIZ': 'Horizon', 'IVY': 'Ivy League', 'Metro': 'MAAC', 'MVC': 'MVC', 'MWEST': 'Mountain West', 'NEC': 'NEC',
+              'OVC': 'OVC', 'PAC12': 'Pac-12', 'PATR': 'Patriot', 'SOUTH': 'SoCon', 'SUMM': 'Summit', 'SBELT': 'Sun Belt',
+              'WCC': 'WCC', 'BSKY': 'Big Sky', 'CUSA': 'CUSA', 'MIDAM': 'MAC', 'SLAND': 'Southland', 'SWAC': 'SWAC', 'UAC': 'UAC',
+              'INDP': 'Independent'}
 SOCCER_LEAGUES = {'usa.ncaa.m.1': ('5658', 'msoc'), 'usa.ncaa.w.1': ('20382', 'wsoc')}   # WVU's ESPN team id, Sidearm path
 ESPN_CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/'
 
@@ -593,20 +600,26 @@ def table_spot(table, team):
     return hit[0] if hit else None
 
 
+def soccer_teams(league, wvu):
+    """WVU's ESPN team and the opponents in its games from 15 hours ago on (the games the card can show), by ESPN id."""
+    base = f'https://site.api.espn.com/apis/site/v2/sports/soccer/{league}/teams/{wvu}/schedule'
+    events = {e['id']: e for u in (base, base + '?fixture=true') for e in get_json(u).get('events', [])}
+    cutoff = NOW - timedelta(hours=15)
+    me, opps = None, {}
+    for e in events.values():
+        for c in e['competitions'][0]['competitors']:
+            if c['id'] == wvu:
+                me = c['team']
+            elif datetime.fromisoformat(e['date'].replace('Z', '+00:00')) >= cutoff and not re.match(r'TBD\b', c['team'].get('location') or ''):
+                opps[c['id']] = c['team']
+    return me, opps
+
+
 def soccer_opponent_ranks():
     out = {}
     for league, (wvu, path) in SOCCER_LEAGUES.items():
         try:
-            base = f'https://site.api.espn.com/apis/site/v2/sports/soccer/{league}/teams/{wvu}/schedule'
-            events = {e['id']: e for u in (base, base + '?fixture=true') for e in get_json(u).get('events', [])}
-            cutoff = NOW - timedelta(hours=15)
-            opps = {}
-            for e in events.values():
-                if datetime.fromisoformat(e['date'].replace('Z', '+00:00')) < cutoff:
-                    continue
-                for c in e['competitions'][0]['competitors']:
-                    if c['id'] != wvu and not re.match(r'TBD\b', c['team'].get('location') or ''):
-                        opps[c['id']] = c['team']
+            opps = soccer_teams(league, wvu)[1]
             ranks = {}
             if opps:
                 season = NOW.year
@@ -620,6 +633,8 @@ def soccer_opponent_ranks():
                     if not mine:
                         continue
                     abbr = get_json(f'{groups}/{gid}')['abbreviation']
+                    for o in mine:
+                        ranks[o] = {'conf': CONF_NAMES.get(abbr, abbr)}
                     try:
                         table, url = conf_table(abbr, path)
                     except Exception as e:
@@ -630,10 +645,49 @@ def soccer_opponent_ranks():
                         if i is None:
                             log('not in', abbr, 'standings:', opps[o].get('location'))
                         else:
-                            ranks[o] = {'rank': i + 1, 'of': len(table), 'url': url}
+                            ranks[o].update(rank=i + 1, of=len(table), url=url)
             out[league] = ranks
         except Exception as e:
             log('opponent ranks failed for', league, e)
+    return out
+
+
+
+# National rank: the United Soccer Coaches poll, the current one (the page's active tab). The poll lists schools
+# by their full names ("West Virginia University", "University of Washington"), matched to ESPN's school names.
+POLL_URLS = {'usa.ncaa.m.1': 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/',
+             'usa.ncaa.w.1': 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-women/'}
+# poll name -> ESPN's, where they differ beyond University / University of
+POLL_NAMES = {'southern methodist': 'smu', 'umkc': 'kansas city', 'brigham young': 'byu', 'north carolina wilmington': 'unc wilmington',
+              'north carolina greensboro': 'unc greensboro', 'north carolina asheville': 'unc asheville', 'north carolina charlotte': 'charlotte',
+              'california los angeles': 'ucla', 'southern california': 'usc', 'california berkeley': 'california', 'connecticut': 'uconn',
+              'louisiana state': 'lsu', 'texas christian': 'tcu', 'central florida': 'ucf', 'virginia commonwealth': 'vcu',
+              'massachusetts': 'umass', 'nevada las vegas': 'unlv', 'alabama birmingham': 'uab'}
+
+
+def soccer_poll():
+    out = {}
+    plain = lambda x: re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9 ]', ' ', re.sub(r'\b(the|university|of)\b', ' ', x.lower()))).strip()
+    for league, (wvu, _) in SOCCER_LEAGUES.items():
+        try:
+            page = get(POLL_URLS[league])
+            m = re.search(r'<div class="poll_table active"[^>]*>\s*<h2>(.*?)</h2>(.*?)</table>', page, re.S)
+            title, table = text(m.group(1)), m.group(2)
+            rows = [(int(text(r)), text(n)) for r, n in re.findall(r'<td class="tdRank">(.*?)</td>\s*<td class="tdSchool">(.*?)</td>', table, re.S)]
+            if len(rows) < 20:
+                raise RuntimeError('poll table not found')
+            me, opps = soccer_teams(league, wvu)
+            teams = {**opps, wvu: me}
+            ranks = {}
+            for rank, school in rows:
+                name = plain(school)
+                name = POLL_NAMES.get(name, name)
+                for tid, t in teams.items():
+                    if t and name in {plain(t.get(k) or '') for k in ('location', 'displayName', 'shortDisplayName')}:
+                        ranks[tid] = rank
+            out[league] = {'poll': title, 'url': POLL_URLS[league], 'ranks': ranks}
+        except Exception as e:
+            log('soccer poll failed for', league, e)
     return out
 
 
@@ -648,6 +702,10 @@ def main():
         data['soccerStandings'] = soccer()
     except Exception as e:
         log('soccer failed:', e)
+    try:
+        data['soccerPoll'] = soccer_poll()
+    except Exception as e:
+        log('soccer poll failed:', e)
     try:
         data['soccerOppRanks'] = soccer_opponent_ranks()
     except Exception as e:

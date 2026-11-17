@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-17T15:05:32Z",
+ "updated": "2026-11-17T15:31:03Z",
  "manual": {
   "Rifle": [
    {
@@ -596,10 +596,25 @@
    ]
   ]
  },
+ "soccerPoll": {
+  "usa.ncaa.m.1": {
+   "poll": "National - Poll 12 - November 10, 2026",
+   "url": "https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/",
+   "ranks": {
+    "5658": 7
+   }
+  },
+  "usa.ncaa.w.1": {
+   "poll": "National - Poll 13 - November 10, 2026",
+   "url": "https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-women/",
+   "ranks": {}
+  }
+ },
  "soccerOppRanks": {
   "usa.ncaa.m.1": {},
   "usa.ncaa.w.1": {
    "20383": {
+    "conf": "Sun Belt",
     "rank": 2,
     "of": 14,
     "url": "https://sunbeltsports.org/standings.aspx?path=wsoc"

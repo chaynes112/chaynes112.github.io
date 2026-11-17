@@ -1224,6 +1224,10 @@
   // An opponent from another conference: its rank in its own conference's standings, which the GitHub job looks up
   // (wvu-data.json soccerOppRanks: {league: {ESPN team id: {rank, of, url}}}, refreshed every 2 hours)
   const SOCCER_OPP_RANK = {};
+  // Soccer national rank beside each name: the United Soccer Coaches poll, read by the GitHub job (wvu-data.json soccerPoll:
+  // {league: {poll, url, ranks: {ESPN team id: rank}}}). ESPN's own soccer rank is no use: its poll feed stopped updating,
+  // and in NCAA tournament games it carries the seed (that goes in the Seed row instead).
+  const SOCCER_POLL = {};
   const soccerOppRank = (card, c) => { const r = (SOCCER_OPP_RANK[card.dataset.league] || {})[c.id]; return r ? { text: ordinal(r.rank) + ' of ' + r.of, href: r.url } : null; };
   // Links for the Conf. rank values on soccer cards (the pages the standings above come from).
   // Big 12's page id changes each season: big12sports.com/sports/wsoc links the current one.
@@ -1389,7 +1393,8 @@
       const tbd = /^TBD\b/i.test(opp.team.location || opp.team.displayName || '');
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
-      const rankNum = c => { const r = pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
+      const soccerPoll = card.dataset.sport === 'soccer' && SOCCER_POLL[card.dataset.league];
+      const rankNum = c => { const r = soccerPoll ? soccerPoll.ranks && soccerPoll.ranks[c.id] : GAME_SEED[ev.id] ? null : pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
       // score next to each name once the game starts; at the final the loser's score is dimmed
       const score = c => state === 'pre' || c.score == null ? null : (typeof c.score === 'object' ? c.score.displayValue : c.score);
       const lost = c => state === 'post' && comp.competitors.some(x => x !== c && x.winner);
@@ -1407,7 +1412,7 @@
         // a moved game's broadcast gets the same gold highlight as its changed time
         ['Broadcast', (tv => moved && tv !== 'TBA' ? { text: tv, changed: true } : tv)(gameTV(comp) || GAME_TV[ev.id] || 'TBA')],
         ['Nickname', wvNick || DASH, oppNick || DASH],
-        ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
+        ['Conference', card.dataset.conf || DASH, oppConfName || ((SOCCER_OPP_RANK[card.dataset.league] || {})[opp.id] || {}).conf || DASH],
         ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || soccerOppRank(card, opp) || oppRank || DASH],
         ['Poll', pollLink || DASH],   // right under Conf. rank (the votes footnote still sits below the table)
         ...(GAME_SEED[ev.id] ? [['Seed', GAME_SEED[ev.id][0] || DASH, GAME_SEED[ev.id][1] || DASH]] : []),
@@ -1693,6 +1698,7 @@
     });
     Object.entries(d.soccerStandings || {}).forEach(([league, table]) => { if (Array.isArray(table) && table.length) SOCCER_STANDINGS[league] = table; });
     Object.assign(SOCCER_OPP_RANK, d.soccerOppRanks || {});
+    Object.assign(SOCCER_POLL, d.soccerPoll || {});
   }
   // rifle-style cards (liveWindow) have no feed to refresh them, so check each minute whether LIVE NOW should turn on or off
   setInterval(() => grid.querySelectorAll('.game').forEach(c => {
