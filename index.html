@@ -72,6 +72,11 @@
   .music:hover, .music:focus-visible { background: var(--gold); color: var(--deep); outline: none; }
   .music:disabled { opacity: .6; cursor: wait; }
   .music .icon { font-size: 1.2rem; line-height: 1; }
+  /* phones: the Country Roads button sits at the bottom of the page under the mascots instead of floating over the cards */
+  @media (max-width: 767px) {
+    main { padding-bottom: 1.5rem; }
+    .music { position: relative; right: auto; bottom: auto; width: fit-content; margin: 0 auto calc(2rem + env(safe-area-inset-bottom, 0px)); }
+  }
   midi-player { display: none; }
   .games { width: min(1280px, 100%); margin-top: 2.25rem; animation: rise 1.2s 1.2s ease-out both; }
   .games h2 {
