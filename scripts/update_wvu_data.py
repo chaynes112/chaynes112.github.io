@@ -6,6 +6,7 @@
   GARC conference records/rank   conference-marked matches on the GARC schools' own schedules
   Baseball schedule              wvusports.com (used until ESPN posts the season)
   Soccer conference standings    sunbeltsports.org (men), big12sports.com (women)
+  Soccer opponents' conf. ranks  the opponent's conference site (ESPN says which conference)
   Team abbreviations/conference  ESPN
 
 Run by .github/workflows/update-wvu-data.yml. Any source that fails is left out of the file, and the
@@ -544,6 +545,98 @@ def soccer():
     return out
 
 
+
+# Opponents' conference ranks: ESPN says which conference each soccer team is in (its conference groups list
+# their teams) but has no soccer standings, so the standings come from the conference's own site. Nearly every
+# conference site is Sidearm (standings.aspx?path=msoc / wsoc); the SEC's is its own JSON API. Keyed by ESPN group abbreviation.
+CONF_SITES = {'ACC': 'theacc.com', 'AEAST': 'americaeast.com', 'American': 'theamerican.org', 'ATL10': 'atlantic10.com',
+              'ASUN': 'asunsports.org', 'BIGE': 'bigeast.com', 'BSOU': 'bigsouthsports.com', 'BIG10': 'bigten.org',
+              'BIGW': 'bigwest.org', 'COLN': 'caasports.com', 'HORIZ': 'horizonleague.org', 'IVY': 'ivyleague.com',
+              'Metro': 'maacsports.com', 'MVC': 'mvc-sports.com', 'MWEST': 'themw.com', 'NEC': 'northeastconference.org',
+              'OVC': 'ovcsports.com', 'PAC12': 'pac-12.com', 'PATR': 'patriotleague.org', 'SOUTH': 'soconsports.com',
+              'SUMM': 'thesummitleague.org', 'SBELT': 'sunbeltsports.org', 'WCC': 'wccsports.com', 'BSKY': 'bigskyconf.com',
+              'CUSA': 'conferenceusa.com', 'MIDAM': 'getsomemaction.com', 'SLAND': 'southland.org', 'SWAC': 'swac.org',
+              'UAC': 'uacsports.com'}
+SOCCER_LEAGUES = {'usa.ncaa.m.1': ('5658', 'msoc'), 'usa.ncaa.w.1': ('20382', 'wsoc')}   # WVU's ESPN team id, Sidearm path
+ESPN_CORE = 'https://sports.core.api.espn.com/v2/sports/soccer/leagues/'
+
+
+def sec_standings():
+    api = 'https://www.secsports.com/api/schedules'
+    sid = next(x['id'] for x in get_json(api + '?per_page=100&filter%5Bsport_id%5D=9')['data'] if x.get('current'))
+    rows = get_json(f'{api}/{sid}/standings?include=school')['data']
+    return [[r['school']['name'], f"{r['conference_wins']}-{r['conference_loses']}-{r['conference_ties']}"] for r in rows]
+
+
+def conf_table(abbr, path):
+    if abbr == 'SEC':
+        return sec_standings(), 'https://www.secsports.com/standings/soccer'
+    if abbr == 'Big 12':
+        sport = get('https://big12sports.com/sports/' + path)
+        sid = re.search(r'standings\.aspx\?standings=(\d+)&(?:amp;)?path=soc', sport).group(1)
+        url = f'https://big12sports.com/standings.aspx?standings={sid}&path=soc'
+        return sidearm_standings(url), url
+    url = f'https://{CONF_SITES[abbr]}/standings.aspx?path={path}'
+    return sidearm_standings(url), url
+
+
+def table_spot(table, team):
+    """Row of an ESPN team in a conference table (names differ: 'FGCU *', 'App State', 'Vanderbilt Commodores')."""
+    def n(x):
+        x = re.sub(r'\s+-[a-z]+$|[*#!^]+', '', x.lower()).replace('st.', 'state')
+        return re.sub(r'\s+', ' ', re.sub(r'[^a-z0-9 ]', '', x)).strip()
+    names = [n(r[0]) for r in table]
+    cands = {n(team.get(k) or '') for k in ('location', 'displayName', 'shortDisplayName', 'abbreviation', 'nickname')} - {''}
+    hit = [i for i, x in enumerate(names) if x in cands]
+    if not hit:   # school name then mascot (SEC): the shortest such name, so 'Texas' finds Texas Longhorns, not Texas A&M Aggies
+        hit = [i for _, i in sorted((len(x), i) for i, x in enumerate(names) for c in cands if x.startswith(c + ' '))]
+    return hit[0] if hit else None
+
+
+def soccer_opponent_ranks():
+    out = {}
+    for league, (wvu, path) in SOCCER_LEAGUES.items():
+        try:
+            base = f'https://site.api.espn.com/apis/site/v2/sports/soccer/{league}/teams/{wvu}/schedule'
+            events = {e['id']: e for u in (base, base + '?fixture=true') for e in get_json(u).get('events', [])}
+            cutoff = NOW - timedelta(hours=15)
+            opps = {}
+            for e in events.values():
+                if datetime.fromisoformat(e['date'].replace('Z', '+00:00')) < cutoff:
+                    continue
+                for c in e['competitions'][0]['competitors']:
+                    if c['id'] != wvu and not re.match(r'TBD\b', c['team'].get('location') or ''):
+                        opps[c['id']] = c['team']
+            ranks = {}
+            if opps:
+                season = NOW.year
+                groups = f'{ESPN_CORE}{league}/seasons/{season}/types/1/groups'
+                for g in get_json(groups + '?limit=100')['items']:
+                    gid = g['$ref'].split('/groups/')[1].split('?')[0]
+                    if gid == '0':
+                        continue
+                    members = {t['$ref'].split('/teams/')[1].split('?')[0] for t in get_json(f'{groups}/{gid}/teams?limit=100').get('items', [])}
+                    mine = [o for o in opps if o in members]
+                    if not mine:
+                        continue
+                    abbr = get_json(f'{groups}/{gid}')['abbreviation']
+                    try:
+                        table, url = conf_table(abbr, path)
+                    except Exception as e:
+                        log('standings failed for', abbr, path, e)
+                        continue
+                    for o in mine:
+                        i = table_spot(table, opps[o])
+                        if i is None:
+                            log('not in', abbr, 'standings:', opps[o].get('location'))
+                        else:
+                            ranks[o] = {'rank': i + 1, 'of': len(table), 'url': url}
+            out[league] = ranks
+        except Exception as e:
+            log('opponent ranks failed for', league, e)
+    return out
+
+
 def main():
     data = {}
     for key, fn in (('Rifle', rifle), ('Baseball', baseball)):
@@ -555,6 +648,10 @@ def main():
         data['soccerStandings'] = soccer()
     except Exception as e:
         log('soccer failed:', e)
+    try:
+        data['soccerOppRanks'] = soccer_opponent_ranks()
+    except Exception as e:
+        log('opponent ranks failed:', e)
     path = sys.argv[1] if len(sys.argv) > 1 else 'wvu-data.json'
     old = None
     try:

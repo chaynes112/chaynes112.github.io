@@ -1221,6 +1221,10 @@
     const i = table.findIndex(([name]) => name === c.team.location || name === c.team.shortDisplayName);
     return i >= 0 && table[i][1] === confRec ? { text: ordinal(i + 1) + ' of ' + table.length, href: SOCCER_STANDINGS_URL[card.dataset.league] } : null;
   }
+  // An opponent from another conference: its rank in its own conference's standings, which the GitHub job looks up
+  // (wvu-data.json soccerOppRanks: {league: {ESPN team id: {rank, of, url}}}, refreshed every 2 hours)
+  const SOCCER_OPP_RANK = {};
+  const soccerOppRank = (card, c) => { const r = (SOCCER_OPP_RANK[card.dataset.league] || {})[c.id]; return r ? { text: ordinal(r.rank) + ' of ' + r.of, href: r.url } : null; };
   // Links for the Conf. rank values on soccer cards (the pages the standings above come from).
   // Big 12's page id changes each season: big12sports.com/sports/wsoc links the current one.
   const SOCCER_STANDINGS_URL = {
@@ -1263,11 +1267,13 @@
     '401929890': 'Big 12 Quarterfinal',     // women's soccer vs BYU, Nov 9, 2026
     '401929854': 'Sun Belt Semifinal',      // men's soccer vs Coastal Carolina, Nov 11, 2026
     '401929856': 'Sun Belt Championship Final', // men's soccer vs South Carolina, Nov 15, 2026
+    '401932637': 'NCAA Tournament First Round',  // women's soccer vs Old Dominion, Nov 20, 2026 (NCAA bracket)
     '401932602': 'NCAA Tournament Second Round', // men's soccer vs Washington/Cleveland St. winner, Nov 22, 2026 (NCAA bracket)
     '401920512': 'Players Era 8',           // men's basketball vs Auburn, Las Vegas, Nov 17, 2026
   };
   // NCAA tournament seeds for specific ESPN games: [WVU, opponent] (null = no seed / not known yet)
   const GAME_SEED = {
+    '401932637': ['No. 7', null],   // women's soccer first round vs Old Dominion (unseeded), Nov 20, 2026 (wvusports.com / NCAA bracket, Nov 16)
     '401932602': ['No. 4', null],   // men's soccer second round vs Washington/Cleveland St. winner, Nov 22, 2026 (wvusports.com, Nov 16)
   };
 
@@ -1402,7 +1408,7 @@
         ['Broadcast', (tv => moved && tv !== 'TBA' ? { text: tv, changed: true } : tv)(gameTV(comp) || GAME_TV[ev.id] || 'TBA')],
         ['Nickname', wvNick || DASH, oppNick || DASH],
         ['Conference', card.dataset.conf || DASH, oppConfName || DASH],
-        ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || oppRank || DASH],
+        ['Conf. rank', soccerConfRank(card, wv, wvConf) || wvRank || DASH, soccerConfRank(card, opp, oppConf) || soccerOppRank(card, opp) || oppRank || DASH],
         ['Poll', pollLink || DASH],   // right under Conf. rank (the votes footnote still sits below the table)
         ...(GAME_SEED[ev.id] ? [['Seed', GAME_SEED[ev.id][0] || DASH, GAME_SEED[ev.id][1] || DASH]] : []),
         // only when there's data
@@ -1686,6 +1692,7 @@
       if (Array.isArray(games) && !s.done) s.games = games.map(g => ({ ...g, us: logo(g.us), them: logo(g.them) }));
     });
     Object.entries(d.soccerStandings || {}).forEach(([league, table]) => { if (Array.isArray(table) && table.length) SOCCER_STANDINGS[league] = table; });
+    Object.assign(SOCCER_OPP_RANK, d.soccerOppRanks || {});
   }
   // rifle-style cards (liveWindow) have no feed to refresh them, so check each minute whether LIVE NOW should turn on or off
   setInterval(() => grid.querySelectorAll('.game').forEach(c => {

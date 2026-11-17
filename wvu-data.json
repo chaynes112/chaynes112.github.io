@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-17T13:40:17Z",
+ "updated": "2026-11-17T15:05:32Z",
  "manual": {
   "Rifle": [
    {
@@ -595,5 +595,15 @@
     "0-9-2"
    ]
   ]
+ },
+ "soccerOppRanks": {
+  "usa.ncaa.m.1": {},
+  "usa.ncaa.w.1": {
+   "20383": {
+    "rank": 2,
+    "of": 14,
+    "url": "https://sunbeltsports.org/standings.aspx?path=wsoc"
+   }
+  }
  }
 }
