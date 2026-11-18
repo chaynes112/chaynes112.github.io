@@ -1,12 +1,12 @@
 {
- "updated": "2026-11-17T15:31:03Z",
+ "updated": "2026-11-18T04:13:42Z",
  "manual": {
   "Rifle": [
    {
     "date": "2027-01-15T17:00:00Z",
     "where": "Fairbanks, AK",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -46,7 +46,7 @@
     "date": "2027-01-16T17:00:00Z",
     "where": "Fairbanks, AK",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -86,7 +86,7 @@
     "date": "2027-01-23T17:00:00Z",
     "where": "Morgantown, WV",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -126,7 +126,7 @@
     "date": "2027-01-30T17:00:00Z",
     "where": "Akron, OH",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -166,7 +166,7 @@
     "date": "2027-02-13T17:00:00Z",
     "where": "Lexington, KY",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -206,7 +206,7 @@
     "date": "2027-02-20T17:00:00Z",
     "where": "Morgantown, WV",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -244,7 +244,7 @@
     "date": "2027-02-27T17:00:00Z",
     "where": "Morgantown, WV",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",
@@ -283,7 +283,7 @@
     "date": "2027-03-12T17:00:00Z",
     "where": "Statesboro, GA",
     "us": {
-     "rank": null,
+     "rank": 1,
      "name": "West Virginia",
      "short": "WVU",
      "nick": "Mountaineers",

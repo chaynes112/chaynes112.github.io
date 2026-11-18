@@ -7,6 +7,18 @@
 <title>Let's Go Mountaineers!</title>
 <meta name="description" content="West Virginia University (WVU) Mountaineers and Sissonville High School (SHS) Indians live scores and upcoming games.">
 <link rel="icon" type="image/png" href="wvu-logo.png">
+<link rel="apple-touch-icon" href="wvu-logo.png">
+<link rel="canonical" href="https://chuckhaynes.com/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="chuckhaynes.com">
+<meta property="og:title" content="Let's Go Mountaineers!">
+<meta property="og:description" content="West Virginia University (WVU) Mountaineers and Sissonville High School (SHS) Indians live scores and upcoming games.">
+<meta property="og:url" content="https://chuckhaynes.com/">
+<meta property="og:image" content="https://chuckhaynes.com/wvu-logo.png">
+<meta property="og:image:width" content="640">
+<meta property="og:image:height" content="601">
+<meta property="og:image:alt" content="West Virginia University flying WV logo">
+<meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
@@ -25,7 +37,7 @@
     font-family: "Inter", system-ui, sans-serif;
     overflow-x: hidden;
   }
-  #stars { position: fixed; inset: 0; z-index: 0; }
+  #stars { position: fixed; inset: 0; z-index: 0; width: 100vw; height: 100vh; }
   .mountains { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 38vh; z-index: 1; }
   main {
     position: relative; z-index: 2;
@@ -73,9 +85,10 @@
   .music:disabled { opacity: .6; cursor: wait; }
   .music .icon { font-size: 1.2rem; line-height: 1; }
   /* phones: the Country Roads button sits at the bottom of the page under the mascots instead of floating over the cards */
-  @media (max-width: 767px) {
+  @media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
     main { padding-bottom: 1.5rem; }
-    .music { position: relative; right: auto; bottom: auto; width: fit-content; margin: 0 auto calc(2rem + env(safe-area-inset-bottom, 0px)); }
+    .music { position: relative; right: auto; bottom: auto; width: fit-content; margin: 0 auto; }
+    body::after { content: ""; display: block; height: calc(2rem + env(safe-area-inset-bottom, 0px)); }
   }
   midi-player { display: none; }
   .games { width: min(1280px, 100%); margin-top: 2.25rem; animation: rise 1.2s 1.2s ease-out both; }
@@ -90,13 +103,17 @@
   .game .cmp-label { opacity: .65; }
   .game .cmp-val { font-weight: 600; }
   .game .cmp-val a, .game dd a { color: inherit; }
+  /* taller tap target for phones without moving anything: inline padding does not affect line height */
+  .game .cmp-val a, .game dd a { padding-block: .45rem; position: relative; z-index: 1; }
   .game .cmp-wide { grid-column: span 2; }
   .game .cmp-lines { white-space: pre; }   /* one entry per line (rifle opponents) */
   .game .details dl { margin-top: .5rem; }
   .game dd { white-space: nowrap; }
   /* phones are too narrow for one-line values; let long ones wrap rather than run off the card */
   @media (max-width: 480px) { .game dd, .game .cmp, .game .team-name { white-space: normal; }
+    .game .cmp { grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr); overflow-wrap: anywhere; }
     .game .team-name { height: auto; min-height: 32px; } .game .team, .game .team-main, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
+  @media (max-width: 360px) { .game .cmp { column-gap: .35rem; } }   /* room for "Mountaineers" without breaking it */
   .game {
     background: rgba(0, 26, 56, .78); border: 2px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
@@ -162,7 +179,7 @@
   #outlaw-spot { position: absolute; left: 88.7%; top: 27.7%; width: 22%; height: 30%; transform: translate(-50%, -50%);
                  padding: 0; border: 0; background: transparent; cursor: default; -webkit-tap-highlight-color: transparent; }
   #outlaw-spot:focus { outline: none; }
-  @media (pointer: coarse) { #outlaw-spot { width: 32px; height: 32px; } }
+  @media (pointer: coarse) { #outlaw-spot { width: 40px; height: 40px; } }
   .games .team-logo { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
   /* Cartoon Mountaineer and Sissonville Indian side by side -- in the page flow on narrow screens, standing on the mountains on wide ones */
   .mascot { display: flex; gap: 10px; width: 250px; margin: 2rem auto 0; pointer-events: none; }
@@ -173,9 +190,13 @@
     .mascot { position: fixed; z-index: 2; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); margin: 0;
               width: min(290px, calc((100% - 1280px) / 2 - 16px));
               left: calc(((100% - 1280px) / 2 - min(290px, calc((100% - 1280px) / 2 - 16px))) / 2); }
-    /* Country Roads button centered in the strip between the cards and the right edge */
+  }
+  /* Country Roads button centered in the strip between the cards and the right edge; up to 1699px the strip is only
+     180-210px wide, so the button's side padding is trimmed there so it fits without touching the cards */
+  @media (min-width: 1640px) {
     .music { right: calc((100% - 1280px) / 4); transform: translateX(50%); }
   }
+  @media (min-width: 1640px) and (max-width: 1699px) { .music { padding-inline: .55rem; gap: .4rem; } }
   .mascot .bob { animation: bob 1.6s ease-in-out infinite; }
   .mascot .ready { transform-box: view-box; transform-origin: 77px 150px; animation: ready 2.4s ease-in-out infinite; }
   /* Click the Mountaineer to fire the rifle (hidden: the cursor stays an arrow) */
@@ -724,10 +745,24 @@
   const icon = document.getElementById('music-icon');
   const label = document.getElementById('music-label');
   function idle() { icon.innerHTML = '&#9654;'; label.textContent = 'Country Roads'; btn.setAttribute('aria-label', 'Play Take Me Home, Country Roads'); }
-  player.addEventListener('load', () => { btn.disabled = false; idle(); });
+  let useRecording = false;   // true when the MIDI player library failed to load: the button plays country-roads.mp3
+  player.addEventListener('load', () => { if (useRecording) return; btn.disabled = false; idle(); });
+  function fallBack() {
+    if (useRecording || !btn.disabled) return;
+    useRecording = true;
+    roads.addEventListener('play', () => { icon.innerHTML = '&#10074;&#10074;'; label.textContent = 'Pause'; btn.setAttribute('aria-label', 'Pause music'); });
+    roads.addEventListener('pause', idle);
+    btn.disabled = false; idle();
+  }
+  // The jsDelivr script above has already run (or failed) by now. Check once this whole script has run (roads is defined below);
+  // if the library loaded but the MIDI never finishes loading, fall back after a while too.
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!customElements.get('midi-player')) fallBack(); else setTimeout(fallBack, 10000);
+  });
   player.addEventListener('start', () => { icon.innerHTML = '&#10074;&#10074;'; label.textContent = 'Pause'; btn.setAttribute('aria-label', 'Pause music'); });
   player.addEventListener('stop', idle);
   btn.addEventListener('click', () => {
+    if (useRecording) { toggle(roads); return; }
     if (player.playing) { player.stop(); return; }
     quiet(player);
     // Wake the MIDI's audio engine right here in the click. player.start() loads the instrument sounds
@@ -737,17 +772,17 @@
   });
 
   // Click the Sissonville logo: the Tomahawk Chop MP3. Click again to pause, again to resume.
-  // Loaded with the page so it starts right away; skips the recording's 1.74 s of faint hiss at the top.
+  // Only its start loads with the page (the rest streams in on the first click); skips the recording's 1.74 s of faint hiss at the top.
   // Country Roads stops so the two don't clash, and the Country Roads button pauses this one.
   const CHOP_START = 1.74;
   const chop = new Audio('tomahawk-chop.mp3');
-  chop.preload = 'auto';
+  chop.preload = 'metadata';
   chop.volume = 0.5;   // a little under full so it sits closer to the Country Roads MIDI
   document.querySelector('.sville .team-logo').addEventListener('click', () => {
     if (!chop.paused) { chop.pause(); return; }
     quiet(chop);
     if (chop.ended || chop.currentTime < CHOP_START) chop.currentTime = CHOP_START;
-    chop.play();
+    chop.play().catch(() => {});
   });
 
   // Click the big Flying WV: Country Roads (the recording). Click the arrowhead on the Sissonville logo: Indian Outlaw.
@@ -827,13 +862,31 @@
   const UFO_MS = 5200;
   let flying = false, audio = null;
 
+  // Browsers keep Web Audio suspended until the visitor taps or presses something, and iOS only lets it
+  // resume inside that gesture. So the first tap or key anywhere on the page wakes it, and a fireworks show
+  // that is already running gets sound from its next rocket.
+  function wakeAudio() {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    try { audio = audio || new AC(); } catch (e) { return; }
+    if (audio.state !== 'running') audio.resume().then(audioAwake, () => {});
+    audioAwake();
+  }
+  const WAKE_EVENTS = ['pointerdown', 'touchend', 'click', 'keydown'];
+  function audioAwake() {
+    if (audio && audio.state === 'running') WAKE_EVENTS.forEach(e => window.removeEventListener(e, wakeAudio, true));
+  }
+  WAKE_EVENTS.forEach(e => window.addEventListener(e, wakeAudio, true));
+  // iPhone: play Web Audio even with the silent switch on (like the songs do)
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* not supported */ }
+
   // Classic sci-fi warble, synthesized (no sound file): a rising then falling tone with fast vibrato,
   // panned right to left so it follows the saucer across the screen
   function ufoSound() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     audio = audio || new AC();
-    if (audio.state === 'suspended') audio.resume();
+    if (audio.state !== 'running') audio.resume().catch(() => {});   // iOS can also leave it 'interrupted'
     const t = audio.currentTime, dur = UFO_MS / 1000;
     const out = audio.createGain();
     out.gain.setValueAtTime(0.0001, t);
@@ -924,6 +977,7 @@
   document.getElementById('r-spot').addEventListener('click', () => {
     if (fwShow) return;
     fwShow = true;
+    wakeAudio();   // inside the click, so iOS lets the sound start
     fireworks(10000, () => { fwShow = false; });
   });
 
@@ -935,7 +989,7 @@
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     audio = audio || new AC();
-    if (audio.state === 'suspended') audio.resume();
+    if (audio.state !== 'running') audio.resume().catch(() => {});   // iOS can also leave it 'interrupted'
     loadToasty();
     const t = audio.currentTime;
     // heavy black powder: a darker crack with a long rolling tail
@@ -1121,7 +1175,11 @@
     if (!votes) return null;
     if (sport === 'soccer') {
       const list = await getJSON(CORE + sport + '/leagues/' + league + '/rankings');
-      const poll = await getJSON(list.items[0].$ref.replace(/^http:/, 'https:'));
+      // ESPN's list can lead with last season's poll (a 404); soccer seasons fall within one calendar year
+      const ref = ((list.items || [])[0] || {}).$ref || '';
+      const m = ref.match(/\/seasons\/(\d{4})\//);
+      if (!m || +m[1] < seasonFor(card)) return null;
+      const poll = await getJSON(ref.replace(/^http:/, 'https:'));
       if (!(poll.others || []).some(o => ((o.team && o.team.$ref) || '').includes('/teams/' + team + '?'))) return null;
       const known = SOCCER_VOTES[league];
       const n = known && (poll.date || '').startsWith(known.poll) && known.teams[team];
@@ -1212,7 +1270,7 @@
   };
 
   // Soccer conference standings from sunbeltsports.org and big12sports.com, in order, with each team's conference
-  // record. wvu-data.json (updated every 2 hours by the GitHub job) replaces these; the copy below is the fallback. A rank only shows while ESPN's count of that team's conference
+  // record. wvu-data.json (updated every hour by the GitHub job) replaces these; the copy below is the fallback. A rank only shows while ESPN's count of that team's conference
   // record still matches, so it drops off by itself after the team's next game. Update after games.
   const SOCCER_STANDINGS = {
     'usa.ncaa.m.1': [['West Virginia', '6-1-2'], ['Marshall', '6-1-2'], ['UCF', '5-3-1'], ['James Madison', '4-2-3'],
@@ -1230,7 +1288,7 @@
     return i >= 0 && table[i][1] === confRec ? { text: ordinal(i + 1) + ' of ' + table.length, href: SOCCER_STANDINGS_URL[card.dataset.league] } : null;
   }
   // An opponent from another conference: its rank in its own conference's standings, which the GitHub job looks up
-  // (wvu-data.json soccerOppRanks: {league: {ESPN team id: {rank, of, url}}}, refreshed every 2 hours)
+  // (wvu-data.json soccerOppRanks: {league: {ESPN team id: {rank, of, url}}}, refreshed every hour)
   const SOCCER_OPP_RANK = {};
   // Soccer national rank beside each name: the United Soccer Coaches poll, read by the GitHub job (wvu-data.json soccerPoll:
   // {league: {poll, url, ranks: {ESPN team id: rank}}}). ESPN's own soccer rank is no use: its poll feed stopped updating,
@@ -1253,8 +1311,9 @@
     'college-football': 'https://www.espn.com/college-football/rankings',
     'mens-college-basketball': 'https://www.espn.com/mens-college-basketball/rankings',
     'womens-college-basketball': 'https://www.espn.com/womens-college-basketball/rankings',
-    'usa.ncaa.m.1': 'https://www.espn.com/mens-college-soccer/rankings',
-    'usa.ncaa.w.1': 'https://www.espn.com/womens-college-soccer/rankings',
+    // soccer: the United Soccer Coaches poll the cards' ranks come from (ESPN's soccer poll stopped updating)
+    'usa.ncaa.m.1': 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/',
+    'usa.ncaa.w.1': 'https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-women/',
     'womens-college-volleyball': 'https://www.espn.com/college-sports/rankings/_/pollId/89/sportId/18530000',
     'college-baseball': 'https://www.espn.com/college-sports/rankings/_/pollId/10543/sportId/10031000',
   };
@@ -1346,6 +1405,22 @@
         const all = (await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/rankings').catch(() => ({}))).rankings || [];
         const polls = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).filter(Boolean);
         if (polls.length) pollRanks = new Map((polls[0].ranks || []).map(r => [String(r.team && r.team.id), r.current]));
+        // ESPN's site feed drops the CFP rankings from Sunday until the new ones come out Tuesday night, so read the
+        // latest from the core feed (this week's, else up to two weeks back); none yet this season keeps the AP poll
+        const want = card.dataset.polls.split('|')[0];
+        if (want === 'Playoff Committee Rankings' && !(polls[0] && polls[0].name === want)) {
+          const base = CORE + card.dataset.sport + '/leagues/' + card.dataset.league;
+          const refs = ((await getJSON(base + '/rankings').catch(() => ({}))).items || [])
+            .map(i => (i.$ref || '').match(/seasons\/(\d+)\/types\/(\d+)\/weeks\/(\d+)\/rankings\/(\d+)/))
+            .filter(m => m && +m[1] === seasonFor(card));
+          const m = refs.find(x => x[4] === '21') || refs[0];
+          for (let w = m ? +m[3] : 0, n = 0; w > 0 && n < 3; w--, n++) {
+            const r = await getJSON(base + '/seasons/' + m[1] + '/types/' + m[2] + '/weeks/' + w + '/rankings/21').catch(() => ({}));
+            if (!(r.ranks || []).length) continue;
+            pollRanks = new Map(r.ranks.map(x => [((x.team && x.team.$ref || '').match(/teams\/(\d+)/) || [])[1], x.current]));
+            break;
+          }
+        }
       }
       const projection = c => {
         const p = summary.predictor;
@@ -1649,37 +1724,37 @@
   };
 
   // WVU sports ESPN doesn't carry (rifle) or hasn't loaded yet (baseball 2027). The GitHub job
-  // (scripts/update_wvu_data.py, every 2 hours) pulls these into wvu-data.json from wvusports.com, ncaarifle.org
+  // (scripts/update_wvu_data.py, every hour) pulls these into wvu-data.json from wvusports.com, ncaarifle.org
   // and ncaa.com's CRCA poll; the games typed in below are only used if that file can't be loaded.
   const WVU_MANUAL = [
     { label: 'Rifle', poll: { text: 'Rankings', href: 'https://www.ncaa.com/rankings/rifle/nc/crca' }, games: [
-      { date: '2026-11-14T16:00:00Z', through: '2026-11-15T16:00:00Z', where: 'Morgantown, WV', prefix: 'at',
-        us: { rank: 1, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '7-1 (2-0)' }, them: { name: 'WVU Fall Classic', logo: 'wvu-logo.png', noOutline: true }, noOpp: true, rows: [
-        // CRCA poll through Nov 1 (ncaa.com); records overall (conference) as of Nov 5, from each school's schedule
-        // (TCU publishes none: counted from match results, 3-2 per Navy's Oct 4 recap + 3 wins since)
-        // GARC publishes no standings; rank from each member's conference record on its own schedule page (Nov 5):
-        // Navy 3-0, WVU 2-0, Kentucky 1-1, Army 0-1, Memphis 0-2, Akron 0-2 -> WVU tied for 1st with Navy
-        ['Venue', 'WVU Rifle Range'],
-        ['Live', { text: 'Scorecard', href: 'http://ncaarifle.org/Home/Scorecard?MatchId=2202' }]],
-        liveWindow: true, liveMatch: '2202',   // ncaarifle.org match 2202
-        liveTeams: [{ name: 'Kentucky', short: 'UK' }, { name: 'Nebraska', short: 'NEB' }, { name: 'Ole Miss', short: 'MISS', withdrew: true },
-                    { name: 'TCU', short: 'TCU' }, { name: 'West Virginia', short: 'WVU' }],
-        // field event: the second column is headed "Opponents", one team per row down that column
-        oppHead: 'Opponents', field: [{ text: '#2 MISS 8-0', note: '(Withdrew)' }, '#4 UK 4-1 (1-1)', '#5 NEB 3-4 (1-1)', '#6 TCU 6-2 (2-0)'],
-        pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
+      // Copied from wvu-data.json (GitHub job, Nov 17, 2026): wvusports.com schedule (times TBA), CRCA ranks (ncaa.com),
+      // records overall (conference) and GARC conf. rank from each school's schedule. The Nov 14-15 WVU Fall Classic is over;
+      // next meet Jan 15-16, 2027 at Alaska Fairbanks.
+      { date: '2027-01-15T17:00:00Z', timeTBA: true, where: 'Fairbanks, AK', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { rank: 6, name: 'Alaska Fairbanks', short: 'UAF', nick: 'Nanooks', logo: 'https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png', record: '5-1' }, rows: [['Venue', 'UAF Range']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
+      { date: '2027-01-16T17:00:00Z', timeTBA: true, where: 'Fairbanks, AK', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { rank: 6, name: 'Alaska Fairbanks', short: 'UAF', nick: 'Nanooks', logo: 'https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png', record: '5-1' }, rows: [['Venue', 'TVSA Range']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
+      { date: '2027-01-23T17:00:00Z', timeTBA: true, where: 'Morgantown, WV', prefix: 'vs', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { rank: 4, name: 'Navy', short: 'NAVY', nick: 'Midshipmen ', logo: 'https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Navy.png', record: '11-0 (3-0)' }, rows: [['Venue', 'WVU Rifle Range']], pairs: [['Conference', 'GARC', 'GARC'], ['Conf. rank', '1st of 6', '1st of 6']] },
+      { date: '2027-01-30T17:00:00Z', timeTBA: true, where: 'Akron, OH', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { rank: 15, name: 'Akron', short: 'AKR', nick: 'Zips', logo: 'https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/android-chrome-192x192.png', record: '3-5 (0-3)' }, rows: [['Venue', 'Robert A. Pinn Shooting Range']], pairs: [['Conference', 'GARC', 'GARC'], ['Conf. rank', '1st of 6', '5th of 6']] },
+      { date: '2027-02-13T17:00:00Z', timeTBA: true, where: 'Lexington, KY', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { rank: 8, name: 'Kentucky', short: 'UK', nick: 'Wildcats', logo: 'https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Kentucky.png', record: '5-3 (1-1)' }, rows: [['Venue', 'Barker Hall Rifle Range']], pairs: [['Conference', 'GARC', 'GARC'], ['Conf. rank', '1st of 6', '3rd of 6']] },
+      { date: '2027-02-20T17:00:00Z', timeTBA: true, where: 'Morgantown, WV', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { name: 'NCAA Qualifying Match (VMI)', logo: 'wvu-logo.png', noOutline: true }, noOpp: true, rows: [['Venue', 'WVU Shell Building']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
+      { date: '2027-02-27T17:00:00Z', through: '2027-02-28T17:00:00Z', timeTBA: true, where: 'Morgantown, WV', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { name: 'GARC Championships', logo: 'wvu-logo.png', noOutline: true }, noOpp: true, rows: [['Venue', 'WVU Shell Building']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
+      { date: '2027-03-12T17:00:00Z', through: '2027-03-13T17:00:00Z', timeTBA: true, where: 'Statesboro, GA', prefix: 'at', us: { rank: null, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-1 (2-0)' }, them: { name: 'NCAA Championships', logo: 'https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/NCAALogoUpdated.png', noOutline: false }, noOpp: true, rows: [['Venue', 'Georgia Southern Shooting Sports Education Center']], pairs: [['Conference', 'GARC', null], ['Conf. rank', '1st of 6', null]] },
     ] },
     // 2026 season over (ESPN; final USA TODAY Coaches Poll Jun 23, 2026). Won the Morgantown Regional and Super Regional,
     // 2-2 at the program's first College World Series, eliminated by North Carolina 12-7 on Jun 17.
     // Next spring's opener (for when this goes back to a game card): at College of Charleston, Feb 19, 2027.
     { label: 'Baseball', poll: POLL_LINK['college-baseball'], done: 'Season Ended', doneLogo: WVU_CARD_LOGO, last: '2026-06-17T23:00:00Z', result: 'L 7-12', rows: [
       ['Last game', 'College World Series'], ['Last opponent', '#2 North Carolina'], ['WVU rank', '#4'], ['WVU record', '47-17 (21-9)']] },
-    // Out of the Big 12 Tournament (1-1 at BYU, lost 2-4 on penalties, Nov 9, 2026); waiting on the NCAA bracket (Nov 16).
-    // Shows only while ESPN has no upcoming game: an NCAA tournament game in ESPN's schedule brings the ESPN card back.
-    // Ranks: United Soccer Coaches poll of Nov 10, 2026 (WVU unranked, no votes; BYU 14th); 12th in the NCAA committee's top 16 of Oct 24.
-    { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], done: 'NCAA Tournament Selection, Nov 16', doneStrong: true, doneLogo: WVU_CARD_LOGO,
-      soon: '2026-11-16T21:00:00Z',   // selection show 4 PM ET on NCAA.com (ncaa.com, Nov 9, 2026)
-      last: '2026-11-09T20:20:00Z', result: 'T 1-1 (2-4 PK)', rows: [
-      ['Last game', 'Big 12 Quarterfinal'], ['Last opponent', '#14 BYU'], ['WVU rank', 'Unranked'], ['WVU record', '9-4-5 (4-4-3)']] },
+    // Out of the Big 12 Tournament (1-1 at BYU, lost 2-4 on penalties, Nov 9, 2026). NCAA bracket (Nov 16): No. 7 seed WVU hosts
+    // unseeded Old Dominion in the First Round, Fri Nov 20, 7 PM ET (ESPN event 401932637: ESPN+, Dick Dlesk Soccer Stadium).
+    // Shows only while ESPN can't be loaded; ESPN's card for that game has the same note and Seed row.
+    // Records W-L-T (ESPN lists W-T-L: WVU 9-5-4, ODU 12-2-6); conf. records/ranks final regular season as the ESPN card shows them
+    // (wvu-data.json soccerStandings, Nov 17, 2026); WVU unranked in the United Soccer Coaches poll of Nov 10, 2026.
+    { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], games: [
+      { date: '2026-11-21T00:00:00Z', where: 'Morgantown, WV', prefix: 'vs', subtitle: 'NCAA Tournament First Round',
+        us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '9-4-5 (4-4-3)' },
+        them: { name: 'Old Dominion', short: 'ODU', nick: 'Monarchs', logo: 'https://a.espncdn.com/i/teamlogos/ncaa/500/295.png', record: '12-6-2 (6-1-2)' },
+        rows: [['Venue', 'Dick Dlesk Soccer Stadium'], ['Broadcast', 'ESPN+']], pairs: [['Conference', 'Big 12', 'Sun Belt'], ['Conf. rank', '8th of 16', '2nd of 14'], ['Seed', 'No. 7', null]] }] },
   ];
   // Soonest game first; cards with no game go last
   const grid = document.getElementById('game-grid');
@@ -1759,8 +1834,9 @@
   function fwSound(kind, x, delay = 0) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
-    audio = audio || new AC();
-    if (audio.state === 'suspended') audio.resume().catch(() => {});
+    // No sound until a tap has woken the audio (wakeAudio). Sounds scheduled while it is suspended would
+    // all pile up and play at once on the first tap.
+    if (!audio || audio.state !== 'running') return;
     const a = audio, t = a.currentTime + delay;
     const out = a.createGain(); out.gain.value = 0.92;   // raised from 0.5 so the show averages about the same level as the songs
     const pan = a.createStereoPanner ? a.createStereoPanner() : null;
@@ -1912,7 +1988,7 @@
           // higher seed hosts; WVSSAC 2026 Class AA bracket: Friday, Nov. 20 at 7pm, Joe Sawyer Field
           ['Venue', 'Joe Sawyer Field']] },
       ],
-      poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/football-ratings/' }, rows: [
+      poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/sports/football-ratings/' }, rows: [
       // Last game: Class AA first round, Sissonville 28, Mingo Central 8 (MetroNews final, Nov 13, 2026)
       ['Last game', 'Class AA First Round'], ['Last opponent', 'Mingo Central'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '11-0']] },
     // Last opponent ranks: MaxPreps class rankings, same lists as Sissonville's (fall: Nov 9, 2026; spring: final, Jun 26, 2026)

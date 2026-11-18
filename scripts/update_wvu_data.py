@@ -96,7 +96,9 @@ ALIASES = {
     'jax state': 'jacksonville state', 'jacksonville st': 'jacksonville state', 'morehead': 'morehead state',
     'morehead st': 'morehead state', 'the citadel': 'citadel', 'john jay college': 'john jay', 'vmi (mixed)': 'vmi',
     'mississippi': 'ole miss', 'massachusetts institute of technology': 'mit', 'schreiner': 'schreiner university',
-    'usafa': 'air force', 'usna': 'navy', 'charleston': 'college of charleston', 'st john s': 'st johns',
+    'usafa': 'air force', 'usna': 'navy',
+    'wvu': 'west virginia', 'jsu': 'jacksonville state', 'utm': 'ut martin',   # ncaa.com CRCA poll short names
+    'charleston': 'college of charleston', 'st john s': 'st johns',
 }
 
 
