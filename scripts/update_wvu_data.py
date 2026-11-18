@@ -227,6 +227,9 @@ GARC_SIDEARM = {'army': 'https://goarmywestpoint.com/sports/rifle/schedule',
                 'akron': 'https://gozips.com/sports/rifle/schedule'}
 GARC_LEGACY = {'navy': 'https://navysports.com/sports/rifle/schedule'}
 GARC = {'west virginia', 'navy', 'army', 'kentucky', 'memphis', 'akron'}
+# other rifle conferences, for the opponent's Conference row (no standings for them, so their Conf. rank stays blank)
+# Patriot Rifle Conference members per alaskananooks.com (2026-27)
+RIFLE_CONF = {t: 'PRC' for t in ('alaska fairbanks', 'air force', 'nebraska', 'ohio state', 'ole miss', 'tcu', 'utep')}
 
 # Teams that withdrew from a WVU meet, by the meet's first day (ET). They stay in the Opponents list, marked (Withdrew).
 WITHDREW = {
@@ -453,7 +456,7 @@ def rifle():
                          'them': {'rank': ranks.get(t), 'name': o['title'].strip(), 'short': abbr(o['title'].strip()),
                                   'nick': o.get('mascot') or None, 'logo': (o.get('image') or {}).get('fullpath'),
                                   'record': team_rec(t, True)},
-                         'pairs': [['Conference', conf_abbr, conf_abbr if t in GARC else None],
+                         'pairs': [['Conference', conf_abbr, conf_abbr if t in GARC else RIFLE_CONF.get(t)],
                                    ['Conf. rank', conf_rank(conf, 'west virginia'), conf_rank(conf, t) if t in GARC else None]]})
         out.append(game)
     return out

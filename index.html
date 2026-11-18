@@ -182,7 +182,8 @@
   @media (pointer: coarse) { #outlaw-spot { width: 40px; height: 40px; } }
   .games .team-logo { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
   /* Cartoon Mountaineer and Sissonville Indian side by side -- in the page flow on narrow screens, standing on the mountains on wide ones */
-  .mascot { display: flex; gap: 10px; width: 250px; margin: 2rem auto 0; pointer-events: none; }
+  .mascot { display: flex; gap: 10px; width: 250px; margin: 2rem auto 0; pointer-events: none;
+            translate: -1.42% 0; }   /* the two drawings sit a little right of the box's centre: equal space each side */
   .mascot svg { display: block; flex: 1 1 0; min-width: 0; height: auto; overflow: visible; }
   /* wide screens: centered in the empty strip between the left edge of the screen and the 1280px game cards,
      shrinking to fit when that strip is narrower than 290px */
@@ -1343,6 +1344,8 @@
     '401920512': 'Players Era 8',           // men's basketball vs Auburn, Las Vegas, Nov 17, 2026
   };
   // NCAA tournament seeds for specific ESPN games: [WVU, opponent] (null = no seed / not known yet)
+  // NCAA brackets for the soccer cards' Poll link during the tournament (the polls stop at the end of the regular season)
+  const NCAA_BRACKET = { 'usa.ncaa.m.1': 'https://www.ncaa.com/brackets/soccer-men/d1/2026', 'usa.ncaa.w.1': 'https://www.ncaa.com/brackets/soccer-women/d1/2026' };
   const GAME_SEED = {
     '401932637': ['No. 7', null],   // women's soccer first round vs Old Dominion (unseeded), Nov 20, 2026 (wvusports.com / NCAA bracket, Nov 16)
     '401932602': ['No. 4', null],   // men's soccer second round vs Washington/Cleveland St. winner, Nov 22, 2026 (wvusports.com, Nov 16)
@@ -1401,6 +1404,7 @@
       // Cards with data-polls use the first listed poll ESPN currently has (football: the CFP rankings in the weeks they
       // come out, otherwise the AP poll); a team not in that poll shows no rank. Other cards use ESPN's own rank.
       let pollRanks = null, pollLink = POLL_LINK[card.dataset.league] || null;
+      if (GAME_SEED[ev.id] && NCAA_BRACKET[card.dataset.league]) pollLink = { text: 'Bracket', href: NCAA_BRACKET[card.dataset.league] };
       if (card.dataset.polls) {
         const all = (await getJSON(SITE + card.dataset.sport + '/' + card.dataset.league + '/rankings').catch(() => ({}))).rankings || [];
         const polls = card.dataset.polls.split('|').map(n => all.find(r => r.name === n)).filter(Boolean);
@@ -1477,7 +1481,9 @@
       const row = (dl, label, value) => { if (value) dl.append(el('dt', null, label), el('dd', null, value)); };
       // Matchup line: "9 WVU vs Georgia Southern" -- rank (if any) before each name, record underneath
       const soccerPoll = card.dataset.sport === 'soccer' && SOCCER_POLL[card.dataset.league];
-      const rankNum = c => { const r = soccerPoll ? soccerPoll.ranks && soccerPoll.ranks[c.id] : GAME_SEED[ev.id] ? null : pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
+      // NCAA tournament game: the number beside each name is its seed (no number for an unseeded team)
+      const seedNum = c => { const v = GAME_SEED[ev.id][c === wv ? 0 : 1]; return v ? Number(String(v).replace(/\D/g, '')) || null : null; };
+      const rankNum = c => { if (GAME_SEED[ev.id]) return seedNum(c); const r = soccerPoll ? soccerPoll.ranks && soccerPoll.ranks[c.id] : GAME_SEED[ev.id] ? null : pollRanks ? pollRanks.get(String(c.id)) : c.curatedRank && c.curatedRank.current; return r && r < 99 ? r : null; };
       // score next to each name once the game starts; at the final the loser's score is dimmed
       const score = c => state === 'pre' || c.score == null ? null : (typeof c.score === 'object' ? c.score.displayValue : c.score);
       const lost = c => state === 'post' && comp.competitors.some(x => x !== c && x.winner);
