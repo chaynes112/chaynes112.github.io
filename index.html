@@ -84,10 +84,10 @@
   .music:hover, .music:focus-visible { background: var(--gold); color: var(--deep); outline: none; }
   .music:disabled { opacity: .6; cursor: wait; }
   .music .icon { font-size: 1.2rem; line-height: 1; }
-  /* phones: the Country Roads button sits at the bottom of the page under the mascots instead of floating over the cards */
+  /* phones: the Country Roads button sits in the page under the Mountaineer (moved there by the script) instead of floating over the cards */
   @media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
     main { padding-bottom: 1.5rem; }
-    .music { position: relative; right: auto; bottom: auto; width: fit-content; margin: 0 auto; }
+    .music { position: relative; right: auto; bottom: auto; width: fit-content; margin: 1.5rem auto 0; }
     body::after { content: ""; display: block; height: calc(2rem + env(safe-area-inset-bottom, 0px)); }
   }
   midi-player { display: none; }
@@ -186,9 +186,6 @@
   .mascot { display: flex; width: 120px; margin: 2rem auto 0; pointer-events: none; }
   .mascot[hidden], .mascot svg.off { display: none; }
   .mascot svg { display: block; flex: 1 1 0; min-width: 0; height: auto; overflow: visible; }
-  /* each drawing sits right of its box's centre (the musket and spear reach right): nudge it so the space either side matches */
-  .mascot svg { translate: -25.8% 0; }
-  .mascot svg.indian { translate: -4.3% 0; }
   /* wide screens: centered in the empty strip between the left edge of the screen and the 1280px game cards,
      shrinking to fit when that strip is narrower than 290px */
   @media (min-width: 1640px) {
@@ -1006,6 +1003,11 @@
       if (wide.matches) { boxSv.prepend(figWvu); boxWvu.hidden = true; pick(); }
       else { boxWvu.append(figWvu); boxWvu.hidden = false; figWvu.classList.remove('off'); figSv.classList.remove('off'); }
     };
+    // phones: the Country Roads button goes under the Mountaineer; elsewhere it floats (back at the end of the page)
+    const btnRoads = document.getElementById('music'), phone = matchMedia('(max-width: 767px), (pointer: coarse) and (max-height: 500px)');
+    const placeBtn = () => { if (phone.matches) boxWvu.after(btnRoads); else document.body.insertBefore(btnRoads, document.getElementById('player')); };
+    phone.addEventListener('change', placeBtn);
+    placeBtn();
     wide.addEventListener('change', place);
     addEventListener('scroll', pick, { passive: true });
     addEventListener('resize', pick);
