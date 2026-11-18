@@ -181,16 +181,21 @@
   #outlaw-spot:focus { outline: none; }
   @media (pointer: coarse) { #outlaw-spot { width: 40px; height: 40px; } }
   .games .team-logo { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
-  /* Cartoon Mountaineer and Sissonville Indian side by side -- in the page flow on narrow screens, standing on the mountains on wide ones */
-  .mascot { display: flex; gap: 10px; width: 250px; margin: 2rem auto 0; pointer-events: none;
-            translate: -1.42% 0; }   /* the two drawings sit a little right of the box's centre: equal space each side */
+  /* Cartoon Mountaineer with the WVU cards, Sissonville Indian with the Sissonville cards: on narrow screens each stands
+     under its own section; on wide ones one at a time stands on the mountains -- whichever section is on screen */
+  .mascot { display: flex; width: 120px; margin: 2rem auto 0; pointer-events: none; }
+  .mascot[hidden], .mascot svg.off { display: none; }
   .mascot svg { display: block; flex: 1 1 0; min-width: 0; height: auto; overflow: visible; }
+  /* each drawing sits right of its box's centre (the musket and spear reach right): nudge it so the space either side matches */
+  .mascot svg { translate: -25.8% 0; }
+  .mascot svg.indian { translate: -4.3% 0; }
   /* wide screens: centered in the empty strip between the left edge of the screen and the 1280px game cards,
      shrinking to fit when that strip is narrower than 290px */
   @media (min-width: 1640px) {
     .mascot { position: fixed; z-index: 2; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); margin: 0;
-              width: min(290px, calc((100% - 1280px) / 2 - 16px));
-              left: calc(((100% - 1280px) / 2 - min(290px, calc((100% - 1280px) / 2 - 16px))) / 2); }
+              --pair: min(290px, calc((100% - 1280px) / 2 - 16px));   /* the size the two figures had side by side */
+              width: calc((var(--pair) - 10px) / 2);
+              left: calc(((100% - 1280px) / 2 - (var(--pair) - 10px) / 2) / 2); }
   }
   /* Country Roads button centered in the strip between the cards and the right edge; up to 1699px the strip is only
      180-210px wide, so the button's side padding is trimmed there so it fits without touching the cards */
@@ -282,6 +287,8 @@
     </div>
   </section>
 
+  <div class="mascot mascot-wvu" aria-hidden="true"></div>
+
   <section class="games sville" aria-labelledby="sville-title">
     <div class="team-logo-wrap">
       <img class="team-logo" src="sissonville-logo.png" alt="Sissonville High School logo">
@@ -292,7 +299,7 @@
     <div class="game-grid" id="sville-grid"></div>
   </section>
 
-  <div class="mascot" aria-hidden="true">
+  <div class="mascot mascot-sville" aria-hidden="true">
     <svg viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="80" cy="212" rx="52" ry="6" fill="#000" opacity=".35"/>
       <g class="bob" stroke-linejoin="round" stroke-linecap="round">
@@ -984,6 +991,26 @@
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
   const mascot = document.querySelector('.mascot svg');
+  // One mascot per section: narrow screens -- the Mountaineer stands under the WVU cards, the Indian under the Sissonville
+  // cards; wide screens (one box fixed on the mountains) -- the Indian once the Sissonville cards reach mid-screen, else the Mountaineer
+  {
+    const boxWvu = document.querySelector('.mascot-wvu'), boxSv = document.querySelector('.mascot-sville');
+    const figWvu = mascot, figSv = boxSv.querySelector('svg.indian');
+    const svSection = document.querySelector('.games.sville'), wide = matchMedia('(min-width: 1640px)');
+    const pick = () => {
+      if (!wide.matches) return;
+      const sv = svSection.getBoundingClientRect().top < innerHeight * 0.5;
+      figWvu.classList.toggle('off', sv); figSv.classList.toggle('off', !sv);
+    };
+    const place = () => {
+      if (wide.matches) { boxSv.prepend(figWvu); boxWvu.hidden = true; pick(); }
+      else { boxWvu.append(figWvu); boxWvu.hidden = false; figWvu.classList.remove('off'); figSv.classList.remove('off'); }
+    };
+    wide.addEventListener('change', place);
+    addEventListener('scroll', pick, { passive: true });
+    addEventListener('resize', pick);
+    place();
+  }
   let reloading = false, shots = 0;
 
   function gunshotSound() {
