@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-18T05:22:58Z",
+ "updated": "2026-11-20T10:30:09Z",
  "manual": {
   "Rifle": [
    {
@@ -601,7 +601,8 @@
    "poll": "National - Poll 12 - November 10, 2026",
    "url": "https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/",
    "ranks": {
-    "5658": 7
+    "5658": 7,
+    "5636": 11
    }
   },
   "usa.ncaa.w.1": {
@@ -611,7 +612,14 @@
   }
  },
  "soccerOppRanks": {
-  "usa.ncaa.m.1": {},
+  "usa.ncaa.m.1": {
+   "5636": {
+    "conf": "Big Ten",
+    "rank": 2,
+    "of": 11,
+    "url": "https://bigten.org/standings.aspx?path=msoc"
+   }
+  },
   "usa.ncaa.w.1": {
    "20383": {
     "conf": "Sun Belt",
