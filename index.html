@@ -1379,7 +1379,7 @@
   const NCAA_BRACKET = { 'usa.ncaa.m.1': 'https://www.ncaa.com/brackets/soccer-men/d1/2026', 'usa.ncaa.w.1': 'https://www.ncaa.com/brackets/soccer-women/d1/2026' };
   const GAME_SEED = {
     '401932637': ['No. 7', null],   // women's soccer first round vs Old Dominion (unseeded), Nov 20, 2026 (wvusports.com / NCAA bracket, Nov 16)
-    '401932602': ['No. 4', null],   // men's soccer second round vs Washington/Cleveland St. winner, Nov 22, 2026 (wvusports.com, Nov 16)
+    '401932602': ['No. 4', 'No. 5'], // men's soccer second round vs No. 5 Washington, Nov 22, 2026 (NCAA bracket, Nov 21)
   };
 
   async function loadGame(card) {
@@ -1786,10 +1786,10 @@
     // in the First Round, Nov 20 (wvusports.com). Second Round at No. 2 seed / No. 10 Virginia, Fri Nov 27, time TBA, Klockner Stadium
     // (wvusports.com schedule, Nov 21, 2026). Shows only while ESPN has no listing for that game.
     // Records W-L-T (ESPN lists W-T-L: WVU 10-5-4, UVA 12-4-4, Nov 21, 2026).
-    { label: "Women's Soccer", poll: POLL_LINK['usa.ncaa.w.1'], games: [
+    { label: "Women's Soccer", poll: { text: 'Bracket', href: NCAA_BRACKET['usa.ncaa.w.1'] }, games: [
       { date: '2026-11-27T17:00:00Z', timeTBA: true, where: 'Charlottesville, VA', prefix: 'at', subtitle: 'NCAA Tournament Second Round',
-        us: { name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-4-5 (4-4-3)' },
-        them: { rank: 10, name: 'Virginia', short: 'UVA', nick: 'Cavaliers', logo: 'https://a.espncdn.com/i/teamlogos/ncaa/500/258.png', record: '12-4-4' },
+        us: { rank: 7, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-4-5 (4-4-3)' },
+        them: { rank: 2, name: 'Virginia', short: 'UVA', nick: 'Cavaliers', logo: 'https://a.espncdn.com/i/teamlogos/ncaa/500/258.png', record: '12-4-4' },
         rows: [['Venue', 'Klöckner Stadium']], pairs: [['Conference', 'Big 12', 'ACC'], ['Conf. rank', '8th of 16', null], ['Seed', 'No. 7', 'No. 2']] }] },
   ];
   // Soonest game first; cards with no game go last
@@ -2016,8 +2016,8 @@
     // Playoffs: WVSSAC pairings Sat Nov 7 (late), dates and times Sun Nov 8. Rank: WVSSAC FINAL Week 11 ratings (Nov 7: Sissonville 2nd in AA, 13.4, behind Frankfort); final score MetroNews.
     // Class AA quarterfinal (MaxPreps WVSSAC AA bracket, Nov 14, 2026): No. 2 Sissonville vs No. 7 Roane County (beat No. 10 Liberty 44-7),
     // Fri Nov 20, 7:00 PM EST at Sissonville High School (MaxPreps game page). Roane County 10-1 per MaxPreps Nov 14.
-    { label: 'Football', first: true, done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-21T00:00:00Z', result: 'L 35-42',
-      poll: { label: 'Ratings', text: 'Rankings', href: 'https://www.wvssac.org/sports/football-ratings/' }, rows: [
+    { label: 'Football', done: 'Season Ended', doneLogo: 'sissonville-logo.png', last: '2026-11-21T00:00:00Z', result: 'L 35-42',
+      rows: [
       // Last game: Class AA quarterfinal, No. 7 Roane County 42, No. 2 Sissonville 35 at Sissonville (MaxPreps / WTAP / MetroNews, Nov 20, 2026)
       ['Last game', 'Class AA Quarterfinal'], ['Last opponent', '#7 Roane County'], ['Sissonville rank', '#2 in Class AA'], ['Sissonville record', '11-1']] },
     // Last opponent ranks: MaxPreps class rankings, same lists as Sissonville's (fall: Nov 9, 2026; spring: final, Jun 26, 2026)
