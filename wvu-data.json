@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-20T10:30:09Z",
+ "updated": "2026-11-21T16:24:55Z",
  "manual": {
   "Rifle": [
    {
@@ -620,13 +620,6 @@
     "url": "https://bigten.org/standings.aspx?path=msoc"
    }
   },
-  "usa.ncaa.w.1": {
-   "20383": {
-    "conf": "Sun Belt",
-    "rank": 2,
-    "of": 14,
-    "url": "https://sunbeltsports.org/standings.aspx?path=wsoc"
-   }
-  }
+  "usa.ncaa.w.1": {}
  }
 }
