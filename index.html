@@ -178,6 +178,11 @@
   .games .source { margin: .7rem 0 0; font-size: .78rem; opacity: .55; }
   .games.sville { margin-top: 4rem; }
   .games.sville h2 { color: #ee2021; }   /* Sissonville red (the logo's) */
+  /* Sissonville cards: red border, sport label and column heads, on a see-through near-black (live and FINAL borders still win) */
+  .games.sville .game { background: rgba(20, 18, 16, .78); border-color: rgba(238, 32, 33, .35); border-top-color: #ee2021; }
+  .games.sville .game .sport, .games.sville .game .cmp-head { color: #ee2021; }
+  .games.sville .game:has(.live) { border-color: rgba(255, 59, 47, .35); border-top-color: #ff3b2f; }
+  .games.sville .game:has(.final) { border-color: rgba(91, 192, 235, .35); border-top-color: #5bc0eb; }
   .games .team-logo-wrap { position: relative; width: 96px; margin: 0 auto .6rem; }
   /* Easter egg: the arrowhead on the Sissonville logo plays Indian Outlaw -- invisible button over it (88.7% across, 27.7% down) */
   #outlaw-spot { position: absolute; left: 88.7%; top: 27.7%; width: 22%; height: 30%; transform: translate(-50%, -50%);
