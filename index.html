@@ -1883,7 +1883,7 @@
     try { localStorage.setItem('wvu-wins-seen', JSON.stringify([...seen, ...wins].slice(-50))); } catch (e) { /* ignore */ }
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) fireworks();
   }
-  // Fireworks sounds, made in the browser like the musket: a rising whistle on launch, then a boom and crackle
+  // Fireworks sounds, made in the browser like the musket: a rising breathy whistle on launch, then a boom and crackle
   // at the burst, panned left/right to where it is on screen. Browsers only allow sound after the visitor has
   // clicked or tapped something on the page, so on a fresh visit the fireworks may be silent.
   function fwSound(kind, x, delay = 0) {
@@ -1900,11 +1900,12 @@
     const noise = secs => { const len = Math.floor(a.sampleRate * secs), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; const s = a.createBufferSource(); s.buffer = b; return s; };
     if (kind === 'launch') {
-      const o = a.createOscillator(), g = a.createGain(); o.type = 'sine';
-      const f = 900 + Math.random() * 500;
-      o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 2.2, t + 0.9);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
-      o.connect(g).connect(out); o.start(t); o.stop(t + 1);
+      // breathy whistle: noise through two tight band-pass filters sweeping upward (airy, not a clean tone)
+      const n = noise(1.1), bp = a.createBiquadFilter(), bp2 = a.createBiquadFilter(), g = a.createGain();
+      const f = 1100 + Math.random() * 400;
+      for (const b of [bp, bp2]) { b.type = 'bandpass'; b.Q.value = 35; b.frequency.setValueAtTime(f, t); b.frequency.exponentialRampToValueAtTime(f * 2.4, t + 1.0); }
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(1.6, t + 0.06); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.05);
+      n.connect(bp).connect(bp2).connect(g).connect(out); n.start(t); n.stop(t + 1.1);
       return;
     }
     // boom
