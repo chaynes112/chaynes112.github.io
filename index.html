@@ -954,14 +954,16 @@
   });
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
-  // click the Indian three times and he pops in saying "Frosty!".
+  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!".
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
   // 0.15 s after he does, so he's all the way out before he says "Toasty!". frosty.mp3's voice already starts
-  // 0.03 s in (the same as Toasty after the skip), and it's about 3 dB louder, so it plays at 0.71 to match.
+  // 0.03 s in (the same as Toasty after the skip), and it's about 3 dB louder, so it plays at 0.71 to match; crispy.mp3 is the same
+  // (voice at 0.03 s, 3 dB louder), so it plays at 0.71 too.
   const CLIPS = {
     toasty: { file: 'toasty.mp3', skip: 0.24, gain: 1 },
     frosty: { file: 'frosty.mp3', skip: 0, gain: 0.71 },
+    crispy: { file: 'crispy.mp3', skip: 0, gain: 0.71 },
   };
   const toasty = document.getElementById('toasty');
   for (const c of Object.values(CLIPS)) { c.el = new Audio(c.file); c.el.preload = 'auto'; c.el.volume = c.gain; c.buf = null; }
@@ -1002,18 +1004,25 @@
     ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   }
 
-  // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time): just two rockets,
-  // one spelling WVU in gold and then one spelling SHS in Sissonville red -- no other fireworks.
+  // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time), one rocket per letter and
+  // no other fireworks. The first click spells WVU to the left of the logo and MOUNTAINEERS to the right in gold; the
+  // second, SHS and INDIANS in Sissonville red; the third, ZIG in green on the left (clear of the logo), and the Toasty guy pops in saying "Crispy!"
+  // as the letters form. Clicks after the third do nothing (until the page is reloaded).
   // (A win still sets off the regular many-color show.)
-  let fwShow = false;
+  const GOLD = '#ffc21a', RED = '#ee2021', GREEN = '#22dd22';
+  const FW_ROUNDS = [
+    { words: [{ text: 'WVU', color: GOLD, place: 'left' }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right' }] },
+    { words: [{ text: 'SHS', color: RED, place: 'left' }, { text: 'INDIANS', color: RED, place: 'right' }] },
+    { words: [{ text: 'ZIG', color: GREEN, place: 'left' }], clip: 'crispy', clipAt: 2500 },
+  ];
+  let fwShow = false, fwRound = 0;
   document.getElementById('r-spot').addEventListener('click', () => {
-    if (fwShow) return;
+    if (fwShow || !FW_ROUNDS[fwRound]) return;
     fwShow = true;
     wakeAudio();   // inside the click, so iOS lets the sound start
-    fireworks(10000, () => { fwShow = false; }, {
-      only: true,
-      words: [{ text: 'WVU', color: '#ffc21a', at: 300 }, { text: 'SHS', color: '#ee2021', at: 5000 }],
-    });
+    const round = FW_ROUNDS[fwRound++];
+    fireworks(10000, () => { fwShow = false; }, { only: true, words: round.words.map(w => ({ ...w, at: 300 })) });
+    if (round.clip) { loadToasty(); setTimeout(() => toastyPop(round.clip), round.clipAt); }
   });
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
@@ -2009,8 +2018,10 @@
       p.connect(hp).connect(pg).connect(out); p.start(pt); p.stop(pt + 0.03);
     }
   }
-  // opts (the (R) show): words -- rockets that burst into a word, each { text, color, at: ms after the start }; the letters
-  // hold for a moment, then drift down and fade like sparks. only -- no regular rockets, just the words.
+  // opts (the (R) show): words -- words spelled in fireworks, each { text, color, at: ms after the start, place }, one rocket
+  // per letter (left to right, a beat apart), each bursting into its letter. place: 'left' / 'right' of the Flying WV
+  // (on a narrow screen with no room beside it, 'left' goes above 'right' instead), or 'center'. The letters hold for a
+  // moment, then drift down and fade like sparks. only -- no regular rockets, just the words.
   function fireworks(ms = 10000, done, opts = {}) {
     const cv = document.createElement('canvas'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
     cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none';
@@ -2023,17 +2034,42 @@
     const rockets = [], sparks = [], start = performance.now();
     const words = (opts.words || []).map(w => ({ ...w })), FORM = 0.7, HOLD = 2.3;   // seconds: fly into place, then stay readable
     let nextLaunch = start, last = start, deck = [], wordBusyUntil = 0;
-    // points on a word, sampled from it drawn big on a scratch canvas, centered on (cx, cy)
-    const wordPoints = (text, cx, cy) => {
-      const W = innerWidth, fs = Math.min(W * 0.3, innerHeight * 0.3, 260), c = document.createElement('canvas'), x = c.getContext('2d');
-      x.font = `900 ${fs}px "Arial Black", Impact, sans-serif`;
+    const pending = [];   // letter rockets waiting for their launch time
+    // where a word goes: its center and the font size that fits the space
+    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`;
+    const wordSpot = (text, place) => {
+      const W = innerWidth, H = innerHeight, m = document.createElement('canvas').getContext('2d');
+      m.font = FONT(100);
+      const w100 = m.measureText(text).width / 100;   // width per pixel of font size
+      const logo = document.querySelector('.logo-wrap').getBoundingClientRect(), gap = 24;
+      const side = place === 'left' ? logo.left - gap - 16 : W - logo.right - gap - 16;
+      if (place !== 'center' && side >= 220 && logo.bottom > 0) {
+        const cy = Math.max(60, (logo.top + logo.bottom) / 2), fs = Math.min(side * 0.92 / w100, (logo.bottom - logo.top) * 0.75);
+        return { fs, cy, cx: place === 'left' ? logo.left - gap - side / 2 : logo.right + gap + side / 2 };
+      }
+      if (place !== 'center') {   // narrow screen: stacked, left word above right word
+        const fs = Math.min(W * 0.9 / w100, H * 0.13);
+        return { fs, cx: W / 2, cy: H * (place === 'left' ? 0.2 : 0.36) };
+      }
+      return { fs: Math.min(W * 0.9 / w100, W * 0.3, H * 0.3, 260), cx: W / 2, cy: H * 0.3 };
+    };
+    // a word's letters: each letter's center and the points on it, sampled from the word drawn on a scratch canvas
+    const wordLetters = (text, place) => {
+      const { fs, cx, cy } = wordSpot(text, place), c = document.createElement('canvas'), x = c.getContext('2d');
+      x.font = FONT(fs);
       const tw = Math.ceil(x.measureText(text).width), th = Math.ceil(fs * 1.1);
+      const edges = [...text].map((_, i) => x.measureText(text.slice(0, i + 1)).width);   // right edge of each letter
       c.width = tw; c.height = th;
-      x.font = `900 ${fs}px "Arial Black", Impact, sans-serif`; x.textBaseline = 'middle'; x.fillText(text, 0, th / 2);
-      const px = x.getImageData(0, 0, tw, th).data, step = Math.max(5, Math.round(fs / 26)), pts = [];
+      x.font = FONT(fs); x.textBaseline = 'middle'; x.fillText(text, 0, th / 2);
+      const px = x.getImageData(0, 0, tw, th).data, step = Math.max(3, Math.min(8, Math.round(fs / 12)));
+      const left = cx - tw / 2, top = cy - th / 2;
+      const letters = edges.map((e, i) => ({ cx: left + ((i ? edges[i - 1] : 0) + e) / 2, pts: [] }));
       for (let y = 0; y < th; y += step) for (let i = 0; i < tw; i += step)
-        if (px[(y * tw + i) * 4 + 3] > 128) pts.push([cx - tw / 2 + i, cy - th / 2 + y]);
-      return { pts, r: Math.min(2.4, step * 0.4) };   // smaller dots on a small word, so the letters don't blur together
+        if (px[(y * tw + i) * 4 + 3] > 128) {
+          const k = Math.max(0, edges.findIndex(e => i < e));
+          letters[k].pts.push([left + i, top + y]);
+        }
+      return { cy, letters: letters.filter(l => l.pts.length), dot: Math.min(2.4, step * 0.4) };   // smaller dots on smaller letters
     };
     const pick = () => { if (!deck.length) deck = [...COLORS].sort(() => Math.random() - 0.5); return deck.pop(); };
     const launch = () => {
@@ -2043,21 +2079,21 @@
                      top: H * (0.12 + Math.random() * 0.33), color: pick(), color2: Math.random() < 0.33 ? pick() : null });
       fwSound('launch', x);
     };
-    const launchWord = w => {
-      const W = innerWidth, H = innerHeight;
-      rockets.push({ x: W / 2, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * H * 0.78), top: H * 0.3, color: w.color, word: w });
-      fwSound('launch', W / 2);
+    // one rocket per letter, left to right 90 ms apart; only every third one whistles and booms, so a long word isn't deafening
+    const launchWord = (w, now) => {
+      const { cy, letters, dot } = wordLetters(w.text, w.place), H = innerHeight;
+      letters.forEach((l, i) => pending.push({ when: now + i * 90, loud: i % 3 === 0,
+        rocket: { x: l.cx, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * (H - cy) * 1.06), top: cy, color: w.color, pts: l.pts, dot } }));
     };
-    const burstWord = r => {
-      const { pts, r: dot } = wordPoints(r.word.text, r.x, r.y);
-      for (const [tx, ty] of pts)
+    const burstLetter = r => {
+      for (const [tx, ty] of r.pts)
         sparks.push({ x: r.x, y: r.y, ox: r.x, oy: r.y, tx: tx + (Math.random() - 0.5) * 2, ty: ty + (Math.random() - 0.5) * 2,
-                      t: 0, vx: 0, vy: 0, dot, life: 1, fade: 0.7 + Math.random() * 0.4, color: r.word.color });
-      wordBusyUntil = performance.now() + (FORM + HOLD) * 1000;
-      fwSound('burst', r.x);
+                      t: 0, vx: 0, vy: 0, dot: r.dot, life: 1, fade: 0.7 + Math.random() * 0.4, color: r.color });
+      wordBusyUntil = Math.max(wordBusyUntil === Infinity ? 0 : wordBusyUntil, performance.now() + (FORM + HOLD) * 1000);
+      if (r.loud) fwSound('burst', r.x);
     };
     const burst = r => {
-      if (r.word) return burstWord(r);
+      if (r.pts) return burstLetter(r);
       const n = 60 + Math.floor(Math.random() * 40), speed = 140 + Math.random() * 120;
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, s = speed * (0.55 + Math.random() * 0.45);
@@ -2068,7 +2104,12 @@
     };
     const frame = now => {
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
-      for (const w of words) if (!w.sent && now - start >= w.at) { w.sent = true; launchWord(w); wordBusyUntil = Infinity; }
+      for (const w of words) if (!w.sent && now - start >= w.at) { w.sent = true; launchWord(w, now); wordBusyUntil = Infinity; }
+      for (let i = pending.length - 1; i >= 0; i--) if (now >= pending[i].when) {
+        const { rocket, loud } = pending.splice(i, 1)[0];
+        rockets.push({ ...rocket, loud });
+        if (loud) fwSound('launch', rocket.x);
+      }
       if (now - start < ms && now >= nextLaunch && now >= wordBusyUntil && !opts.only) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
       // fade the previous frame instead of clearing it, which leaves short trails
       g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(0, 0, innerWidth, innerHeight);
@@ -2095,7 +2136,7 @@
         g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, s.dot || 2.4, 0, Math.PI * 2); g.fill();
       }
       g.globalAlpha = 1;
-      if (now - start < ms || rockets.length || sparks.length || words.some(w => !w.sent)) requestAnimationFrame(frame);
+      if (now - start < ms || rockets.length || sparks.length || pending.length || words.some(w => !w.sent)) requestAnimationFrame(frame);
       else { removeEventListener('resize', size); cv.remove(); if (done) done(); }
     };
     requestAnimationFrame(frame);
