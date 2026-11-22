@@ -1386,6 +1386,7 @@
     '401929856': 'Sun Belt Championship Final', // men's soccer vs South Carolina, Nov 15, 2026
     '401932637': 'NCAA Tournament First Round',  // women's soccer vs Old Dominion, Nov 20, 2026 (NCAA bracket)
     '401932602': 'NCAA Tournament Second Round', // men's soccer vs Washington/Cleveland St. winner, Nov 22, 2026 (NCAA bracket)
+    '401932675': 'NCAA Tournament Second Round', // women's soccer at Virginia, Nov 27, 2026 (NCAA bracket)
     '401920512': 'Players Era 8 Quarterfinal', // men's basketball vs Auburn, Las Vegas, Nov 17, 2026
     '401920515': 'Players Era 8 Semifinal',    // men's basketball vs Kansas, Las Vegas, Nov 18, 2026
     '401920517': 'Players Era 8 Third Place Game', // men's basketball vs Florida, Las Vegas, Nov 19, 2026
@@ -1395,6 +1396,7 @@
   const NCAA_BRACKET = { 'usa.ncaa.m.1': 'https://www.ncaa.com/brackets/soccer-men/d1/2026', 'usa.ncaa.w.1': 'https://www.ncaa.com/brackets/soccer-women/d1/2026' };
   const GAME_SEED = {
     '401932637': ['No. 7', null],   // women's soccer first round vs Old Dominion (unseeded), Nov 20, 2026 (wvusports.com / NCAA bracket, Nov 16)
+    '401932675': ['No. 7', 'No. 2'], // women's soccer second round at No. 2 Virginia, Nov 27, 2026 (NCAA bracket, Nov 21)
     '401932602': ['No. 4', 'No. 5'], // men's soccer second round vs No. 5 Washington, Nov 22, 2026 (NCAA bracket, Nov 21)
   };
 
@@ -1799,13 +1801,13 @@
       ['Last game', 'College World Series'], ['Last opponent', '#2 North Carolina'], ['WVU rank', '#4'], ['WVU record', '47-17 (21-9)']] },
     // Out of the Big 12 Tournament (1-1 at BYU, lost 2-4 on penalties, Nov 9, 2026). NCAA Tournament: No. 7 seed WVU beat Old Dominion 1-0
     // in the First Round, Nov 20 (wvusports.com). Second Round at No. 2 seed / No. 10 Virginia, Fri Nov 27, time TBA, Klockner Stadium
-    // (wvusports.com schedule, Nov 21, 2026). Shows only while ESPN has no listing for that game.
+    // (wvusports.com schedule, Nov 21, 2026); 6 PM ET, ESPN+ (ESPN event 401932675, Nov 22). Shows only while ESPN can't be loaded.
     // Records W-L-T (ESPN lists W-T-L: WVU 10-5-4, UVA 12-4-4, Nov 21, 2026).
     { label: "Women's Soccer", poll: { text: 'Bracket', href: NCAA_BRACKET['usa.ncaa.w.1'] }, games: [
-      { date: '2026-11-27T17:00:00Z', timeTBA: true, where: 'Charlottesville, VA', prefix: 'at', subtitle: 'NCAA Tournament Second Round',
+      { date: '2026-11-27T23:00:00Z', where: 'Charlottesville, VA', prefix: 'at', subtitle: 'NCAA Tournament Second Round',
         us: { rank: 7, name: 'West Virginia', short: 'WVU', nick: 'Mountaineers', logo: WVU_CARD_LOGO, record: '10-4-5 (4-4-3)' },
         them: { rank: 2, name: 'Virginia', short: 'UVA', nick: 'Cavaliers', logo: 'https://a.espncdn.com/i/teamlogos/ncaa/500/258.png', record: '12-4-4' },
-        rows: [['Venue', 'Klöckner Stadium']], pairs: [['Conference', 'Big 12', 'ACC'], ['Conf. rank', '8th of 16', null]] }] },
+        rows: [['Venue', 'Klöckner Stadium'], ['Broadcast', 'ESPN+']], pairs: [['Conference', 'Big 12', 'ACC'], ['Conf. rank', '8th of 16', null]] }] },
   ];
   // Soonest game first; cards with no game go last
   const grid = document.getElementById('game-grid');
