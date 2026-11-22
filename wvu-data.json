@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-21T16:24:55Z",
+ "updated": "2026-11-22T10:19:08Z",
  "manual": {
   "Rifle": [
    {
@@ -27,7 +27,7 @@
      "short": "UAF",
      "nick": "Nanooks",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png",
-     "record": "5-1"
+     "record": "7-1"
     },
     "pairs": [
      [
@@ -67,7 +67,7 @@
      "short": "UAF",
      "nick": "Nanooks",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/u20.png",
-     "record": "5-1"
+     "record": "7-1"
     },
     "pairs": [
      [
@@ -187,7 +187,7 @@
      "short": "UK",
      "nick": "Wildcats",
      "logo": "https://dxbhsrqyrr690.cloudfront.net/sidearm.nextgen.sites/wvuni.sidearmsports.com/images/logos/Kentucky.png",
-     "record": "5-3 (1-1)"
+     "record": "6-4 (1-1)"
     },
     "pairs": [
      [
@@ -608,7 +608,9 @@
   "usa.ncaa.w.1": {
    "poll": "National - Poll 13 - November 10, 2026",
    "url": "https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-women/",
-   "ranks": {}
+   "ranks": {
+    "20336": 10
+   }
   }
  },
  "soccerOppRanks": {
@@ -620,6 +622,13 @@
     "url": "https://bigten.org/standings.aspx?path=msoc"
    }
   },
-  "usa.ncaa.w.1": {}
+  "usa.ncaa.w.1": {
+   "20336": {
+    "conf": "ACC",
+    "rank": 5,
+    "of": 17,
+    "url": "https://theacc.com/standings.aspx?path=wsoc"
+   }
+  }
  }
 }
