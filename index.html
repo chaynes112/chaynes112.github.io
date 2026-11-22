@@ -1292,7 +1292,7 @@
   // venue names ESPN has out of date (WVU volleyball plays in Hope Coliseum), or that need a note (Colonial Hall is at The Greenbrier)
   const VENUE_FIX = { 'WVU Coliseum': 'Hope Coliseum', 'Colonial Hall': 'Colonial Hall (The Greenbrier)' };
   // venues where ESPN leaves the state off -- add to this as they come up
-  const CITY_STATE = { Harrisonburg: 'VA', Morgantown: 'WV' };
+  const CITY_STATE = { Charlottesville: 'VA', Harrisonburg: 'VA', Morgantown: 'WV' };
   function gameCity(comp) {
     const a = (comp.venue && comp.venue.address) || {};
     let city = (a.city || '').trim(), state = (a.state || '').trim();
@@ -1387,6 +1387,8 @@
     '401932637': 'NCAA Tournament First Round',  // women's soccer vs Old Dominion, Nov 20, 2026 (NCAA bracket)
     '401932602': 'NCAA Tournament Second Round', // men's soccer vs Washington/Cleveland St. winner, Nov 22, 2026 (NCAA bracket)
     '401932675': 'NCAA Tournament Second Round', // women's soccer at Virginia, Nov 27, 2026 (NCAA bracket)
+    '401928216': 'Battle 4 Atlantis',          // women's basketball vs Florida, Nassau, Nov 24, 2026 (set matchups, no bracket rounds)
+    '401923185': 'Battle 4 Atlantis',          // women's basketball vs Notre Dame, Nassau, Nov 26, 2026
     '401920512': 'Players Era 8 Quarterfinal', // men's basketball vs Auburn, Las Vegas, Nov 17, 2026
     '401920515': 'Players Era 8 Semifinal',    // men's basketball vs Kansas, Las Vegas, Nov 18, 2026
     '401920517': 'Players Era 8 Third Place Game', // men's basketball vs Florida, Las Vegas, Nov 19, 2026
