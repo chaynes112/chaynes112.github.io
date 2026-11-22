@@ -2089,10 +2089,10 @@
                      top: H * (0.12 + Math.random() * 0.33), color: pick(), color2: Math.random() < 0.33 ? pick() : null });
       fwSound('launch', x);
     };
-    // one rocket per letter, left to right 90 ms apart; only every third one whistles and booms, so a long word isn't deafening
+    // one rocket per letter, left to right 90 ms apart, each with its own whistle going up and its own bang
     const launchWord = (w, now) => {
       const { cy, letters, dot } = wordLetters(w), H = innerHeight;
-      letters.forEach((l, i) => pending.push({ when: now + i * 90, loud: i % 3 === 0,
+      letters.forEach((l, i) => pending.push({ when: now + i * 90, loud: true,
         rocket: { x: l.cx, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * (H - cy) * 1.06), top: cy, color: w.color, pts: l.pts, dot } }));
     };
     const burstLetter = r => {
