@@ -1002,8 +1002,8 @@
     ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   }
 
-  // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time): only gold and red
-  // bursts, with one rocket spelling WVU in gold and then one spelling SHS in Sissonville red.
+  // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time): just two rockets,
+  // one spelling WVU in gold and then one spelling SHS in Sissonville red -- no other fireworks.
   // (A win still sets off the regular many-color show.)
   let fwShow = false;
   document.getElementById('r-spot').addEventListener('click', () => {
@@ -1011,7 +1011,7 @@
     fwShow = true;
     wakeAudio();   // inside the click, so iOS lets the sound start
     fireworks(10000, () => { fwShow = false; }, {
-      colors: ['#ffc21a', '#ee2021'],
+      only: true,
       words: [{ text: 'WVU', color: '#ffc21a', at: 300 }, { text: 'SHS', color: '#ee2021', at: 5000 }],
     });
   });
@@ -2009,9 +2009,8 @@
       p.connect(hp).connect(pg).connect(out); p.start(pt); p.stop(pt + 0.03);
     }
   }
-  // opts (the (R) show): colors -- the burst colors instead of the full set; words -- rockets that burst into a word,
-  // each { text, color, at: ms after the start }. The letters hold for a moment, then drift down and fade like sparks.
-  // Regular rockets wait while a word is in the air or still readable.
+  // opts (the (R) show): words -- rockets that burst into a word, each { text, color, at: ms after the start }; the letters
+  // hold for a moment, then drift down and fade like sparks. only -- no regular rockets, just the words.
   function fireworks(ms = 10000, done, opts = {}) {
     const cv = document.createElement('canvas'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
     cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none';
@@ -2020,7 +2019,7 @@
     document.body.append(cv);
     // red, orange, yellow, green, blue, purple, pink, silver, gold -- dealt out like cards (every color once before
     // any repeats) so the show never runs to just a couple of colors
-    const COLORS = opts.colors || ['#ff2a2a', '#ff7a00', '#ffe600', '#22dd22', '#1e6bff', '#9b30ff', '#ff3fa4', '#c8ccd4', '#ffc21a'];
+    const COLORS = ['#ff2a2a', '#ff7a00', '#ffe600', '#22dd22', '#1e6bff', '#9b30ff', '#ff3fa4', '#c8ccd4', '#ffc21a'];
     const rockets = [], sparks = [], start = performance.now();
     const words = (opts.words || []).map(w => ({ ...w })), FORM = 0.7, HOLD = 2.3;   // seconds: fly into place, then stay readable
     let nextLaunch = start, last = start, deck = [], wordBusyUntil = 0;
@@ -2070,7 +2069,7 @@
     const frame = now => {
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
       for (const w of words) if (!w.sent && now - start >= w.at) { w.sent = true; launchWord(w); wordBusyUntil = Infinity; }
-      if (now - start < ms && now >= nextLaunch && now >= wordBusyUntil) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
+      if (now - start < ms && now >= nextLaunch && now >= wordBusyUntil && !opts.only) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
       // fade the previous frame instead of clearing it, which leaves short trails
       g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(0, 0, innerWidth, innerHeight);
       // normal drawing (not additive), so the navy background doesn't tint every color toward blue/white
