@@ -1002,13 +1002,18 @@
     ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   }
 
-  // Easter egg: click the (R) on the Flying WV for fireworks (one show at a time)
+  // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time): only gold and red
+  // bursts, with one rocket spelling WVU in gold and then one spelling SHS in Sissonville red.
+  // (A win still sets off the regular many-color show.)
   let fwShow = false;
   document.getElementById('r-spot').addEventListener('click', () => {
     if (fwShow) return;
     fwShow = true;
     wakeAudio();   // inside the click, so iOS lets the sound start
-    fireworks(10000, () => { fwShow = false; });
+    fireworks(10000, () => { fwShow = false; }, {
+      colors: ['#ffc21a', '#ee2021'],
+      words: [{ text: 'WVU', color: '#ffc21a', at: 300 }, { text: 'SHS', color: '#ee2021', at: 5000 }],
+    });
   });
 
   // Click the Mountaineer: flintlock fires -- pan flash, muzzle flash, recoil, boom, then a drifting cloud of smoke
@@ -2004,7 +2009,10 @@
       p.connect(hp).connect(pg).connect(out); p.start(pt); p.stop(pt + 0.03);
     }
   }
-  function fireworks(ms = 10000, done) {
+  // opts (the (R) show): colors -- the burst colors instead of the full set; words -- rockets that burst into a word,
+  // each { text, color, at: ms after the start }. The letters hold for a moment, then drift down and fade like sparks.
+  // Regular rockets wait while a word is in the air or still readable.
+  function fireworks(ms = 10000, done, opts = {}) {
     const cv = document.createElement('canvas'), g = cv.getContext('2d'), dpr = Math.min(devicePixelRatio || 1, 2);
     cv.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none';
     const size = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0); };
@@ -2012,9 +2020,22 @@
     document.body.append(cv);
     // red, orange, yellow, green, blue, purple, pink, silver, gold -- dealt out like cards (every color once before
     // any repeats) so the show never runs to just a couple of colors
-    const COLORS = ['#ff2a2a', '#ff7a00', '#ffe600', '#22dd22', '#1e6bff', '#9b30ff', '#ff3fa4', '#c8ccd4', '#ffc21a'];
+    const COLORS = opts.colors || ['#ff2a2a', '#ff7a00', '#ffe600', '#22dd22', '#1e6bff', '#9b30ff', '#ff3fa4', '#c8ccd4', '#ffc21a'];
     const rockets = [], sparks = [], start = performance.now();
-    let nextLaunch = start, last = start, deck = [];
+    const words = (opts.words || []).map(w => ({ ...w })), FORM = 0.7, HOLD = 2.3;   // seconds: fly into place, then stay readable
+    let nextLaunch = start, last = start, deck = [], wordBusyUntil = 0;
+    // points on a word, sampled from it drawn big on a scratch canvas, centered on (cx, cy)
+    const wordPoints = (text, cx, cy) => {
+      const W = innerWidth, fs = Math.min(W * 0.3, innerHeight * 0.3, 260), c = document.createElement('canvas'), x = c.getContext('2d');
+      x.font = `900 ${fs}px "Arial Black", Impact, sans-serif`;
+      const tw = Math.ceil(x.measureText(text).width), th = Math.ceil(fs * 1.1);
+      c.width = tw; c.height = th;
+      x.font = `900 ${fs}px "Arial Black", Impact, sans-serif`; x.textBaseline = 'middle'; x.fillText(text, 0, th / 2);
+      const px = x.getImageData(0, 0, tw, th).data, step = Math.max(5, Math.round(fs / 26)), pts = [];
+      for (let y = 0; y < th; y += step) for (let i = 0; i < tw; i += step)
+        if (px[(y * tw + i) * 4 + 3] > 128) pts.push([cx - tw / 2 + i, cy - th / 2 + y]);
+      return { pts, r: Math.min(2.4, step * 0.4) };   // smaller dots on a small word, so the letters don't blur together
+    };
     const pick = () => { if (!deck.length) deck = [...COLORS].sort(() => Math.random() - 0.5); return deck.pop(); };
     const launch = () => {
       const W = innerWidth, H = innerHeight, x = W * (0.15 + Math.random() * 0.7);
@@ -2023,7 +2044,21 @@
                      top: H * (0.12 + Math.random() * 0.33), color: pick(), color2: Math.random() < 0.33 ? pick() : null });
       fwSound('launch', x);
     };
+    const launchWord = w => {
+      const W = innerWidth, H = innerHeight;
+      rockets.push({ x: W / 2, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * H * 0.78), top: H * 0.3, color: w.color, word: w });
+      fwSound('launch', W / 2);
+    };
+    const burstWord = r => {
+      const { pts, r: dot } = wordPoints(r.word.text, r.x, r.y);
+      for (const [tx, ty] of pts)
+        sparks.push({ x: r.x, y: r.y, ox: r.x, oy: r.y, tx: tx + (Math.random() - 0.5) * 2, ty: ty + (Math.random() - 0.5) * 2,
+                      t: 0, vx: 0, vy: 0, dot, life: 1, fade: 0.7 + Math.random() * 0.4, color: r.word.color });
+      wordBusyUntil = performance.now() + (FORM + HOLD) * 1000;
+      fwSound('burst', r.x);
+    };
     const burst = r => {
+      if (r.word) return burstWord(r);
       const n = 60 + Math.floor(Math.random() * 40), speed = 140 + Math.random() * 120;
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + Math.random() * 0.2, s = speed * (0.55 + Math.random() * 0.45);
@@ -2034,7 +2069,8 @@
     };
     const frame = now => {
       const dt = Math.min((now - last) / 1000, 0.05); last = now;
-      if (now - start < ms && now >= nextLaunch) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
+      for (const w of words) if (!w.sent && now - start >= w.at) { w.sent = true; launchWord(w); wordBusyUntil = Infinity; }
+      if (now - start < ms && now >= nextLaunch && now >= wordBusyUntil) { launch(); if (Math.random() < 0.35) launch(); nextLaunch = now + 350 + Math.random() * 450; }
       // fade the previous frame instead of clearing it, which leaves short trails
       g.globalCompositeOperation = 'destination-out'; g.fillStyle = 'rgba(0,0,0,.22)'; g.fillRect(0, 0, innerWidth, innerHeight);
       // normal drawing (not additive), so the navy background doesn't tint every color toward blue/white
@@ -2047,12 +2083,20 @@
       }
       for (let i = sparks.length - 1; i >= 0; i--) {
         const s = sparks[i];
+        if (s.tx !== undefined && s.t < FORM + HOLD) {
+          // a word's spark: flies out to its spot in the letter, then holds there with a little twinkle
+          s.t += dt;
+          const k = Math.min(s.t / FORM, 1), e = 1 - Math.pow(1 - k, 3);
+          s.x = s.ox + (s.tx - s.ox) * e; s.y = s.oy + (s.ty - s.oy) * e;
+          g.globalAlpha = k < 1 ? 1 : 0.75 + Math.random() * 0.25; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, s.dot, 0, Math.PI * 2); g.fill();
+          continue;
+        }
         s.vx *= 0.985; s.vy = s.vy * 0.985 + 90 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= s.fade * dt;
         if (s.life <= 0) { sparks.splice(i, 1); continue; }
-        g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, 2.4, 0, Math.PI * 2); g.fill();
+        g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, s.dot || 2.4, 0, Math.PI * 2); g.fill();
       }
       g.globalAlpha = 1;
-      if (now - start < ms || rockets.length || sparks.length) requestAnimationFrame(frame);
+      if (now - start < ms || rockets.length || sparks.length || words.some(w => !w.sent)) requestAnimationFrame(frame);
       else { removeEventListener('resize', size); cv.remove(); if (done) done(); }
     };
     requestAnimationFrame(frame);
