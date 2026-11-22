@@ -211,7 +211,9 @@
   /* Click the Mountaineer to fire the rifle (hidden: the cursor stays an arrow) */
   .mascot svg .bob { pointer-events: visiblePainted; cursor: default; }
   .mascot .recoil { transform-box: view-box; transform-origin: 77px 150px; }
-  .mascot .smoke circle { transform-box: fill-box; transform-origin: center; }
+  .mascot .smoke circle, .mascot .dust circle { transform-box: fill-box; transform-origin: center; }
+  /* Click the Indian: he hops and stamps his lance on the ground (the whole figure, pivoting at his feet) */
+  .mascot .stomp { transform-box: view-box; transform-origin: 80px 212px; }
   .mascot .tail { transform-box: view-box; transform-origin: 54px 53px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   .mascot svg.indian .eyes { animation-delay: -2s; } /* blinks halfway between the Mountaineer's blinks */
@@ -497,6 +499,7 @@
     <!-- Cartoon Sissonville Indian chief in a red war bonnet, drawn in the Mountaineer's style (after the school's logos) -->
     <svg class="indian" viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="80" cy="212" rx="52" ry="6" fill="#000" opacity=".35"/>
+      <g class="stomp">
       <g class="bob" stroke-linejoin="round" stroke-linecap="round">
         <!-- war bonnet trailers hanging down both sides -->
         <g transform="translate(47.0 84.0) rotate(200.0)"><g class="sway trail" style="animation-delay:-0.00s"><path d="M0 0 Q-6.5 -11.7 -4.5 -21.3 Q0 -29.0 4.5 -21.3 Q6.5 -11.7 0 0 Z" fill="#c8102e" stroke="#141414" stroke-width="1.3"/><path d="M-4.7 -22.6 Q0 -29.0 4.7 -22.6 Q0 -21.3 -4.7 -22.6 Z" fill="#ffffff" stroke="#141414" stroke-width="1"/><path d="M0 -2 L0 -23.4" stroke="#141414" stroke-width="1"/><path d="M0 -7.8 l-3 -4 M0 -11.7 l3 -4 M0 -15.6 l-3 -4" stroke="#7a0a1c" stroke-width=".9"/></g></g>
@@ -738,6 +741,8 @@
           </g>
         </g>
       </g>
+      </g>
+      <g class="dust"></g>
     </svg>
   </div>
 </main>
@@ -948,38 +953,45 @@
     ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
   });
 
-  // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat.
+  // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
+  // click the Indian three times and he pops in saying "Frosty!".
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
-  // 0.15 s after he does, so he's all the way out before he says "Toasty!".
-  const TOASTY_SKIP = 0.24;
+  // 0.15 s after he does, so he's all the way out before he says "Toasty!". frosty.mp3's voice already starts
+  // 0.03 s in (the same as Toasty after the skip), and it's about 3 dB louder, so it plays at 0.71 to match.
+  const CLIPS = {
+    toasty: { file: 'toasty.mp3', skip: 0.24, gain: 1 },
+    frosty: { file: 'frosty.mp3', skip: 0, gain: 0.71 },
+  };
   const toasty = document.getElementById('toasty');
-  const toastySound = new Audio('toasty.mp3');
-  toastySound.preload = 'auto';
+  for (const c of Object.values(CLIPS)) { c.el = new Audio(c.file); c.el.preload = 'auto'; c.el.volume = c.gain; c.buf = null; }
   let toasting = false;
   // Some browsers (e.g. on the Nvidia Shield) only let an MP3 start right inside a click, and Toasty comes
-  // half a second after the third shot. So the clip is also decoded into the gunshot's audio engine,
-  // which the shot's click already woke up, and played from there; the plain MP3 is the fallback.
-  let toastyBuf = null;
+  // half a second after the third shot. So each clip is also decoded into the gunshot's audio engine,
+  // which the click already woke up, and played from there; the plain MP3 is the fallback.
   function loadToasty() {
-    if (toastyBuf || !audio) return;
-    toastyBuf = 'loading';
-    fetch('toasty.mp3').then(r => r.arrayBuffer())
-      .then(b => new Promise((ok, no) => audio.decodeAudioData(b, ok, no)))
-      .then(d => { toastyBuf = d; }, () => { toastyBuf = null; });
+    if (!audio) return;
+    for (const c of Object.values(CLIPS)) {
+      if (c.buf) continue;
+      c.buf = 'loading';
+      fetch(c.file).then(r => r.arrayBuffer())
+        .then(b => new Promise((ok, no) => audio.decodeAudioData(b, ok, no)))
+        .then(d => { c.buf = d; }, () => { c.buf = null; });
+    }
   }
-  function toastyPop() {
+  function toastyPop(name = 'toasty') {
     if (toasting) return;
     toasting = true;
     toasty.hidden = false;
-    if (toastyBuf instanceof AudioBuffer && audio.state === 'running') {
-      const src = audio.createBufferSource();
-      src.buffer = toastyBuf;
-      src.connect(audio.destination);
-      src.start(audio.currentTime + 0.15, TOASTY_SKIP);
+    const c = CLIPS[name];
+    if (c.buf instanceof AudioBuffer && audio.state === 'running') {
+      const src = audio.createBufferSource(), g = audio.createGain();
+      src.buffer = c.buf; g.gain.value = c.gain;
+      src.connect(g).connect(audio.destination);
+      src.start(audio.currentTime + 0.15, c.skip);
     } else {
-      toastySound.currentTime = TOASTY_SKIP;
-      setTimeout(() => toastySound.play().catch(() => {}), 150);
+      c.el.currentTime = c.skip;
+      setTimeout(() => c.el.play().catch(() => {}), 150);
     }
     // in by 0.1 s, up until the clip ends (~0.95 s after the skip), out by 1.2 s
     toasty.animate([
@@ -1096,7 +1108,61 @@
     }
     setTimeout(() => { reloading = false; }, 1200);
     // every third shot brings out Toasty, just after the boom
-    if (++shots % 3 === 0) setTimeout(toastyPop, 400);
+    if (++shots % 3 === 0) setTimeout(() => toastyPop('toasty'), 400);
+  });
+
+  // Click the Indian: he hops and stamps his lance on the ground -- a deep war-drum boom and a puff of dust at his feet.
+  // Every third stamp brings out the same guy as Toasty, saying "Frosty!".
+  const indian = document.querySelector('svg.indian');
+  let stamping = false, stamps = 0;
+  function drumSound(delay) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audio = audio || new AC();
+    if (audio.state !== 'running') audio.resume().catch(() => {});
+    loadToasty();
+    const t = audio.currentTime + delay;
+    // drum head: a low tone that drops in pitch
+    const o = audio.createOscillator(), og = audio.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.35);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.9, t + 0.008); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o.connect(og).connect(audio.destination); o.start(t); o.stop(t + 0.65);
+    // the skin's slap, plus the lance butt hitting the dirt
+    const len = Math.floor(audio.sampleRate * 0.25), b = audio.createBuffer(1, len, audio.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const n = audio.createBufferSource(), lp = audio.createBiquadFilter(), ng = audio.createGain();
+    n.buffer = b; lp.type = 'lowpass'; lp.frequency.setValueAtTime(1400, t); lp.frequency.exponentialRampToValueAtTime(200, t + 0.2);
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.45, t + 0.004); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    n.connect(lp).connect(ng).connect(audio.destination); n.start(t); n.stop(t + 0.25);
+  }
+  function dust(cx, cy, r, dx, dy, grow, ms, delay) {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+    c.setAttribute('fill', '#b89a72'); c.setAttribute('opacity', '0');
+    indian.querySelector('.dust').append(c);
+    c.animate([
+      { transform: 'translate(0, 0) scale(.4)', opacity: 0.85 },
+      { transform: `translate(${dx * 0.6}px, ${dy * 0.6}px) scale(${grow * 0.7})`, opacity: 0.6, offset: 0.35 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${grow})`, opacity: 0 },
+    ], { duration: ms, delay, easing: 'ease-out', fill: 'backwards' }).onfinish = () => c.remove();
+  }
+  indian.addEventListener('click', () => {
+    if (stamping) return;
+    stamping = true;
+    // up off the ground, then down hard with a little squash; the drum hits as he lands (0.22 s in)
+    drumSound(0.22);
+    indian.querySelector('.stomp').animate([
+      { transform: 'none' },
+      { transform: 'translateY(-14px) rotate(-2deg)', offset: 0.35, easing: 'ease-in' },
+      { transform: 'translateY(1px) scale(1.04, .96)', offset: 0.45 },
+      { transform: 'none' },
+    ], { duration: 500, easing: 'ease-out' });
+    // dust kicked up from the lance butt and both feet as he lands
+    for (let i = 0; i < 7; i++) dust(121, 206, 3 + Math.random() * 2, -10 + Math.random() * 28, -6 - Math.random() * 12, 2 + Math.random(), 700 + Math.random() * 400, 220 + i * 15);
+    for (const x of [66, 94]) for (let i = 0; i < 4; i++) dust(x, 209, 3 + Math.random() * 1.5, (x < 80 ? -1 : 1) * (6 + Math.random() * 14), -3 - Math.random() * 7, 1.8 + Math.random(), 600 + Math.random() * 300, 220 + i * 20);
+    setTimeout(() => { stamping = false; }, 700);
+    if (++stamps % 3 === 0) setTimeout(() => toastyPop('frosty'), 650);
   });
 </script>
 
