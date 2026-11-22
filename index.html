@@ -1007,7 +1007,7 @@
   // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time), one rocket per letter and
   // no other fireworks. The first click spells WVU to the left of the logo and MOUNTAINEERS to the right in gold; the
   // second, SHS and INDIANS in Sissonville red; the third, ZIG in green on the left (clear of the logo), and the Toasty guy pops in saying "Crispy!"
-  // as the letters form. Clicks after the third do nothing (until the page is reloaded).
+  // as the letters form. Then it starts over at WVU.
   // (A win still sets off the regular many-color show.)
   const GOLD = '#ffc21a', RED = '#ee2021', GREEN = '#22dd22';
   const FW_ROUNDS = [
@@ -1017,10 +1017,11 @@
   ];
   let fwShow = false, fwRound = 0;
   document.getElementById('r-spot').addEventListener('click', () => {
-    if (fwShow || !FW_ROUNDS[fwRound]) return;
+    if (fwShow) return;
     fwShow = true;
     wakeAudio();   // inside the click, so iOS lets the sound start
-    const round = FW_ROUNDS[fwRound++];
+    const round = FW_ROUNDS[fwRound];
+    fwRound = (fwRound + 1) % FW_ROUNDS.length;   // after ZIG, back to WVU
     fireworks(10000, () => { fwShow = false; }, { only: true, words: round.words.map(w => ({ ...w, at: 300 })) });
     if (round.clip) { loadToasty(); setTimeout(() => toastyPop(round.clip), round.clipAt); }
   });
