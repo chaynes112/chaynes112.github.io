@@ -1011,9 +1011,9 @@
   // (A win still sets off the regular many-color show.)
   const GOLD = '#ffc21a', RED = '#ee2021', GREEN = '#22dd22';
   const FW_ROUNDS = [
-    { words: [{ text: 'WVU', color: GOLD, place: 'left' }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right' }] },
-    { words: [{ text: 'SHS', color: RED, place: 'left' }, { text: 'INDIANS', color: RED, place: 'right' }] },
-    { words: [{ text: 'ZIG', color: GREEN, place: 'left' }], clip: 'crispy', clipAt: 2500 },
+    { words: [{ text: 'WVU', color: GOLD, place: 'left', cells: true }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right' }] },
+    { words: [{ text: 'SHS', color: RED, place: 'left', cells: true }, { text: 'INDIANS', color: RED, place: 'right' }] },
+    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true }], clip: 'crispy', clipAt: 2500 },
   ];
   let fwShow = false, fwRound = 0;
   document.getElementById('r-spot').addEventListener('click', () => {
@@ -2036,40 +2036,49 @@
     const words = (opts.words || []).map(w => ({ ...w })), FORM = 0.7, HOLD = 2.3;   // seconds: fly into place, then stay readable
     let nextLaunch = start, last = start, deck = [], wordBusyUntil = 0;
     const pending = [];   // letter rockets waiting for their launch time
-    // where a word goes: its center and the font size that fits the space
-    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`;
-    const wordSpot = (text, place) => {
+    // where a word goes: its center and the font size that fits the space. A word marked cells puts each letter in the
+    // middle of an equal slot as wide as a W plus a gap, so WVU, SHS and ZIG come out spaced apart and all the same size.
+    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes
+    const wordSpot = w => {
       const W = innerWidth, H = innerHeight, m = document.createElement('canvas').getContext('2d');
       m.font = FONT(100);
-      const w100 = m.measureText(text).width / 100;   // width per pixel of font size
+      const w100 = w.cells ? w.text.length * (m.measureText('W').width / 100 + CELL_GAP) : m.measureText(w.text).width / 100;   // width per px of font size
       const logo = document.querySelector('.logo-wrap').getBoundingClientRect(), gap = 24;
-      const side = place === 'left' ? logo.left - gap - 16 : W - logo.right - gap - 16;
-      if (place !== 'center' && side >= 220 && logo.bottom > 0) {
+      const side = w.place === 'left' ? logo.left - gap - 16 : W - logo.right - gap - 16;
+      if (w.place !== 'center' && side >= 220 && logo.bottom > 0) {
         const cy = Math.max(60, (logo.top + logo.bottom) / 2), fs = Math.min(side * 0.92 / w100, (logo.bottom - logo.top) * 0.75);
-        return { fs, cy, cx: place === 'left' ? logo.left - gap - side / 2 : logo.right + gap + side / 2 };
+        return { fs, cy, cx: w.place === 'left' ? logo.left - gap - side / 2 : logo.right + gap + side / 2 };
       }
-      if (place !== 'center') {   // narrow screen: stacked, left word above right word
+      if (w.place !== 'center') {   // narrow screen: stacked, left word above right word
         const fs = Math.min(W * 0.9 / w100, H * 0.13);
-        return { fs, cx: W / 2, cy: H * (place === 'left' ? 0.2 : 0.36) };
+        return { fs, cx: W / 2, cy: H * (w.place === 'left' ? 0.2 : 0.36) };
       }
       return { fs: Math.min(W * 0.9 / w100, W * 0.3, H * 0.3, 260), cx: W / 2, cy: H * 0.3 };
     };
-    // a word's letters: each letter's center and the points on it, sampled from the word drawn on a scratch canvas
-    const wordLetters = (text, place) => {
-      const { fs, cx, cy } = wordSpot(text, place), c = document.createElement('canvas'), x = c.getContext('2d');
-      x.font = FONT(fs);
-      const tw = Math.ceil(x.measureText(text).width), th = Math.ceil(fs * 1.1);
-      const edges = [...text].map((_, i) => x.measureText(text.slice(0, i + 1)).width);   // right edge of each letter
-      c.width = tw; c.height = th;
-      x.font = FONT(fs); x.textBaseline = 'middle'; x.fillText(text, 0, th / 2);
-      const px = x.getImageData(0, 0, tw, th).data, step = Math.max(3, Math.min(8, Math.round(fs / 12)));
-      const left = cx - tw / 2, top = cy - th / 2;
-      const letters = edges.map((e, i) => ({ cx: left + ((i ? edges[i - 1] : 0) + e) / 2, pts: [] }));
-      for (let y = 0; y < th; y += step) for (let i = 0; i < tw; i += step)
-        if (px[(y * tw + i) * 4 + 3] > 128) {
-          const k = Math.max(0, edges.findIndex(e => i < e));
-          letters[k].pts.push([left + i, top + y]);
-        }
+    // a word's letters: each letter's center and the points on it, sampled from the letter drawn on a scratch canvas
+    const wordLetters = w => {
+      const { fs, cx, cy } = wordSpot(w), m = document.createElement('canvas').getContext('2d'), chars = [...w.text];
+      m.font = FONT(fs);
+      let centers;
+      if (w.cells) {
+        const cell = m.measureText('W').width + CELL_GAP * fs;
+        centers = chars.map((_, i) => cx + (i - (chars.length - 1) / 2) * cell);
+      } else {
+        const total = m.measureText(w.text).width, edges = chars.map((_, i) => m.measureText(w.text.slice(0, i + 1)).width);
+        centers = edges.map((e, i) => cx - total / 2 + ((i ? edges[i - 1] : 0) + e) / 2);
+      }
+      const step = Math.max(3, Math.min(8, Math.round(fs / 12))), th = Math.ceil(fs * 1.1), top = cy - th / 2;
+      const letters = chars.map((ch, k) => {
+        const c = document.createElement('canvas'), x = c.getContext('2d');
+        x.font = FONT(fs);
+        const lw = Math.ceil(x.measureText(ch).width) + 2;
+        c.width = lw; c.height = th;
+        x.font = FONT(fs); x.textBaseline = 'middle'; x.fillText(ch, 1, th / 2);
+        const px = x.getImageData(0, 0, lw, th).data, pts = [], left = centers[k] - lw / 2;
+        for (let y = 0; y < th; y += step) for (let i = 0; i < lw; i += step)
+          if (px[(y * lw + i) * 4 + 3] > 128) pts.push([left + i, top + y]);
+        return { cx: centers[k], pts };
+      });
       return { cy, letters: letters.filter(l => l.pts.length), dot: Math.min(2.4, step * 0.4) };   // smaller dots on smaller letters
     };
     const pick = () => { if (!deck.length) deck = [...COLORS].sort(() => Math.random() - 0.5); return deck.pop(); };
@@ -2082,7 +2091,7 @@
     };
     // one rocket per letter, left to right 90 ms apart; only every third one whistles and booms, so a long word isn't deafening
     const launchWord = (w, now) => {
-      const { cy, letters, dot } = wordLetters(w.text, w.place), H = innerHeight;
+      const { cy, letters, dot } = wordLetters(w), H = innerHeight;
       letters.forEach((l, i) => pending.push({ when: now + i * 90, loud: i % 3 === 0,
         rocket: { x: l.cx, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * (H - cy) * 1.06), top: cy, color: w.color, pts: l.pts, dot } }));
     };
