@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T08:14:51Z",
+ "updated": "2026-11-23T20:33:48Z",
  "manual": {
   "Rifle": [
    {
@@ -22,7 +22,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 6,
+     "rank": 2,
      "name": "Alaska Fairbanks",
      "short": "UAF",
      "nick": "Nanooks",
@@ -62,7 +62,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 6,
+     "rank": 2,
      "name": "Alaska Fairbanks",
      "short": "UAF",
      "nick": "Nanooks",
@@ -142,7 +142,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 15,
+     "rank": 9,
      "name": "Akron",
      "short": "AKR",
      "nick": "Zips",
@@ -182,7 +182,7 @@
     "timeTBA": true,
     "prefix": "at",
     "them": {
-     "rank": 8,
+     "rank": 7,
      "name": "Kentucky",
      "short": "UK",
      "nick": "Wildcats",
@@ -601,8 +601,7 @@
    "poll": "National - Poll 12 - November 10, 2026",
    "url": "https://unitedsoccercoaches.org/rankings/college-rankings/ncaa-di-men/",
    "ranks": {
-    "5658": 7,
-    "5636": 11
+    "5658": 7
    }
   },
   "usa.ncaa.w.1": {
@@ -614,14 +613,7 @@
   }
  },
  "soccerOppRanks": {
-  "usa.ncaa.m.1": {
-   "5636": {
-    "conf": "Big Ten",
-    "rank": 2,
-    "of": 11,
-    "url": "https://bigten.org/standings.aspx?path=msoc"
-   }
-  },
+  "usa.ncaa.m.1": {},
   "usa.ncaa.w.1": {
    "20336": {
     "conf": "ACC",
