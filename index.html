@@ -941,6 +941,7 @@
     flying = true;
     ufo.hidden = false;
     ufoSound();
+    loadToasty();
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32, y = innerHeight * 0.2;
     const at = (px, py, s, r) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)` });
     ufo.animate([
@@ -950,11 +951,12 @@
       at(w * 0.4, y + 25, 1, -6),
       at(w * 0.18, y - 20, 1, 8),
       at(-220, y - 70, 1, -14),
-    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
+    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; toastyPop('threed'); };   // then "3D!"
   });
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
-  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!".
+  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!"; and when the UFO's
+  // noise ends he pops in saying "3D!".
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
   // 0.15 s after he does, so he's all the way out before he says "Toasty!". frosty.mp3's voice already starts
@@ -964,6 +966,9 @@
     toasty: { file: 'toasty.mp3', skip: 0.24, gain: 1 },
     frosty: { file: 'frosty.mp3', skip: 0, gain: 0.71 },
     crispy: { file: 'crispy.mp3', skip: 0, gain: 0.71 },
+    // toasty-3d.m4a is "Toasty! 3D!" (MK soundbite); only the "3D!" plays: skip to 0.95 s, 0.03 s before that voice starts.
+    // It's mastered far louder (about 17.5 dB over Toasty), so it plays at 0.13 to match.
+    threed: { file: 'toasty-3d.m4a', skip: 0.95, gain: 0.13 },
   };
   const toasty = document.getElementById('toasty');
   for (const c of Object.values(CLIPS)) { c.el = new Audio(c.file); c.el.preload = 'auto'; c.el.volume = c.gain; c.buf = null; }
