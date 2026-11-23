@@ -951,12 +951,12 @@
       at(w * 0.4, y + 25, 1, -6),
       at(w * 0.18, y - 20, 1, 8),
       at(-220, y - 70, 1, -14),
-    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; toastyPop('threed'); };   // then "3D!"
+    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; playClip('threed'); };   // then "3D!" (sound only)
   });
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
-  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!"; and when the UFO's
-  // noise ends he pops in saying "3D!".
+  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!". When the UFO's
+  // noise ends, "3D!" plays (sound only, he doesn't pop in).
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
   // 0.15 s after he does, so he's all the way out before he says "Toasty!". frosty.mp3's voice already starts
@@ -986,20 +986,24 @@
         .then(d => { c.buf = d; }, () => { c.buf = null; });
     }
   }
+  // play a clip (from its skip point, at its volume) after a delay in seconds
+  function playClip(name, delay = 0) {
+    const c = CLIPS[name];
+    if (c.buf instanceof AudioBuffer && audio && audio.state === 'running') {
+      const src = audio.createBufferSource(), g = audio.createGain();
+      src.buffer = c.buf; g.gain.value = c.gain;
+      src.connect(g).connect(audio.destination);
+      src.start(audio.currentTime + delay, c.skip);
+    } else {
+      c.el.currentTime = c.skip;
+      setTimeout(() => c.el.play().catch(() => {}), delay * 1000);
+    }
+  }
   function toastyPop(name = 'toasty') {
     if (toasting) return;
     toasting = true;
     toasty.hidden = false;
-    const c = CLIPS[name];
-    if (c.buf instanceof AudioBuffer && audio.state === 'running') {
-      const src = audio.createBufferSource(), g = audio.createGain();
-      src.buffer = c.buf; g.gain.value = c.gain;
-      src.connect(g).connect(audio.destination);
-      src.start(audio.currentTime + 0.15, c.skip);
-    } else {
-      c.el.currentTime = c.skip;
-      setTimeout(() => c.el.play().catch(() => {}), 150);
-    }
+    playClip(name, 0.15);
     // in by 0.1 s, up until the clip ends (~0.95 s after the skip), out by 1.2 s
     toasty.animate([
       { transform: 'translate(105%, 40%)' },
@@ -1011,14 +1015,14 @@
 
   // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time), one rocket per letter and
   // no other fireworks. The first click spells WVU to the left of the logo and MOUNTAINEERS to the right in gold; the
-  // second, SHS and INDIANS in Sissonville red; the third, ZIG in green on the left (clear of the logo), and the Toasty guy pops in saying "Crispy!"
+  // second, SHS and INDIANS in Sissonville red; the third, ZIG in green on both sides, and the Toasty guy pops in saying "Crispy!"
   // as the letters form. Then it starts over at WVU.
   // (A win still sets off the regular many-color show.)
   const GOLD = '#ffc21a', RED = '#ee2021', GREEN = '#22dd22';
   const FW_ROUNDS = [
     { words: [{ text: 'WVU', color: GOLD, place: 'left', cells: true }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right' }] },
     { words: [{ text: 'SHS', color: RED, place: 'left', cells: true }, { text: 'INDIANS', color: RED, place: 'right' }] },
-    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true }], clip: 'crispy', clipAt: 2500 },
+    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true }, { text: 'ZIG', color: GREEN, place: 'right', cells: true }], clip: 'crispy', clipAt: 2500 },
   ];
   let fwShow = false, fwRound = 0;
   document.getElementById('r-spot').addEventListener('click', () => {
