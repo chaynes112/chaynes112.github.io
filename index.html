@@ -1013,25 +1013,25 @@
     ], { duration: 1200, easing: 'ease-out' }).onfinish = () => { toasty.hidden = true; toasting = false; };
   }
 
-  // Easter egg: click the (R) on the Flying WV for its own fireworks show (one show at a time), one rocket per letter and
+  // Easter egg: click the (R) on the Flying WV for its own fireworks show, one rocket per letter and
   // no other fireworks. The first click spells WVU to the left of the logo and MOUNTAINEERS to the right in gold; the
   // second, SHS and INDIANS in Sissonville red; the third, ZIG in green on both sides, and the Toasty guy pops in saying "Crispy!"
   // as the letters form. Then it starts over at WVU.
   // (A win still sets off the regular many-color show.)
   const GOLD = '#ffc21a', RED = '#ee2021', GREEN = '#22dd22';
   const FW_ROUNDS = [
-    { words: [{ text: 'WVU', color: GOLD, place: 'left', cells: true }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right' }] },
+    // on phones, where the words sit over the gold logo, the gold dots get a white outline so they stand out in front of it
+    { words: [{ text: 'WVU', color: GOLD, place: 'left', cells: true, phoneOutline: '#fff' }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right', phoneOutline: '#fff' }] },
     { words: [{ text: 'SHS', color: RED, place: 'left', cells: true }, { text: 'INDIANS', color: RED, place: 'right' }] },
     { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true }, { text: 'ZIG', color: GREEN, place: 'right', cells: true }], clip: 'crispy', clipAt: 2500 },
   ];
-  let fwShow = false, fwRound = 0;
+  // no lockout: every click starts the next show right away, even if the last one is still up (each show has its own layer)
+  let fwRound = 0;
   document.getElementById('r-spot').addEventListener('click', () => {
-    if (fwShow) return;
-    fwShow = true;
     wakeAudio();   // inside the click, so iOS lets the sound start
     const round = FW_ROUNDS[fwRound];
     fwRound = (fwRound + 1) % FW_ROUNDS.length;   // after ZIG, back to WVU
-    fireworks(10000, () => { fwShow = false; }, { only: true, words: round.words.map(w => ({ ...w, at: 300 })) });
+    fireworks(10000, null, { only: true, words: round.words.map(w => ({ ...w, at: 300 })) });
     if (round.clip) { loadToasty(); setTimeout(() => toastyPop(round.clip), round.clipAt); }
   });
 
@@ -1074,7 +1074,7 @@
     addEventListener('resize', pick);
     place();
   }
-  let reloading = false, shots = 0;
+  let shots = 0;   // no reload wait: every click fires
 
   function gunshotSound() {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -1115,8 +1115,6 @@
   }
 
   mascot.addEventListener('click', () => {
-    if (reloading) return;
-    reloading = true;
     gunshotSound();
     const flash = mascot.querySelector('.flash');
     flash.animate([{ opacity: 1 }, { opacity: 1, offset: 0.4 }, { opacity: 0 }], { duration: 120 });
@@ -1130,7 +1128,6 @@
     for (let i = 0; i < 9; i++) {
       puff(186 + i * 2.5, 15 - i * 3, 4 + Math.random() * 3, 18 + Math.random() * 26, -22 - Math.random() * 30, 2.4 + Math.random() * 1.6, 1600 + Math.random() * 900, i * 25);
     }
-    setTimeout(() => { reloading = false; }, 1200);
     // every third shot brings out Toasty, just after the boom
     if (++shots % 3 === 0) setTimeout(() => toastyPop('toasty'), 400);
   });
@@ -1138,7 +1135,7 @@
   // Click the Indian: he hops and stamps his lance on the ground -- a deep war-drum boom and a puff of dust at his feet.
   // Every third stamp brings out the same guy as Toasty, saying "Frosty!".
   const indian = document.querySelector('svg.indian');
-  let stamping = false, stamps = 0;
+  let stamps = 0;   // no wait: every click stamps
   function drumSound(delay) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
@@ -1172,8 +1169,6 @@
     ], { duration: ms, delay, easing: 'ease-out', fill: 'backwards' }).onfinish = () => c.remove();
   }
   indian.addEventListener('click', () => {
-    if (stamping) return;
-    stamping = true;
     // up off the ground, then down hard with a little squash; the drum hits as he lands (0.22 s in)
     drumSound(0.22);
     indian.querySelector('.stomp').animate([
@@ -1185,7 +1180,6 @@
     // dust kicked up from the lance butt and both feet as he lands
     for (let i = 0; i < 7; i++) dust(121, 206, 3 + Math.random() * 2, -10 + Math.random() * 28, -6 - Math.random() * 12, 2 + Math.random(), 700 + Math.random() * 400, 220 + i * 15);
     for (const x of [66, 94]) for (let i = 0; i < 4; i++) dust(x, 209, 3 + Math.random() * 1.5, (x < 80 ? -1 : 1) * (6 + Math.random() * 14), -3 - Math.random() * 7, 1.8 + Math.random(), 600 + Math.random() * 300, 220 + i * 20);
-    setTimeout(() => { stamping = false; }, 700);
     if (++stamps % 3 === 0) setTimeout(() => toastyPop('frosty'), 650);
   });
 </script>
@@ -2060,13 +2054,13 @@
       }
       if (w.place !== 'center') {   // narrow screen: stacked, left word above right word
         const fs = Math.min(W * 0.9 / w100, H * 0.13);
-        return { fs, cx: W / 2, cy: H * (w.place === 'left' ? 0.2 : 0.36) };
+        return { fs, cx: W / 2, cy: H * (w.place === 'left' ? 0.2 : 0.36), stacked: true };
       }
       return { fs: Math.min(W * 0.9 / w100, W * 0.3, H * 0.3, 260), cx: W / 2, cy: H * 0.3 };
     };
     // a word's letters: each letter's center and the points on it, sampled from the letter drawn on a scratch canvas
     const wordLetters = w => {
-      const { fs, cx, cy } = wordSpot(w), m = document.createElement('canvas').getContext('2d'), chars = [...w.text];
+      const { fs, cx, cy, stacked } = wordSpot(w), m = document.createElement('canvas').getContext('2d'), chars = [...w.text];
       m.font = FONT(fs);
       let centers;
       if (w.cells) {
@@ -2088,7 +2082,8 @@
           if (px[(y * lw + i) * 4 + 3] > 128) pts.push([left + i, top + y]);
         return { cx: centers[k], pts };
       });
-      return { cy, letters: letters.filter(l => l.pts.length), dot: Math.min(2.4, step * 0.4) };   // smaller dots on smaller letters
+      // smaller dots on smaller letters; outline (white) only where the word is stacked over the logo (phones) and asks for one
+      return { cy, letters: letters.filter(l => l.pts.length), dot: Math.min(2.4, step * 0.4), outline: stacked ? w.phoneOutline || null : null };
     };
     const pick = () => { if (!deck.length) deck = [...COLORS].sort(() => Math.random() - 0.5); return deck.pop(); };
     const launch = () => {
@@ -2100,14 +2095,14 @@
     };
     // one rocket per letter, left to right 90 ms apart, each with its own whistle going up and its own bang
     const launchWord = (w, now) => {
-      const { cy, letters, dot } = wordLetters(w), H = innerHeight;
+      const { cy, letters, dot, outline } = wordLetters(w), H = innerHeight;
       letters.forEach((l, i) => pending.push({ when: now + i * 90, loud: true,
-        rocket: { x: l.cx, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * (H - cy) * 1.06), top: cy, color: w.color, pts: l.pts, dot } }));
+        rocket: { x: l.cx, y: H, vx: 0, vy: -Math.sqrt(2 * 380 * (H - cy) * 1.06), top: cy, color: w.color, pts: l.pts, dot, outline } }));
     };
     const burstLetter = r => {
       for (const [tx, ty] of r.pts)
         sparks.push({ x: r.x, y: r.y, ox: r.x, oy: r.y, tx: tx + (Math.random() - 0.5) * 2, ty: ty + (Math.random() - 0.5) * 2,
-                      t: 0, vx: 0, vy: 0, dot: r.dot, life: 1, fade: 0.7 + Math.random() * 0.4, color: r.color });
+                      t: 0, vx: 0, vy: 0, dot: r.dot, outline: r.outline, life: 1, fade: 0.7 + Math.random() * 0.4, color: r.color });
       wordBusyUntil = Math.max(wordBusyUntil === Infinity ? 0 : wordBusyUntil, performance.now() + (FORM + HOLD) * 1000);
       if (r.loud) fwSound('burst', r.x);
     };
@@ -2148,11 +2143,13 @@
           const k = Math.min(s.t / FORM, 1), e = 1 - Math.pow(1 - k, 3);
           s.x = s.ox + (s.tx - s.ox) * e; s.y = s.oy + (s.ty - s.oy) * e;
           g.globalAlpha = k < 1 ? 1 : 0.75 + Math.random() * 0.25; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, s.dot, 0, Math.PI * 2); g.fill();
+          if (s.outline) { g.strokeStyle = s.outline; g.lineWidth = 0.9; g.stroke(); }
           continue;
         }
         s.vx *= 0.985; s.vy = s.vy * 0.985 + 90 * dt; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= s.fade * dt;
         if (s.life <= 0) { sparks.splice(i, 1); continue; }
         g.globalAlpha = s.life; g.fillStyle = s.color; g.beginPath(); g.arc(s.x, s.y, s.dot || 2.4, 0, Math.PI * 2); g.fill();
+        if (s.outline) { g.strokeStyle = s.outline; g.lineWidth = 0.9; g.stroke(); }
       }
       g.globalAlpha = 1;
       if (now - start < ms || rockets.length || sparks.length || pending.length || words.some(w => !w.sent)) requestAnimationFrame(frame);
