@@ -246,6 +246,8 @@
           background: linear-gradient(rgba(125, 255, 200, .6), rgba(125, 255, 200, .18));
           filter: drop-shadow(0 0 10px rgba(120, 255, 200, .8)); }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  /* refresh: the cards stay hidden (still taking up their space) until they've loaded and the page is back at its spot */
+  html.restoring main > :not(.mascot) { visibility: hidden; }
 </style>
 </head>
 <body>
@@ -768,8 +770,11 @@
   <script>
     // Refresh (or back/forward) puts you back exactly where you were. The browser's own scroll-back happens before the game
     // cards have loaded, and they change height as they fill in, so it lands in the wrong place. Instead the page remembers
-    // which card or section was at the top of the screen and how far into it you were, and keeps scrolling back to that spot
-    // as the cards load, until you scroll or tap yourself (or 10 s pass).
+    // which card or section was at the top of the screen and how far into it you were. On a refresh the cards stay hidden
+    // (the stars, mountains and mascot still show) until they've all loaded (5 s at most); then the page scrolls to that spot
+    // once and shows them, and the mascot and Country Roads / Tomahawk Chop button are picked from there (window.spotHold
+    // keeps them from switching before that). After that it keeps the spot if something late changes size, until you scroll
+    // or tap yourself (or 10 s pass).
     (() => {
       const KEY = 'scrollSpot';
       const secKey = el => el.classList.contains('sville') ? 'sv' : 'wvu';
@@ -796,6 +801,17 @@
       if (!spot) return;
       history.scrollRestoration = 'manual';   // this page does it instead
       restoring = true;
+      const root = document.documentElement;
+      root.classList.add('restoring'); window.spotHold = true;
+      const loaded = () => document.querySelector('#sville-grid .game')
+        && ![...document.querySelectorAll('main .game .note')].some(n => n.textContent.startsWith('Loading'));
+      const t0 = performance.now();
+      const reveal = () => {
+        if (!root.classList.contains('restoring')) return;
+        if (!loaded() && performance.now() - t0 < 5000) return void setTimeout(reveal, 100);
+        go(); root.classList.remove('restoring'); window.spotHold = false;
+        dispatchEvent(new Event('spotrestored'));   // the main script picks the mascot and button now
+      };
       const go = () => {
         if (!restoring) return;
         let y = spot.off;
@@ -809,6 +825,7 @@
       };
       const stop = () => {
         if (!restoring) return;
+        if (root.classList.contains('restoring')) { root.classList.remove('restoring'); window.spotHold = false; dispatchEvent(new Event('spotrestored')); }
         restoring = false; ro.disconnect();
         ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(e => removeEventListener(e, stop, true));
         save();
@@ -817,7 +834,7 @@
       ro.observe(document.querySelector('main'));   // (the body's own box doesn't grow with the page here)
       ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(e => addEventListener(e, stop, true));
       setTimeout(stop, 10000);
-      go();
+      go(); reveal();
     })();
   </script>
 </main>
@@ -1208,7 +1225,7 @@
     const figWvu = mascot, figSv = boxSv.querySelector('svg.indian');
     const svSection = document.querySelector('.games.sville'), wide = matchMedia('(min-width: 1640px)');
     const pick = () => {
-      if (!wide.matches || window.mascotHold) return;
+      if (!wide.matches || window.mascotHold || window.spotHold) return;
       const sv = svSection.getBoundingClientRect().top < innerHeight * 0.5;
       figWvu.classList.toggle('off', sv); figSv.classList.toggle('off', !sv);
       try { sessionStorage.setItem('mascotPick', sv ? 'sv' : 'wvu'); } catch (e) { /* storage blocked */ }   // for a reload (see the script after the mascots)
@@ -1227,11 +1244,12 @@
     const btnRoads = document.getElementById('music'), btnChop = document.getElementById('chop-btn');
     const phone = matchMedia('(max-width: 767px), (pointer: coarse) and (max-height: 500px)');
     const pickBtn = () => {
-      if (window.btnHold) return;
+      if (window.btnHold || window.spotHold) return;
       const sv = !phone.matches && svSection.getBoundingClientRect().top < innerHeight * 0.5;
       btnRoads.hidden = sv; btnChop.hidden = !phone.matches && !sv;
       if (!phone.matches) try { sessionStorage.setItem('mascotPick', sv ? 'sv' : 'wvu'); } catch (e) { /* storage blocked */ }
     };
+    addEventListener('spotrestored', () => { pick(); pickBtn(); });   // a refresh put the page back at its spot (see the script after the mascots)
     if (window.btnHold) {   // released at load, like the mascots
       const release = () => setTimeout(() => { window.btnHold = false; pickBtn(); }, 300);
       if (document.readyState === 'complete') release(); else addEventListener('load', release);
