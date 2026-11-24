@@ -120,7 +120,8 @@
     .game .team-name { height: auto; min-height: 32px; } .game .team, .game .team-main, .game .team-name span { min-width: 0; } .game .team { flex: 1 1 0; } }
   @media (max-width: 360px) { .game .cmp { column-gap: .35rem; } }   /* room for "Mountaineers" without breaking it */
   .game {
-    background: rgba(0, 26, 56, .78); border: 2px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
+    /* WVU blue, a shade brighter than the night-sky page so the cards stand out from it, still see-through */
+    background: rgba(0, 48, 110, .72); border: 2px solid rgba(234, 170, 0, .35); border-top: 3px solid var(--gold);
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
   }
   .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
@@ -152,13 +153,14 @@
   }
   .game .when.with-spread { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
   .game .when .spread { font-weight: 600; white-space: nowrap; }
-  /* LIVE NOW: red, slowly fading down and back up (2.4s per pulse); steady for people who turn off animations */
-  .game .live { color: #ff3b2f; font-weight: 600; animation: live-pulse 2.4s ease-in-out infinite; }
+  /* LIVE NOW: white on a red box (like the gold box on a changed time), slowly fading down and back up (2.4s per pulse);
+     steady for people who turn off animations */
+  .game .live { background: #ff3b2f; color: #fff; font-weight: 700; padding: 0 .35em; border-radius: 4px; animation: live-pulse 2.4s ease-in-out infinite; }
   @keyframes live-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
   @media (prefers-reduced-motion: reduce) { .game .live { animation: none; } }
   .game .final { color: var(--gold); font-weight: 700; }
-  /* a card with a game in progress: the gold border turns the same red as LIVE NOW */
-  .game:has(.live) { border-color: rgba(255, 59, 47, .35); border-top-color: #ff3b2f; }
+  /* a card with a game in progress: green border (LIVE NOW itself stays red) */
+  .game:has(.live) { border-color: rgba(34, 221, 34, .35); border-top-color: #22dd22; }
   /* a finished game (FINAL), until the card moves on to the next game: light blue border */
   .game:has(.final) { border-color: rgba(91, 192, 235, .35); border-top-color: #5bc0eb; }
   /* live / final score, right after each team's name */
@@ -183,7 +185,7 @@
   /* Sissonville cards: red border, sport label and column heads, on a see-through near-black (live and FINAL borders still win) */
   .games.sville .game { background: rgba(20, 18, 16, .78); border-color: rgba(238, 32, 33, .35); border-top-color: #ee2021; }
   .games.sville .game .sport, .games.sville .game .cmp-head { color: #ee2021; }
-  .games.sville .game:has(.live) { border-color: rgba(255, 59, 47, .35); border-top-color: #ff3b2f; }
+  .games.sville .game:has(.live) { border-color: rgba(34, 221, 34, .35); border-top-color: #22dd22; }
   .games.sville .game:has(.final) { border-color: rgba(91, 192, 235, .35); border-top-color: #5bc0eb; }
   .games .team-logo-wrap { position: relative; width: 96px; margin: 0 auto .6rem; }
   .games .team-logo { display: block; width: 100%; height: auto; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); }
