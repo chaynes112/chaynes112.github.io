@@ -971,8 +971,8 @@
     x.shadowBlur = 0;
   }
   // A faint red light glows up behind the easter-egg star now and then: at random, 30-60 seconds apart (like the shooting
-  // star), fading in and out over 2.4 seconds
-  let glowAt = 30000 + Math.random() * 30000;
+  // star), fading in and out over 2.4 seconds; the first one 5 seconds after the page opens, like the shooting star
+  let glowAt = 5000;
   function drawEggGlow(t, ex, ey) {
     if (t < glowAt) return;
     const k = (t - glowAt) / 2400;
