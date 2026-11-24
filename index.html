@@ -752,6 +752,19 @@
       <g class="dust"></g>
     </svg>
   </div>
+  <script>
+    // Wide screens, page reloaded (or back/forward) while the Indian was showing: show him right away. The browser only scrolls
+    // back down once the cards have loaded, so until then the page sits at the top, which would otherwise pick the Mountaineer.
+    // (The main script keeps him until the page has loaded, then picks by scroll position as usual.)
+    try {
+      const nav = performance.getEntriesByType('navigation')[0];
+      if (matchMedia('(min-width: 1640px)').matches && nav && /reload|back_forward/.test(nav.type) && sessionStorage.getItem('mascotPick') === 'sv') {
+        const box = document.currentScript.previousElementSibling;
+        box.querySelector('svg:not(.indian)').classList.add('off'); box.querySelector('svg.indian').classList.remove('off');
+        window.mascotHold = true;
+      }
+    } catch (e) { /* storage blocked: the normal pick */ }
+  </script>
 </main>
 
 <button class="music" id="music" type="button" disabled aria-label="Play Take Me Home, Country Roads">
@@ -944,8 +957,8 @@
   }
 
   // Every third trip, if a mascot is on screen (whichever one is showing), the UFO stops over him, beams him up and flies off
-  // with him, and he's gone until the page is reloaded (with no mascot on screen it's a normal trip). Only the third trip
-  // ends with "3D!", like the other Toasty voices.
+  // with him, and he's gone until the page is reloaded (with no mascot on screen it's a normal trip). Only a trip that
+  // takes a mascot ends with "3D!" (none once he's gone, or with none on screen).
   const beam = document.getElementById('beam'), ABDUCT_MS = 6800;
   let trips = 0;
   const shownMascot = () => {
@@ -1012,7 +1025,7 @@
     if (third) trips = 0;
     const ms = fig ? ABDUCT_MS : UFO_MS;
     ufoSound(ms);
-    if (third) setTimeout(() => playClip('threed'), ms - 150);   // "3D!" (sound only) as the warble fades out, no gap
+    if (fig) setTimeout(() => playClip('threed'), ms - 150);   // "3D!" (sound only) as the warble fades out, no gap -- only when he's taken
     if (fig) { abduct(fig); return; }
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32, y = innerHeight * 0.2;
     const at = (px, py, s, r) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)` });
@@ -1027,8 +1040,8 @@
   });
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
-  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!". On the UFO's third trip,
-  // "3D!" plays as its noise ends (sound only, he doesn't pop in).
+  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!". When the UFO beams up a
+  // mascot, "3D!" plays as its noise ends (sound only, he doesn't pop in).
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
   // 0.15 s after he does, so he's all the way out before he says "Toasty!". frosty.mp3's voice already starts
@@ -1099,7 +1112,7 @@
       { text: 'MOUNTAINEERS', color: GOLD, place: 'left', row: 1, phoneOutline: '#fff' },
       { text: 'SHS', color: RED, place: 'right', row: 0, cells: true },
       { text: 'INDIANS', color: RED, place: 'right', row: 1 }] })),
-    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true, gap: 0.1 }, { text: 'ZIG', color: GREEN, place: 'right', cells: true, gap: 0.1 }], clip: 'crispy', clipAt: 2500 },
+    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true, gap: -0.2 }, { text: 'ZIG', color: GREEN, place: 'right', cells: true, gap: -0.2 }], clip: 'crispy', clipAt: 2500 },
   ];
   // no lockout: every click starts the next show right away, even if the last one is still up (each show has its own layer)
   let fwRound = 0;
@@ -1120,10 +1133,16 @@
     const figWvu = mascot, figSv = boxSv.querySelector('svg.indian');
     const svSection = document.querySelector('.games.sville'), wide = matchMedia('(min-width: 1640px)');
     const pick = () => {
-      if (!wide.matches) return;
+      if (!wide.matches || window.mascotHold) return;
       const sv = svSection.getBoundingClientRect().top < innerHeight * 0.5;
       figWvu.classList.toggle('off', sv); figSv.classList.toggle('off', !sv);
+      try { sessionStorage.setItem('mascotPick', sv ? 'sv' : 'wvu'); } catch (e) { /* storage blocked */ }   // for a reload (see the script after the mascots)
     };
+    // a reload that kept the Indian up: the browser scrolls back down at load, so pick by scroll position from then on
+    if (window.mascotHold) {
+      const release = () => setTimeout(() => { window.mascotHold = false; pick(); }, 300);
+      if (document.readyState === 'complete') release(); else addEventListener('load', release);
+    }
     const place = () => {
       if (wide.matches) { boxSv.prepend(figWvu); boxWvu.hidden = true; pick(); }
       else { boxWvu.append(figWvu); boxWvu.hidden = false; figWvu.classList.remove('off'); figSv.classList.remove('off'); }
@@ -2122,7 +2141,7 @@
     const pending = [];   // letter rockets waiting for their launch time
     // where a word goes: its center and the font size that fits the space. A word marked cells puts each letter in the
     // middle of an equal slot as wide as a W plus a gap, so WVU, SHS and ZIG come out spaced apart and all the same size.
-    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes (a word's own gap, e.g. ZIG's tighter 0.1, only moves its letters closer; the size stays the same)
+    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes (a word's own gap, e.g. ZIG's tighter -0.2, only moves its letters closer; the size stays the same)
     const wordSpot = w => {
       const W = innerWidth, H = innerHeight, m = document.createElement('canvas').getContext('2d');
       m.font = FONT(100);
