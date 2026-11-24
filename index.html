@@ -914,7 +914,7 @@
     const out = audio.createGain();
     out.gain.setValueAtTime(0.0001, t);
     out.gain.exponentialRampToValueAtTime(0.16, t + 0.5);
-    out.gain.setValueAtTime(0.16, t + dur - 1.2);
+    out.gain.setValueAtTime(0.16, t + dur - 0.3);   // short fade at the end, so "3D!" comes right on its tail
     out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     const pan = audio.createStereoPanner ? audio.createStereoPanner() : null;
     if (pan) { pan.pan.setValueAtTime(0.8, t); pan.pan.linearRampToValueAtTime(-0.9, t + dur); out.connect(pan).connect(audio.destination); }
@@ -942,6 +942,7 @@
     ufo.hidden = false;
     ufoSound();
     loadToasty();
+    setTimeout(() => playClip('threed'), UFO_MS - 150);   // "3D!" (sound only) as the warble fades out, no gap
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32, y = innerHeight * 0.2;
     const at = (px, py, s, r) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)` });
     ufo.animate([
@@ -951,7 +952,7 @@
       at(w * 0.4, y + 25, 1, -6),
       at(w * 0.18, y - 20, 1, 8),
       at(-220, y - 70, 1, -14),
-    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; playClip('threed'); };   // then "3D!" (sound only)
+    ], { duration: UFO_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; };
   });
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
@@ -1014,15 +1015,19 @@
   }
 
   // Easter egg: click the (R) on the Flying WV for its own fireworks show, one rocket per letter and
-  // no other fireworks. The first click spells WVU to the left of the logo and MOUNTAINEERS to the right in gold; the
-  // second, SHS and INDIANS in Sissonville red; the third, ZIG in green on both sides, and the Toasty guy pops in saying "Crispy!"
-  // as the letters form. Then it starts over at WVU.
+  // no other fireworks. The first and second clicks spell WVU over MOUNTAINEERS in gold to the left of the logo and SHS
+  // over INDIANS in Sissonville red to the right; the third, ZIG in green on both sides, and the Toasty guy pops in saying
+  // "Crispy!" as the letters form. Then it starts over.
   // (A win still sets off the regular many-color show.)
   const GOLD = '#ffc21a', RED = '#ee2021', GREEN = '#22dd22';
   const FW_ROUNDS = [
     // on phones, where the words sit over the gold logo, the gold dots get a white outline so they stand out in front of it
-    { words: [{ text: 'WVU', color: GOLD, place: 'left', cells: true, phoneOutline: '#fff' }, { text: 'MOUNTAINEERS', color: GOLD, place: 'right', phoneOutline: '#fff' }] },
-    { words: [{ text: 'SHS', color: RED, place: 'left', cells: true }, { text: 'INDIANS', color: RED, place: 'right' }] },
+    // row 0 / row 1: the top and bottom line on that side
+    ...[0, 1].map(() => ({ words: [
+      { text: 'WVU', color: GOLD, place: 'left', row: 0, cells: true, phoneOutline: '#fff' },
+      { text: 'MOUNTAINEERS', color: GOLD, place: 'left', row: 1, phoneOutline: '#fff' },
+      { text: 'SHS', color: RED, place: 'right', row: 0, cells: true },
+      { text: 'INDIANS', color: RED, place: 'right', row: 1 }] })),
     { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true }, { text: 'ZIG', color: GREEN, place: 'right', cells: true }], clip: 'crispy', clipAt: 2500 },
   ];
   // no lockout: every click starts the next show right away, even if the last one is still up (each show has its own layer)
@@ -1030,7 +1035,7 @@
   document.getElementById('r-spot').addEventListener('click', () => {
     wakeAudio();   // inside the click, so iOS lets the sound start
     const round = FW_ROUNDS[fwRound];
-    fwRound = (fwRound + 1) % FW_ROUNDS.length;   // after ZIG, back to WVU
+    fwRound = (fwRound + 1) % FW_ROUNDS.length;   // after ZIG, back to the start
     fireworks(10000, null, { only: true, words: round.words.map(w => ({ ...w, at: 300 })) });
     if (round.clip) { loadToasty(); setTimeout(() => toastyPop(round.clip), round.clipAt); }
   });
@@ -2053,13 +2058,16 @@
       const w100 = w.cells ? w.text.length * (m.measureText('W').width / 100 + CELL_GAP) : m.measureText(w.text).width / 100;   // width per px of font size
       const logo = document.querySelector('.logo-wrap').getBoundingClientRect(), gap = 24;
       const side = w.place === 'left' ? logo.left - gap - 16 : W - logo.right - gap - 16;
+      const two = w.row !== undefined;   // a word on one of two lines on its side (row 0 on top)
       if (w.place !== 'center' && side >= 220 && logo.bottom > 0) {
-        const cy = Math.max(60, (logo.top + logo.bottom) / 2), fs = Math.min(side * 0.92 / w100, (logo.bottom - logo.top) * 0.75);
+        const lh = logo.bottom - logo.top, mid = Math.max(60, (logo.top + logo.bottom) / 2);
+        const cy = two ? mid + (w.row ? 0.25 : -0.25) * lh : mid, fs = Math.min(side * 0.92 / w100, lh * (two ? 0.4 : 0.75));
         return { fs, cy, cx: w.place === 'left' ? logo.left - gap - side / 2 : logo.right + gap + side / 2 };
       }
-      if (w.place !== 'center') {   // narrow screen: stacked, left word above right word
-        const fs = Math.min(W * 0.9 / w100, H * 0.13);
-        return { fs, cx: W / 2, cy: H * (w.place === 'left' ? 0.2 : 0.36), stacked: true };
+      if (w.place !== 'center') {   // narrow screen: stacked, left side's lines above right side's
+        const fs = Math.min(W * 0.9 / w100, H * (two ? 0.085 : 0.13));
+        const cy = two ? [[0.14, 0.24], [0.36, 0.46]][w.place === 'left' ? 0 : 1][w.row] : (w.place === 'left' ? 0.2 : 0.36);
+        return { fs, cx: W / 2, cy: H * cy, stacked: true };
       }
       return { fs: Math.min(W * 0.9 / w100, W * 0.3, H * 0.3, 260), cx: W / 2, cy: H * 0.3 };
     };
