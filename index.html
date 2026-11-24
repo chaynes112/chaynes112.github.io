@@ -240,6 +240,11 @@
   #ufo .light { animation: ufo-blink .6s steps(2, jump-none) infinite; }
   #ufo .light:nth-of-type(2n) { animation-delay: .3s; }
   @keyframes ufo-blink { from { opacity: 1; } to { opacity: .25; } }
+  /* the tractor beam on every third UFO trip: a cone of green light from under the saucer down past the mascot's feet */
+  #beam { position: fixed; z-index: 1; pointer-events: none; transform-origin: top center;
+          clip-path: polygon(calc(50% - 22px) 0, calc(50% + 22px) 0, 100% 100%, 0 100%);
+          background: linear-gradient(rgba(125, 255, 200, .6), rgba(125, 255, 200, .18));
+          filter: drop-shadow(0 0 10px rgba(120, 255, 200, .8)); }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
@@ -247,6 +252,7 @@
 <canvas id="stars"></canvas>
 <button id="egg" type="button" tabindex="-1" aria-hidden="true"></button>
 <div id="toasty" hidden aria-hidden="true"><img alt="Toasty!" src="toasty.gif?v=3"></div>
+<div id="beam" hidden aria-hidden="true"></div>
 <div id="ufo" hidden aria-hidden="true">
   <svg viewBox="0 0 130 64" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="65" cy="58" rx="30" ry="4" fill="#7dffc8" opacity=".35"/>
@@ -905,12 +911,12 @@
 
   // Classic sci-fi warble, synthesized (no sound file): a rising then falling tone with fast vibrato,
   // panned right to left so it follows the saucer across the screen
-  function ufoSound() {
+  function ufoSound(ms = UFO_MS) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     audio = audio || new AC();
     if (audio.state !== 'running') audio.resume().catch(() => {});   // iOS can also leave it 'interrupted'
-    const t = audio.currentTime, dur = UFO_MS / 1000;
+    const t = audio.currentTime, dur = ms / 1000;
     const out = audio.createGain();
     out.gain.setValueAtTime(0.0001, t);
     out.gain.exponentialRampToValueAtTime(0.16, t + 0.5);
@@ -936,13 +942,79 @@
     [lfo, ...tones].forEach(o => { o.start(t); o.stop(t + dur + 0.05); });
   }
 
+  // Every third trip, if a mascot is on screen (whichever one is showing), the UFO stops over him, beams him up and flies off
+  // with him; a moment later he fades back in where he was (with no mascot on screen it's a normal trip). Only the third trip
+  // ends with "3D!", like the other Toasty voices.
+  const beam = document.getElementById('beam'), ABDUCT_MS = 6800;
+  let trips = 0;
+  const shownMascot = () => {
+    let best = null, most = 0;
+    for (const f of document.querySelectorAll('.mascot svg')) {
+      const r = f.getBoundingClientRect();
+      if (!r.height) continue;   // hidden
+      const seen = (Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height;
+      if (seen >= 0.5 && seen > most) { best = f; most = seen; }
+    }
+    return best;
+  };
+  function abduct(fig) {
+    const at = (px, py, s, r, offset) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)`, offset });
+    const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32;
+    const m = fig.getBoundingClientRect(), mx = m.left + m.width / 2, my = m.top + m.height / 2;
+    const ux = Math.min(Math.max(mx - 65, 0), w - 130), uy = Math.max(10, m.top - Math.max(160, m.height * 1.3));   // hover spot (UFO's top left)
+    const cx = ux + 65, under = uy + 44;   // middle of the saucer's underside
+    ufo.animate([
+      at(sx, sy, 0.05, 0, 0),
+      at(sx - w * 0.05, sy + 10, 0.6, -10, 0.12),
+      at((sx + ux) / 2, Math.min(sy, uy) - 20, 1, 8, 0.25),
+      at(ux, uy, 1, 0, 0.36),
+      at(ux, uy + 6, 1, -2, 0.5),
+      at(ux, uy, 1, 2, 0.64),
+      at(ux, uy + 6, 1, 0, 0.8),
+      at(ux - 40, uy - 30, 1, -14, 0.86),
+      at(-260, -200, 0.6, -20, 1),
+    ], { duration: ABDUCT_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; ufo.style.zIndex = beam.style.zIndex = ''; };
+    // the saucer and beam go in front of the game cards for this trip, since the mascot may be standing over one (phones)
+    ufo.style.zIndex = beam.style.zIndex = '3';
+    // the beam: on at 37%, off by 74% (before the saucer leaves at 80%)
+    const bw = Math.max(70, m.width * 1.5);
+    Object.assign(beam.style, { left: cx - bw / 2 + 'px', top: under + 'px', width: bw + 'px', height: Math.max(20, m.bottom + 8 - under) + 'px' });
+    beam.hidden = false;
+    beam.animate([
+      { opacity: 0, transform: 'scaleY(0)', offset: 0 }, { opacity: 0, transform: 'scaleY(0)', offset: 0.37 },
+      { opacity: 1, transform: 'scaleY(1)', offset: 0.41 }, { opacity: 0.75, offset: 0.5 }, { opacity: 1, offset: 0.6 },
+      { opacity: 0.75, offset: 0.66 }, { opacity: 1, transform: 'scaleY(1)', offset: 0.71 }, { opacity: 0, transform: 'scaleY(1)', offset: 0.74 },
+      { opacity: 0, offset: 1 },
+    ], { duration: ABDUCT_MS }).onfinish = () => { beam.hidden = true; };
+    // the mascot floats up the beam, turning and shrinking, into the saucer (43% to 70%); his box drops under the UFO meanwhile
+    const box = fig.closest('.mascot'), dx = cx - mx, dy = under - 8 - my;
+    box.style.zIndex = '0';
+    const lift = fig.animate([
+      { transform: 'none', opacity: 1, offset: 0 }, { transform: 'none', opacity: 1, offset: 0.43 },
+      { transform: `translate(${dx * 0.3}px, ${dy * 0.25}px) rotate(-8deg) scale(0.9)`, opacity: 1, offset: 0.52 },
+      { transform: `translate(${dx * 0.7}px, ${dy * 0.65}px) rotate(10deg) scale(0.55)`, opacity: 1, offset: 0.64 },
+      { transform: `translate(${dx}px, ${dy}px) rotate(-4deg) scale(0.12)`, opacity: 0, offset: 0.7 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.12)`, opacity: 0, offset: 1 },
+    ], { duration: ABDUCT_MS, fill: 'forwards' });
+    // 1.5 s after the UFO is gone, he fades back in where he was
+    lift.onfinish = () => setTimeout(() => {
+      box.style.zIndex = '';
+      fig.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800 });
+      lift.cancel();
+    }, 1500);
+  }
+
   document.getElementById('egg').addEventListener('click', () => {
     if (flying) return;
     flying = true;
     ufo.hidden = false;
-    ufoSound();
     loadToasty();
-    setTimeout(() => playClip('threed'), UFO_MS - 150);   // "3D!" (sound only) as the warble fades out, no gap
+    const third = ++trips === 3, fig = third ? shownMascot() : null;
+    if (third) trips = 0;
+    const ms = fig ? ABDUCT_MS : UFO_MS;
+    ufoSound(ms);
+    if (third) setTimeout(() => playClip('threed'), ms - 150);   // "3D!" (sound only) as the warble fades out, no gap
+    if (fig) { abduct(fig); return; }
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32, y = innerHeight * 0.2;
     const at = (px, py, s, r) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)` });
     ufo.animate([
@@ -956,8 +1028,8 @@
   });
 
   // Easter egg: fire the Mountaineer's musket three times and the Toasty guy pops in from the corner, like Mortal Kombat;
-  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!". When the UFO's
-  // noise ends, "3D!" plays (sound only, he doesn't pop in).
+  // click the Indian three times and he pops in saying "Frosty!"; the third fireworks show from the (R) brings him out saying "Crispy!". On the UFO's third trip,
+  // "3D!" plays as its noise ends (sound only, he doesn't pop in).
   // toasty.gif is just his talking loop; the page slides him in and out so he stays up for the whole
   // sound. toasty.mp3 has 0.28 s of silence before the voice; playback skips 0.24 s of it and starts
   // 0.15 s after he does, so he's all the way out before he says "Toasty!". frosty.mp3's voice already starts
