@@ -765,6 +765,61 @@
       }
     } catch (e) { /* storage blocked: the normal pick */ }
   </script>
+  <script>
+    // Refresh (or back/forward) puts you back exactly where you were. The browser's own scroll-back happens before the game
+    // cards have loaded, and they change height as they fill in, so it lands in the wrong place. Instead the page remembers
+    // which card or section was at the top of the screen and how far into it you were, and keeps scrolling back to that spot
+    // as the cards load, until you scroll or tap yourself (or 10 s pass).
+    (() => {
+      const KEY = 'scrollSpot';
+      const secKey = el => el.classList.contains('sville') ? 'sv' : 'wvu';
+      const keyOf = el => el.matches('section') ? secKey(el)
+        : secKey(el.closest('section')) + ':' + (el.querySelector('.sport') || {}).textContent;
+      const anchors = () => [...document.querySelectorAll('main section.games, main article.game')];
+      let restoring = false;
+      const save = () => {
+        if (restoring) return;
+        let best = null;
+        for (const el of anchors()) { const r = el.getBoundingClientRect(); if (r.height && r.top <= 1 && (!best || r.top >= best.top)) best = { el, top: r.top }; }
+        const sec = best && best.el.closest('section');   // also the spot within its section, for before that card is in
+        const spot = best ? { key: keyOf(best.el), off: -best.top, sec: secKey(sec), secOff: -sec.getBoundingClientRect().top } : { key: '', off: scrollY };
+        try { sessionStorage.setItem(KEY, JSON.stringify(spot)); } catch (e) { /* storage blocked */ }
+      };
+      let queued = false;
+      addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; save(); }); } }, { passive: true });
+      addEventListener('pagehide', save);
+      let spot = null;
+      try {
+        const nav = performance.getEntriesByType('navigation')[0];
+        if (!location.hash && nav && /reload|back_forward/.test(nav.type)) spot = JSON.parse(sessionStorage.getItem(KEY) || 'null');
+      } catch (e) { spot = null; }
+      if (!spot) return;
+      history.scrollRestoration = 'manual';   // this page does it instead
+      restoring = true;
+      const go = () => {
+        if (!restoring) return;
+        let y = spot.off;
+        if (spot.key) {
+          const card = anchors().find(a => keyOf(a) === spot.key);
+          const sec = card ? null : anchors().find(a => keyOf(a) === spot.sec);   // that card isn't in yet: its section for now
+          if (!card && !sec) return;
+          y = card ? card.getBoundingClientRect().top + scrollY + spot.off : sec.getBoundingClientRect().top + scrollY + spot.secOff;
+        }
+        if (Math.abs(scrollY - y) > 1) scrollTo(0, y);
+      };
+      const stop = () => {
+        if (!restoring) return;
+        restoring = false; ro.disconnect();
+        ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(e => removeEventListener(e, stop, true));
+        save();
+      };
+      const ro = new ResizeObserver(go);
+      ro.observe(document.querySelector('main'));   // (the body's own box doesn't grow with the page here)
+      ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(e => addEventListener(e, stop, true));
+      setTimeout(stop, 10000);
+      go();
+    })();
+  </script>
 </main>
 
 <button class="music" id="music" type="button" disabled aria-label="Play Take Me Home, Country Roads">
