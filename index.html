@@ -943,7 +943,7 @@
   }
 
   // Every third trip, if a mascot is on screen (whichever one is showing), the UFO stops over him, beams him up and flies off
-  // with him; a moment later he fades back in where he was (with no mascot on screen it's a normal trip). Only the third trip
+  // with him, and he's gone until the page is reloaded (with no mascot on screen it's a normal trip). Only the third trip
   // ends with "3D!", like the other Toasty voices.
   const beam = document.getElementById('beam'), ABDUCT_MS = 6800;
   let trips = 0;
@@ -951,7 +951,7 @@
     let best = null, most = 0;
     for (const f of document.querySelectorAll('.mascot svg')) {
       const r = f.getBoundingClientRect();
-      if (!r.height) continue;   // hidden
+      if (!r.height || f.dataset.gone) continue;   // hidden, or already taken
       const seen = (Math.min(r.bottom, innerHeight) - Math.max(r.top, 0)) / r.height;
       if (seen >= 0.5 && seen > most) { best = f; most = seen; }
     }
@@ -996,12 +996,9 @@
       { transform: `translate(${dx}px, ${dy}px) rotate(-4deg) scale(0.12)`, opacity: 0, offset: 0.7 },
       { transform: `translate(${dx}px, ${dy}px) scale(0.12)`, opacity: 0, offset: 1 },
     ], { duration: ABDUCT_MS, fill: 'forwards' });
-    // 1.5 s after the UFO is gone, he fades back in where he was
-    lift.onfinish = () => setTimeout(() => {
-      box.style.zIndex = '';
-      fig.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 800 });
-      lift.cancel();
-    }, 1500);
+    // he stays gone until the page is reloaded (hidden, so his click spot goes too)
+    fig.dataset.gone = '1';
+    lift.onfinish = () => { fig.style.visibility = 'hidden'; box.style.zIndex = ''; };
   }
 
   document.getElementById('egg').addEventListener('click', () => {
@@ -1100,7 +1097,7 @@
       { text: 'MOUNTAINEERS', color: GOLD, place: 'left', row: 1, phoneOutline: '#fff' },
       { text: 'SHS', color: RED, place: 'right', row: 0, cells: true },
       { text: 'INDIANS', color: RED, place: 'right', row: 1 }] })),
-    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true }, { text: 'ZIG', color: GREEN, place: 'right', cells: true }], clip: 'crispy', clipAt: 2500 },
+    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true, gap: 0.25 }, { text: 'ZIG', color: GREEN, place: 'right', cells: true, gap: 0.25 }], clip: 'crispy', clipAt: 2500 },
   ];
   // no lockout: every click starts the next show right away, even if the last one is still up (each show has its own layer)
   let fwRound = 0;
@@ -2123,7 +2120,7 @@
     const pending = [];   // letter rockets waiting for their launch time
     // where a word goes: its center and the font size that fits the space. A word marked cells puts each letter in the
     // middle of an equal slot as wide as a W plus a gap, so WVU, SHS and ZIG come out spaced apart and all the same size.
-    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes
+    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes (a word's own gap, e.g. ZIG's tighter 0.25, only moves its letters closer; the size stays the same)
     const wordSpot = w => {
       const W = innerWidth, H = innerHeight, m = document.createElement('canvas').getContext('2d');
       m.font = FONT(100);
@@ -2149,7 +2146,7 @@
       m.font = FONT(fs);
       let centers;
       if (w.cells) {
-        const cell = m.measureText('W').width + CELL_GAP * fs;
+        const cell = m.measureText('W').width + (w.gap ?? CELL_GAP) * fs;
         centers = chars.map((_, i) => cx + (i - (chars.length - 1) / 2) * cell);
       } else {
         const total = m.measureText(w.text).width, edges = chars.map((_, i) => m.measureText(w.text.slice(0, i + 1)).width);
