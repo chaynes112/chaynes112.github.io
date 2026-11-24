@@ -958,7 +958,8 @@
     return best;
   };
   function abduct(fig) {
-    const at = (px, py, s, r, offset) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)`, offset });
+    // easing on each leg (not the whole trip), so the offsets are real times and the beam below lines up with the hover
+    const at = (px, py, s, r, offset) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)`, offset, easing: 'ease-in-out' });
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32;
     const m = fig.getBoundingClientRect(), mx = m.left + m.width / 2, my = m.top + m.height / 2;
     const ux = Math.min(Math.max(mx - 65, 0), w - 130), uy = Math.max(10, m.top - Math.max(160, m.height * 1.3));   // hover spot (UFO's top left)
@@ -973,16 +974,16 @@
       at(ux, uy + 6, 1, 0, 0.8),
       at(ux - 40, uy - 30, 1, -14, 0.86),
       at(-260, -200, 0.6, -20, 1),
-    ], { duration: ABDUCT_MS, easing: 'ease-in-out' }).onfinish = () => { ufo.hidden = true; flying = false; ufo.style.zIndex = beam.style.zIndex = ''; };
+    ], { duration: ABDUCT_MS }).onfinish = () => { ufo.hidden = true; flying = false; ufo.style.zIndex = beam.style.zIndex = ''; };
     // the saucer and beam go in front of the game cards for this trip, since the mascot may be standing over one (phones)
     ufo.style.zIndex = beam.style.zIndex = '3';
-    // the beam: on at 37%, off by 74% (before the saucer leaves at 80%)
+    // the beam: on at 38%, once the saucer has stopped (36%), and off by 74%, before it leaves (80%)
     const bw = Math.max(70, m.width * 1.5);
     Object.assign(beam.style, { left: cx - bw / 2 + 'px', top: under + 'px', width: bw + 'px', height: Math.max(20, m.bottom + 8 - under) + 'px' });
     beam.hidden = false;
     beam.animate([
-      { opacity: 0, transform: 'scaleY(0)', offset: 0 }, { opacity: 0, transform: 'scaleY(0)', offset: 0.37 },
-      { opacity: 1, transform: 'scaleY(1)', offset: 0.41 }, { opacity: 0.75, offset: 0.5 }, { opacity: 1, offset: 0.6 },
+      { opacity: 0, transform: 'scaleY(0)', offset: 0 }, { opacity: 0, transform: 'scaleY(0)', offset: 0.38 },
+      { opacity: 1, transform: 'scaleY(1)', offset: 0.42 }, { opacity: 0.75, offset: 0.5 }, { opacity: 1, offset: 0.6 },
       { opacity: 0.75, offset: 0.66 }, { opacity: 1, transform: 'scaleY(1)', offset: 0.71 }, { opacity: 0, transform: 'scaleY(1)', offset: 0.74 },
       { opacity: 0, offset: 1 },
     ], { duration: ABDUCT_MS }).onfinish = () => { beam.hidden = true; };
@@ -1097,7 +1098,7 @@
       { text: 'MOUNTAINEERS', color: GOLD, place: 'left', row: 1, phoneOutline: '#fff' },
       { text: 'SHS', color: RED, place: 'right', row: 0, cells: true },
       { text: 'INDIANS', color: RED, place: 'right', row: 1 }] })),
-    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true, gap: 0.25 }, { text: 'ZIG', color: GREEN, place: 'right', cells: true, gap: 0.25 }], clip: 'crispy', clipAt: 2500 },
+    { words: [{ text: 'ZIG', color: GREEN, place: 'left', cells: true, gap: 0.1 }, { text: 'ZIG', color: GREEN, place: 'right', cells: true, gap: 0.1 }], clip: 'crispy', clipAt: 2500 },
   ];
   // no lockout: every click starts the next show right away, even if the last one is still up (each show has its own layer)
   let fwRound = 0;
@@ -2120,7 +2121,7 @@
     const pending = [];   // letter rockets waiting for their launch time
     // where a word goes: its center and the font size that fits the space. A word marked cells puts each letter in the
     // middle of an equal slot as wide as a W plus a gap, so WVU, SHS and ZIG come out spaced apart and all the same size.
-    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes (a word's own gap, e.g. ZIG's tighter 0.25, only moves its letters closer; the size stays the same)
+    const FONT = fs => `900 ${fs}px "Arial Black", Impact, sans-serif`, CELL_GAP = 0.45;   // gap between slots, in font sizes (a word's own gap, e.g. ZIG's tighter 0.1, only moves its letters closer; the size stays the same)
     const wordSpot = w => {
       const W = innerWidth, H = innerHeight, m = document.createElement('canvas').getContext('2d');
       m.font = FONT(100);
