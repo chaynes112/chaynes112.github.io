@@ -984,21 +984,29 @@
     return best;
   };
   function abduct(fig) {
-    // easing on each leg (not the whole trip), so the offsets are real times and the beam below lines up with the hover
-    const at = (px, py, s, r, offset) => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)`, offset, easing: 'ease-in-out' });
+    // Offsets are real times (no easing over the whole trip), so the beam below lines up with the hover. The trips in and out
+    // are each one smooth curve, sampled into many small steps, so the saucer never stops or jerks partway; only the hover bob
+    // eases in and out at every turn.
+    const at = (px, py, s, r, offset, easing = 'ease-in-out') => ({ transform: `translate(${px}px, ${py}px) scale(${s}) rotate(${r}deg)`, offset, easing });
+    // a curve from a to b bending toward c, from offset o0 to o1; ease shapes the speed along it; s and r give scale and tilt along it
+    const curve = (a, c, b, o0, o1, ease, sc, rot) => Array.from({ length: 24 }, (_, i) => {
+      const u = ease(i / 24), v = 1 - u;
+      return at(v * v * a[0] + 2 * v * u * c[0] + u * u * b[0], v * v * a[1] + 2 * v * u * c[1] + u * u * b[1], sc(u), rot(u), o0 + (o1 - o0) * i / 24, 'linear');
+    });
+    const smooth = u => u * u * (3 - 2 * u), speedUp = u => u * u;
     const w = innerWidth, sx = w * 0.9 - 65, sy = innerHeight * 0.12 - 32;
     const m = fig.getBoundingClientRect(), mx = m.left + m.width / 2, my = m.top + m.height / 2;
     const ux = Math.min(Math.max(mx - 65, 0), w - 130), uy = Math.max(10, m.top - Math.max(160, m.height * 1.3));   // hover spot (UFO's top left)
     const cx = ux + 65, under = uy + 44;   // middle of the saucer's underside
     ufo.animate([
-      at(sx, sy, 0.05, 0, 0),
-      at(sx - w * 0.05, sy + 10, 0.6, -10, 0.12),
-      at((sx + ux) / 2, Math.min(sy, uy) - 20, 1, 8, 0.25),
+      // out of the star, growing, in an arc over to the hover spot, slowing to a stop there
+      ...curve([sx, sy], [(sx + ux) / 2, Math.min(sy, uy) - 80], [ux, uy], 0, 0.36, smooth,
+               u => 0.05 + 0.95 * Math.min(1, u / 0.35), u => -12 * Math.sin(Math.PI * u)),
       at(ux, uy, 1, 0, 0.36),
       at(ux, uy + 6, 1, -2, 0.5),
       at(ux, uy, 1, 2, 0.64),
-      at(ux, uy + 6, 1, 0, 0.8),
-      at(ux - 40, uy - 30, 1, -14, 0.86),
+      // speeding up, off the top left
+      ...curve([ux, uy + 6], [ux - 60, uy - 40], [-260, -200], 0.8, 1, speedUp, u => 1 - 0.4 * u, u => -20 * u),
       at(-260, -200, 0.6, -20, 1),
     ], { duration: ABDUCT_MS }).onfinish = () => { ufo.hidden = true; flying = false; ufo.style.zIndex = beam.style.zIndex = ''; };
     // the saucer and beam go in front of the game cards for this trip, since the mascot may be standing over one (phones)
