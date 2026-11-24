@@ -773,6 +773,18 @@
 <button class="music sv" id="chop-btn" type="button" hidden aria-label="Play Tomahawk Chop">
   <span class="icon">&#9654;</span><span>Tomahawk Chop</span>
 </button>
+<script>
+  // Same as the mascots: off phones, a reload while Tomahawk Chop was showing shows it right away instead of Country Roads
+  // (the main script keeps it until the page has loaded and the browser has scrolled back down).
+  try {
+    const nav = performance.getEntriesByType('navigation')[0];
+    if (!matchMedia('(max-width: 767px), (pointer: coarse) and (max-height: 500px)').matches && nav && /reload|back_forward/.test(nav.type)
+        && sessionStorage.getItem('mascotPick') === 'sv') {
+      document.getElementById('music').hidden = true; document.getElementById('chop-btn').hidden = false;
+      window.btnHold = true;
+    }
+  } catch (e) { /* storage blocked: the normal pick */ }
+</script>
 <!-- ?v= changes whenever the .mid file is replaced, so browsers don't keep playing a cached old copy -->
 <midi-player id="player" src="country-roads.mid?v=2" sound-font loop></midi-player>
 <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/html-midi-player@1.5.0"></script>
@@ -1152,9 +1164,15 @@
     const btnRoads = document.getElementById('music'), btnChop = document.getElementById('chop-btn');
     const phone = matchMedia('(max-width: 767px), (pointer: coarse) and (max-height: 500px)');
     const pickBtn = () => {
+      if (window.btnHold) return;
       const sv = !phone.matches && svSection.getBoundingClientRect().top < innerHeight * 0.5;
       btnRoads.hidden = sv; btnChop.hidden = !phone.matches && !sv;
+      if (!phone.matches) try { sessionStorage.setItem('mascotPick', sv ? 'sv' : 'wvu'); } catch (e) { /* storage blocked */ }
     };
+    if (window.btnHold) {   // released at load, like the mascots
+      const release = () => setTimeout(() => { window.btnHold = false; pickBtn(); }, 300);
+      if (document.readyState === 'complete') release(); else addEventListener('load', release);
+    }
     const placeBtn = () => {
       if (phone.matches) { boxWvu.after(btnRoads); boxSv.after(btnChop); }
       else { const end = document.getElementById('player'); document.body.insertBefore(btnRoads, end); document.body.insertBefore(btnChop, end); }
