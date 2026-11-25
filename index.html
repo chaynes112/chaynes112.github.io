@@ -125,6 +125,15 @@
     border-radius: 10px; padding: 1rem 1.1rem; text-align: left;
   }
   .game .sport { font: 500 .8rem "Oswald", Impact, sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+  /* a little ball for the sport beside each card's sport label */
+  .game .sport[data-ball]::before { content: ''; display: inline-block; width: 1.35em; height: 1.35em; vertical-align: -.3em; margin-right: .45em;
+                                    background: center / contain no-repeat; }
+  .game .sport[data-ball="football"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke-linejoin='round'%3E%3Cg transform='rotate%28-35 12 12%29'%3E%3Cellipse cx='12' cy='12' rx='11' ry='6.6' fill='%238b4a22' stroke='%23141414' stroke-width='1.3'/%3E%3Cpath d='M5.6 7.4 Q6.7 12 5.6 16.6 M18.4 7.4 Q17.3 12 18.4 16.6' stroke='%23fff' stroke-width='1.1' fill='none'/%3E%3Cpath d='M8.4 12 H15.6' stroke='%23fff' stroke-width='1.2' stroke-linecap='round'/%3E%3Cpath d='M9.8 10.9 v2.2 M11.3 10.9 v2.2 M12.8 10.9 v2.2 M14.3 10.9 v2.2' stroke='%23fff' stroke-width='1' stroke-linecap='round'/%3E%3C/g%3E%3C/svg%3E"); }
+  .game .sport[data-ball="soccer"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.6' fill='%23fff' stroke='%23141414' stroke-width='1.3'/%3E%3Cpath d='M12 8.2 L15.6 10.8 L14.2 15 L9.8 15 L8.4 10.8 Z' fill='%23141414'/%3E%3Cpath d='M12 8.2 L12 2 M15.6 10.8 L21.2 9 M14.2 15 L17.6 20.2 M9.8 15 L6.4 20.2 M8.4 10.8 L2.8 9' stroke='%23141414' stroke-width='1'/%3E%3Cpath d='M9.6 1.9 L12 3.4 L14.4 1.9 Z M20.6 6.4 L20.1 9.4 L22.1 11.5 Z M19.6 18.3 L16.6 18.9 L15.6 21.9 Z M8.4 21.9 L7.4 18.9 L4.4 18.3 Z M1.9 11.5 L3.9 9.4 L3.4 6.4 Z' fill='%23141414'/%3E%3C/svg%3E"); }
+  .game .sport[data-ball="basketball"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.6' fill='%23e8731d' stroke='%23141414' stroke-width='1.3'/%3E%3Cpath d='M1.4 12 H22.6 M12 1.4 V22.6 M4.4 4.6 Q9.4 12 4.4 19.4 M19.6 4.6 Q14.6 12 19.6 19.4' stroke='%23141414' stroke-width='1.1' fill='none'/%3E%3C/svg%3E"); }
+  .game .sport[data-ball="volleyball"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.6' fill='%23fff' stroke='%23141414' stroke-width='1.3'/%3E%3Cpath d='M12 12 Q12.4 5.6 8.4 2 M12 12 Q17.6 15 22.2 13.6 M12 12 Q6.6 15.4 5.4 20.2 M12.9 6.6 Q17.6 6.8 21 9.6 M14.8 15.6 Q13 19.6 9 22.3 M8.4 9.6 Q4.6 7.6 1.6 9.4' stroke='%23141414' stroke-width='1.05' fill='none'/%3E%3Cpath d='M12 12 Q12.4 5.6 8.4 2 A10.6 10.6 0 0 0 1.6 9.4 Q4.6 7.6 8.4 9.6 Z' fill='%230d3b8c'/%3E%3Cpath d='M12 12 Q17.6 15 22.2 13.6 A10.6 10.6 0 0 1 9 22.3 Q13 19.6 14.8 15.6 Z' fill='%23eaaa00'/%3E%3C/svg%3E"); }
+  .game .sport[data-ball="baseball"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.6' fill='%23fff' stroke='%23141414' stroke-width='1.3'/%3E%3Cpath d='M5.2 3.9 Q9.4 12 5.2 20.1 M18.8 3.9 Q14.6 12 18.8 20.1' stroke='%23d22' stroke-width='1.1' fill='none'/%3E%3Cpath d='M6.3 6.6 l1.8 -.6 M7.3 9.3 l1.9 -.2 M7.6 12 h1.9 M7.3 14.7 l1.9 .2 M6.3 17.4 l1.8 .6 M17.7 6.6 l-1.8 -.6 M16.7 9.3 l-1.9 -.2 M16.4 12 h-1.9 M16.7 14.7 l-1.9 .2 M17.7 17.4 l-1.8 .6' stroke='%23d22' stroke-width='.9' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  .game .sport[data-ball="softball"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10.6' fill='%23dff23a' stroke='%23141414' stroke-width='1.3'/%3E%3Cpath d='M5.2 3.9 Q9.4 12 5.2 20.1 M18.8 3.9 Q14.6 12 18.8 20.1' stroke='%23d22' stroke-width='1.1' fill='none'/%3E%3Cpath d='M6.3 6.6 l1.8 -.6 M7.3 9.3 l1.9 -.2 M7.6 12 h1.9 M7.3 14.7 l1.9 .2 M6.3 17.4 l1.8 .6 M17.7 6.6 l-1.8 -.6 M16.7 9.3 l-1.9 -.2 M16.4 12 h-1.9 M16.7 14.7 l-1.9 .2 M17.7 17.4 l-1.8 .6' stroke='%23d22' stroke-width='.9' stroke-linecap='round'/%3E%3C/svg%3E"); }
   .game .matchup { display: flex; align-items: center; gap: .55rem; margin: .5rem 0 .35rem; font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
   /* Matchup: [logo][rank] West Virginia / record  vs  [logo][rank] Opponent / record -- the biggest text on the card */
   .game .teams { display: flex; align-items: flex-start; gap: .5rem; margin: .9rem 0 .75rem; }
@@ -1422,7 +1431,13 @@
   const isWVU = c => /West Virginia/i.test(c.team.displayName || c.team.location || '');
   const rank = c => { const r = c.curatedRank && c.curatedRank.current; return r && r < 99 ? '#' + r : 'Unranked'; };
   const ymdET = iso => new Intl.DateTimeFormat('en-CA', { timeZone: ET, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso)).replace(/-/g, '');
-  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; if (cls === 'sport') tagBall(e); return e; };
+  // the ball shown beside a card's sport label (CSS draws it), picked from the label's words; none for rifle
+  function tagBall(div) {
+    const m = /football|soccer|basketball|volleyball|softball|baseball/i.exec(div.textContent);
+    if (m) div.dataset.ball = m[0].toLowerCase();
+  }
+  document.querySelectorAll('.game .sport').forEach(tagBall);
 
   // Every game on a team's season, from the core API
   async function seasonEvents(sport, league, team, season) {
