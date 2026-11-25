@@ -1367,14 +1367,6 @@
   // with no sound. Every third one brings out the same guy as Toasty, saying "Frosty!".
   const indian = document.querySelector('svg.indian');
   let stamps = 0;
-  // no sound of his own: just wakes the page's audio on the click, so Frosty's clip is ready to play
-  function wakeAudio() {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    audio = audio || new AC();
-    if (audio.state !== 'running') audio.resume().catch(() => {});
-    loadToasty();
-  }
   indian.addEventListener('click', () => {
     // Poses: a1 = upper arm's angle from the shoulder, a2 = forearm's angle from the elbow (degrees, 0 = pointing right,
     // 90 = down), drop = how far the shoulder dips, tilt = the tomahawk's lean once he holds it (0 = head straight up).
@@ -1404,7 +1396,7 @@
     run('.tk-elbow', k => `rotate(${k.held ? k.F - g.F : 0}deg)`);
     run('.tk-back', k => k.held ? `rotate(${-g.U}deg) translate(0px, ${-g.drop}px)` : `rotate(${-k.U}deg) translate(0px, ${-k.drop}px)`);
     run('.tk-wrist', k => `rotate(${k.held ? k.tilt - (k.U - g.U) - (k.F - g.F) : 0}deg)`);
-    wakeAudio();
+    wakeAudio(); loadToasty();   // no sound of his own: wake the page's audio and load Frosty's clip
     if (++stamps % 3 === 0) setTimeout(() => toastyPop('frosty'), 1500);
   });
 </script>
