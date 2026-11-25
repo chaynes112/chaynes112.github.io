@@ -1364,55 +1364,16 @@
   });
 
   // Click the Indian: he grabs the tomahawk low on the handle, curls it up and raises it overhead, cocked to strike,
-  // while a voice chants "Hey-ya, hey-ya". Every third one brings out the same guy as Toasty, saying "Frosty!".
+  // with no sound. Every third one brings out the same guy as Toasty, saying "Frosty!".
   const indian = document.querySelector('svg.indian');
   let stamps = 0;
-  function chantSound() {
+  // no sound of his own: just wakes the page's audio on the click, so Frosty's clip is ready to play
+  function wakeAudio() {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     audio = audio || new AC();
     if (audio.state !== 'running') audio.resume().catch(() => {});
     loadToasty();
-    const t0 = audio.currentTime + 0.05;
-    const out = audio.createGain(); out.gain.value = 1; out.connect(audio.destination);
-    // vowel formants (Hz): "eh", "ee", "ah"
-    const V = { e: [530, 1840, 2480], i: [300, 2200, 2900], a: [730, 1090, 2440] };
-    // syllable: start, length, pitch, vowel glide (from, to), breathy "h" at the start
-    const syl = [[0, 0.30, 220, 'e', 'i', true], [0.30, 0.26, 196, 'i', 'a', false],
-                 [0.62, 0.30, 220, 'e', 'i', true], [0.92, 0.50, 165, 'i', 'a', false]];
-    for (const [at, len, f0, v1, v2, h] of syl) {
-      const t = t0 + at, end = t + len;
-      const env = audio.createGain();
-      env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(1, t + 0.04);
-      env.gain.setValueAtTime(1, end - 0.08); env.gain.exponentialRampToValueAtTime(0.0001, end);
-      env.connect(out);
-      // three formant filters shape a buzzy source into the vowel, gliding from one vowel to the next
-      const bands = V[v1].map((f, i) => {
-        const bp = audio.createBiquadFilter(), g = audio.createGain();
-        bp.type = 'bandpass'; bp.Q.value = 9;
-        bp.frequency.setValueAtTime(f, t); bp.frequency.linearRampToValueAtTime(V[v2][i], t + len * 0.6);
-        g.gain.value = [1, 0.55, 0.25][i] * 4;
-        bp.connect(g).connect(env); return bp;
-      });
-      // two voices an octave apart plus a slightly out-of-tune third, scooping up into the note, with vibrato
-      for (const [mult, lvl] of [[1, 1], [0.5, 0.7], [1.006, 0.5]]) {
-        const o = audio.createOscillator(), og = audio.createGain(), lfo = audio.createOscillator(), lg = audio.createGain();
-        o.type = 'sawtooth'; og.gain.value = lvl * 0.25;
-        o.frequency.setValueAtTime(f0 * mult * 0.92, t); o.frequency.exponentialRampToValueAtTime(f0 * mult, t + 0.06);
-        lfo.frequency.value = 5.5; lg.gain.value = f0 * mult * 0.012;
-        lfo.connect(lg).connect(o.frequency);
-        o.connect(og); for (const bp of bands) og.connect(bp);
-        o.start(t); o.stop(end + 0.02); lfo.start(t); lfo.stop(end + 0.02);
-      }
-      if (h) {   // the breath of the "h"
-        const n = audio.createBufferSource(), b = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.08), audio.sampleRate);
-        const d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-        const bp = audio.createBiquadFilter(), ng = audio.createGain();
-        n.buffer = b; bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 1.2;
-        ng.gain.setValueAtTime(0.25, t - 0.03); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-        n.connect(bp).connect(ng).connect(out); n.start(t - 0.03);
-      }
-    }
   }
   indian.addEventListener('click', () => {
     // Poses: a1 = upper arm's angle from the shoulder, a2 = forearm's angle from the elbow (degrees, 0 = pointing right,
@@ -1443,7 +1404,7 @@
     run('.tk-elbow', k => `rotate(${k.held ? k.F - g.F : 0}deg)`);
     run('.tk-back', k => k.held ? `rotate(${-g.U}deg) translate(0px, ${-g.drop}px)` : `rotate(${-k.U}deg) translate(0px, ${-k.drop}px)`);
     run('.tk-wrist', k => `rotate(${k.held ? k.tilt - (k.U - g.U) - (k.F - g.F) : 0}deg)`);
-    chantSound();
+    wakeAudio();
     if (++stamps % 3 === 0) setTimeout(() => toastyPop('frosty'), 1500);
   });
 </script>
