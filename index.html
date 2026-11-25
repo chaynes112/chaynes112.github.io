@@ -224,11 +224,8 @@
   .mascot svg .bob { pointer-events: visiblePainted; cursor: default; }
   .mascot .recoil { transform-box: view-box; transform-origin: 77px 150px; }
   .mascot .smoke circle, .mascot .dust circle { transform-box: fill-box; transform-origin: center; }
-  /* Click the Indian: his shoulder dips as his left arm reaches down and grabs the tomahawk low on the handle, curls it up
-     and raises it overhead, cocked to strike (the arm turns at the shoulder and elbow; the tomahawk rides in his fist) */
-  .mascot .lift-arm, .mascot .tk-swing, .mascot .tk-back { transform-box: view-box; transform-origin: 54px 110px; }
-  .mascot .lift-fore, .mascot .tk-elbow { transform-box: view-box; transform-origin: 46px 127.5px; }
-  .mascot .tk-wrist { transform-box: view-box; transform-origin: 64.46px 163.17px; }
+  /* Click the Indian: he hops and stamps his lance on the ground (the whole figure, pivoting at his feet) */
+  .mascot .stomp { transform-box: view-box; transform-origin: 80px 212px; }
   .mascot .tail { transform-box: view-box; transform-origin: 54px 53px; animation: tail 1.6s ease-in-out infinite; }
   .mascot .eyes { transform-box: view-box; transform-origin: 80px 68px; animation: blink 4s infinite; }
   .mascot svg.indian .eyes { animation-delay: -2s; } /* blinks halfway between the Mountaineer's blinks */
@@ -589,7 +586,6 @@
         <path d="M69 150 L91 150 L93 182 L67 182 Z" fill="#c8102e" stroke="#141414" stroke-width="2"/>
         <path d="M70.4 168 l3.2 -4.5 l3.2 4.5 l3.2 -4.5 l3.2 4.5 l3.2 -4.5 l3.2 4.5" stroke="#ffffff" stroke-width="1.8" fill="none"/>
         <!-- tomahawk hanging in front of the belt at his right hip in a leather sling: steel head up top -->
-        <g class="tk-swing"><g class="tk-elbow"><g class="tk-back"><g class="tk-wrist">
         <g transform="translate(65 158) rotate(6) scale(1.3)">
           <rect x="-2.06" y="-22.6" width="4.12" height="38.6" rx="1.8" fill="#7a4520" stroke="#141414" stroke-width="1.2"/>
           <!-- steel head (blade and back), enlarged around the top of the handle -->
@@ -621,7 +617,6 @@
           </g>
           <circle cx="-4.1" cy="-7.9" r=".85" fill="#2a9d8f" stroke="#141414" stroke-width=".45"/>
         </g>
-        </g></g></g></g>
         <!-- rawhide rattle tucked in the belt at his left hip (like the reference rattles): painted head up top, wrapped handle, leather fringe, beads and a feather -->
         <g transform="translate(102 158) rotate(-6) scale(1.12)">
           <g transform="translate(0 -14) scale(1.05) translate(0 14)">
@@ -649,19 +644,13 @@
             <path d="M0 0.63 L0 7.56" stroke="#8a8f94" stroke-width=".55"/>
           </g>
         </g>
-        <!-- left arm, fist on the hip, red armband: upper arm turns at the shoulder, forearm at the elbow -->
-        <g class="lift-arm">
-        <path d="M54 110 L46 127.5" stroke="#141414" stroke-width="20" fill="none"/>
-        <path d="M54 110 L46 127.5" stroke="#e0a07c" stroke-width="16" fill="none"/>
-        <path d="M43.4 117.6 L53.4 122.2" stroke="#141414" stroke-width="6.5"/>
-        <path d="M43.4 117.6 L53.4 122.2" stroke="#c8102e" stroke-width="4"/>
-        <g class="lift-fore">
-        <path d="M46 127.5 L50 144" stroke="#141414" stroke-width="20" fill="none"/>
-        <path d="M46 127.5 L50 144" stroke="#e0a07c" stroke-width="16" fill="none"/>
-        <circle cx="46" cy="127.5" r="8" fill="#e0a07c"/>
+        <!-- left arm, fist on the hip, red armband -->
+        <path d="M54 110 Q40 128 50 144" stroke="#141414" stroke-width="20" fill="none"/>
+        <path d="M54 110 Q40 128 50 144" stroke="#e0a07c" stroke-width="16" fill="none"/>
+        <path d="M42 120 L53 123" stroke="#141414" stroke-width="6.5"/>
+        <path d="M42 120 L53 123" stroke="#c8102e" stroke-width="4"/>
         <path d="M43 142 Q43 137 49 137 Q57 138 57 145 Q57 153 49 153 Q43 152 43 146 Z" fill="#e0a07c" stroke="#141414" stroke-width="2"/>
         <path d="M46 143 l8 1 M46 147.5 l8 1" stroke="#9c5638" stroke-width="1.2"/>
-        </g></g>
         <!-- right arm up, behind the lance, red armband -->
         <path d="M106 110 Q130 118 121 100" stroke="#141414" stroke-width="20" fill="none"/>
         <path d="M106 110 Q130 118 121 100" stroke="#e0a07c" stroke-width="16" fill="none"/>
@@ -1363,41 +1352,55 @@
     if (++shots % 3 === 0) setTimeout(() => toastyPop('toasty'), 400);
   });
 
-  // Click the Indian: he grabs the tomahawk low on the handle, curls it up and raises it overhead, cocked to strike,
-  // with no sound. Every third one brings out the same guy as Toasty, saying "Frosty!".
+  // Click the Indian: he hops and stamps his lance on the ground -- a deep war-drum boom and a puff of dust at his feet.
+  // Every third stamp brings out the same guy as Toasty, saying "Frosty!".
   const indian = document.querySelector('svg.indian');
-  let stamps = 0;
+  let stamps = 0;   // no wait: every click stamps
+  function drumSound(delay) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audio = audio || new AC();
+    if (audio.state !== 'running') audio.resume().catch(() => {});
+    loadToasty();
+    const t = audio.currentTime + delay;
+    // drum head: a low tone that drops in pitch
+    const o = audio.createOscillator(), og = audio.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(48, t + 0.35);
+    og.gain.setValueAtTime(0.0001, t); og.gain.exponentialRampToValueAtTime(0.9, t + 0.008); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+    o.connect(og).connect(audio.destination); o.start(t); o.stop(t + 0.65);
+    // the skin's slap, plus the lance butt hitting the dirt
+    const len = Math.floor(audio.sampleRate * 0.25), b = audio.createBuffer(1, len, audio.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const n = audio.createBufferSource(), lp = audio.createBiquadFilter(), ng = audio.createGain();
+    n.buffer = b; lp.type = 'lowpass'; lp.frequency.setValueAtTime(1400, t); lp.frequency.exponentialRampToValueAtTime(200, t + 0.2);
+    ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.45, t + 0.004); ng.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    n.connect(lp).connect(ng).connect(audio.destination); n.start(t); n.stop(t + 0.25);
+  }
+  function dust(cx, cy, r, dx, dy, grow, ms, delay) {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+    c.setAttribute('fill', '#b89a72'); c.setAttribute('opacity', '0');
+    indian.querySelector('.dust').append(c);
+    c.animate([
+      { transform: 'translate(0, 0) scale(.4)', opacity: 0.85 },
+      { transform: `translate(${dx * 0.6}px, ${dy * 0.6}px) scale(${grow * 0.7})`, opacity: 0.6, offset: 0.35 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${grow})`, opacity: 0 },
+    ], { duration: ms, delay, easing: 'ease-out', fill: 'backwards' }).onfinish = () => c.remove();
+  }
   indian.addEventListener('click', () => {
-    // Poses: a1 = upper arm's angle from the shoulder, a2 = forearm's angle from the elbow (degrees, 0 = pointing right,
-    // 90 = down), drop = how far the shoulder dips, tilt = the tomahawk's lean once he holds it (0 = head straight up).
-    // His shoulder dips so his fist reaches the low part of the handle; he curls it up in front of him, then raises it
-    // overhead and cocks it back to strike, holds, and puts it back. The tomahawk sits still until he grabs it, then rides
-    // in his fist (the arm's turn now, undoing the arm's turn at the grab, plus a turn in his grip for the lean).
-    const T = 2000;
-    const pose = (o, a1, a2, drop, held, tilt, easing) => ({ o, U: a1 - 114.57, F: a2 - 76.37 - (a1 - 114.57), drop, held, tilt, easing });
-    const keys = [
-      pose(0,    114.57, 76.37, 0,  false, 0,   'ease-in-out'),
-      pose(0.14, 94.65,  44.94, 22, false, 0,   'linear'),
-      pose(0.20, 94.65,  44.94, 22, true,  0,   'ease-in-out'),
-      pose(0.36, 118,    -45,   0,  true,  0,   'ease-in-out'),
-      pose(0.52, 220,    -80,   0,  true,  -20, 'ease-in-out'),
-      pose(0.60, 225,    -100,  0,  true,  -42, 'ease-in-out'),
-      pose(0.68, 220,    -80,   0,  true,  -20, 'ease-in-out'),
-      pose(0.78, 220,    -80,   0,  true,  -20, 'ease-in-out'),
-      pose(0.86, 118,    -45,   0,  true,  0,   'ease-in-out'),
-      pose(0.93, 94.65,  44.94, 22, true,  0,   'ease-in-out'),
-      pose(1,    114.57, 76.37, 0,  false, 0,   'linear'),
-    ];
-    const g = keys[1];   // the grab
-    const run = (sel, f) => indian.querySelector(sel).animate(keys.map(k => ({ transform: f(k), offset: k.o, easing: k.easing })), { duration: T });
-    run('.lift-arm', k => `translate(0px, ${k.drop}px) rotate(${k.U}deg)`);
-    run('.lift-fore', k => `rotate(${k.F}deg)`);
-    run('.tk-swing', k => `translate(0px, ${k.drop}px) rotate(${k.U}deg)`);
-    run('.tk-elbow', k => `rotate(${k.held ? k.F - g.F : 0}deg)`);
-    run('.tk-back', k => k.held ? `rotate(${-g.U}deg) translate(0px, ${-g.drop}px)` : `rotate(${-k.U}deg) translate(0px, ${-k.drop}px)`);
-    run('.tk-wrist', k => `rotate(${k.held ? k.tilt - (k.U - g.U) - (k.F - g.F) : 0}deg)`);
-    wakeAudio(); loadToasty();   // no sound of his own: wake the page's audio and load Frosty's clip
-    if (++stamps % 3 === 0) setTimeout(() => toastyPop('frosty'), 1500);
+    // up off the ground, then down hard with a little squash; the drum hits as he lands (0.22 s in)
+    drumSound(0.22);
+    indian.querySelector('.stomp').animate([
+      { transform: 'none' },
+      { transform: 'translateY(-14px) rotate(-2deg)', offset: 0.35, easing: 'ease-in' },
+      { transform: 'translateY(1px) scale(1.04, .96)', offset: 0.45 },
+      { transform: 'none' },
+    ], { duration: 500, easing: 'ease-out' });
+    // dust kicked up from the lance butt and both feet as he lands
+    for (let i = 0; i < 7; i++) dust(121, 206, 3 + Math.random() * 2, -10 + Math.random() * 28, -6 - Math.random() * 12, 2 + Math.random(), 700 + Math.random() * 400, 220 + i * 15);
+    for (const x of [66, 94]) for (let i = 0; i < 4; i++) dust(x, 209, 3 + Math.random() * 1.5, (x < 80 ? -1 : 1) * (6 + Math.random() * 14), -3 - Math.random() * 7, 1.8 + Math.random(), 600 + Math.random() * 300, 220 + i * 20);
+    if (++stamps % 3 === 0) setTimeout(() => toastyPop('frosty'), 650);
   });
 </script>
 
