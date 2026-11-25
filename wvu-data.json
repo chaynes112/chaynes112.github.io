@@ -1,5 +1,5 @@
 {
- "updated": "2026-11-23T20:33:48Z",
+ "updated": "2026-11-25T10:29:41Z",
  "manual": {
   "Rifle": [
    {
@@ -616,10 +616,7 @@
   "usa.ncaa.m.1": {},
   "usa.ncaa.w.1": {
    "20336": {
-    "conf": "ACC",
-    "rank": 5,
-    "of": 17,
-    "url": "https://theacc.com/standings.aspx?path=wsoc"
+    "conf": "ACC"
    }
   }
  }
