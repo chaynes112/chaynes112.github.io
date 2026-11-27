@@ -1439,16 +1439,19 @@
     'usa.ncaa.m.1': '2026-11-06T00:00:00Z',   // Sun Belt, last regular-season games Nov 3-5, 2026
     'usa.ncaa.w.1': '2026-11-07T00:00:00Z',   // Big 12, last regular-season games Nov 5-6, 2026
   };
-  // Conference record counted from finished conference games; soccer adds ties (W-L-T)
+  // Conference record counted from finished conference games; soccer adds ties (W-L-T). A game counts as soon as
+  // ESPN names a winner, so it matches the overall record; a game with no winner counts as a soccer tie only once
+  // it started 3+ hours ago (an unfinished game has no winner either)
   function confRecord(events, team, sport, league) {
     let w = 0, l = 0, t = 0;
-    const done = Math.min(Date.now() - 3 * 3600e3, CONF_REG_END[league] ? Date.parse(CONF_REG_END[league]) : Infinity);
+    const regEnd = CONF_REG_END[league] ? Date.parse(CONF_REG_END[league]) : Infinity;
+    const tieDone = Math.min(Date.now() - 3 * 3600e3, regEnd);
     for (const e of events) {
       const c = e && e.competitions && e.competitions[0];
-      if (!c || !c.conferenceCompetition || new Date(e.date) > done) continue;
+      if (!c || !c.conferenceCompetition || new Date(e.date) > regEnd) continue;
       const me = c.competitors.find(x => x.id === String(team)), them = c.competitors.find(x => x.id !== String(team));
       if (!me || !them) continue;
-      if (me.winner) w++; else if (them.winner) l++; else t++;
+      if (me.winner) w++; else if (them.winner) l++; else if (new Date(e.date) <= tieDone) t++;
     }
     return sport === 'soccer' ? w + '-' + l + '-' + t : w + '-' + l;
   }
